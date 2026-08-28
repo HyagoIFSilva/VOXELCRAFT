@@ -16,6 +16,7 @@ let scene = null;
  */
 export function createRenderer() {
   renderer = new THREE.WebGLRenderer({ antialias: true });
+  renderer.domElement.id = 'game-canvas';
   renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   renderer.setClearColor(0x78b9e8); // Soft sky blue

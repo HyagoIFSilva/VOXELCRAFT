@@ -1,6 +1,7 @@
 /**
- * Furnace System — Minecraft-style smelting mechanism and interactive 3D block GUI.
+ * Furnace System — Industrial Furnace Interface & Smelting Mechanism.
  * Smelts raw iron ore into iron ingots and cooks raw meat into roasted food using coal or wood fuel.
+ * Styled with Tailwind dark-green glassmorphism, Space Grotesk, JetBrains Mono, and animated heat glow.
  */
 
 import { BlockType, ITEM_NAMES } from '../world/blockTypes.js';
@@ -57,7 +58,7 @@ export function openFurnace(x, y, z) {
     initFurnaceUI();
   }
 
-  furnaceModal.style.display = 'block';
+  furnaceModal.style.display = 'flex';
   openWindow(UIWindow.FURNACE);
   playInventorySound(true);
   renderFurnaceSlots();
@@ -123,80 +124,105 @@ export function updateFurnaces(dt) {
 function initFurnaceUI() {
   furnaceModal = document.createElement('div');
   furnaceModal.id = 'furnace-modal';
-  Object.assign(furnaceModal.style, {
-    position: 'fixed',
-    top: '50%',
-    left: '50%',
-    transform: 'translate(-50%, -50%)',
-    width: '460px',
-    padding: '24px',
-    borderRadius: '18px',
-    background: 'rgba(15, 23, 42, 0.96)',
-    border: '1px solid rgba(255, 255, 255, 0.2)',
-    boxShadow: '0 25px 60px rgba(0, 0, 0, 0.8), 0 0 40px rgba(249, 115, 22, 0.15)',
-    zIndex: '150',
-    display: 'none',
-    color: '#f8fafc',
-    fontFamily: "'Outfit', 'Segoe UI', sans-serif",
-    backdropFilter: 'blur(16px)',
-  });
+  furnaceModal.className = 'fixed inset-0 z-[150] hidden items-center justify-center p-4 bg-black/60 backdrop-blur-md select-none';
 
   furnaceModal.innerHTML = `
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:18px; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:10px;">
-      <div style="display:flex; align-items:center; gap:8px;">
-        <span style="font-size:20px;">🔥</span>
-        <h2 style="margin:0; font-size:18px; font-weight:800; letter-spacing:1px; color:#f97316;">FORNALHA & FUNDIÇÃO</h2>
-      </div>
-      <button id="close-furnace-btn" style="background:transparent; border:none; color:#94a3b8; font-size:20px; font-weight:bold; cursor:pointer; padding:4px 8px; border-radius:6px;">✕</button>
-    </div>
+    <div class="glass-panel w-full max-w-3xl bg-surface/90 backdrop-blur-xl border border-outline-variant rounded-xl shadow-[0_0_30px_rgba(15,21,14,0.9)] overflow-hidden p-6 text-on-surface">
+      <!-- Header -->
+      <header class="flex justify-between items-center border-b border-outline-variant pb-3 mb-6">
+        <h1 class="font-headline-lg-mobile md:font-headline-lg text-headline-lg-mobile md:text-headline-lg text-primary tracking-tighter uppercase flex items-center gap-2 font-bold">
+          <span class="material-symbols-outlined text-tertiary-container" style="font-variation-settings: 'FILL' 1;">local_fire_department</span>
+          <span>Industrial Furnace</span>
+        </h1>
+        <button id="close-furnace-btn" aria-label="Close" class="text-on-surface-variant hover:text-primary transition-colors p-2 rounded-lg hover:bg-surface-container cursor-pointer">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </header>
 
-    <!-- Smelting Chamber -->
-    <div style="display:flex; align-items:center; justify-content:center; gap:24px; margin-bottom:20px; background:rgba(30,41,59,0.6); padding:16px; border-radius:14px; border:1px solid rgba(255,255,255,0.06);">
-      <!-- Left Column: Input + Fire + Fuel -->
-      <div style="display:flex; flex-direction:column; align-items:center; gap:8px;">
-        <div id="furnace-input-slot" style="width:48px; height:48px; border-radius:8px; background:rgba(15,23,42,0.85); border:2px solid rgba(255,255,255,0.2); display:flex; align-items:center; justify-content:center; cursor:pointer; position:relative;" title="Coloque Minério de Ferro ou Carne Crua"></div>
-        
-        <div id="furnace-flame" style="font-size:20px; opacity:0.3; transition:opacity 0.2s;">🔥</div>
-        
-        <div id="furnace-fuel-slot" style="width:48px; height:48px; border-radius:8px; background:rgba(15,23,42,0.85); border:2px solid rgba(255,255,255,0.2); display:flex; align-items:center; justify-content:center; cursor:pointer; position:relative;" title="Coloque Carvão ou Madeira como combustível"></div>
-      </div>
+      <!-- Furnace Interface Grid -->
+      <div class="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
+        <!-- Left Side: Input & Fuel -->
+        <div class="md:col-span-5 flex flex-col items-center gap-4 bg-surface-container/50 p-6 rounded-xl border border-outline-variant">
+          <!-- Input Slot -->
+          <div id="furnace-input-slot" class="w-24 h-24 bg-surface-container-lowest border border-outline-variant hover:border-primary rounded-xl transition-all cursor-pointer flex items-center justify-center relative group shadow-inner" title="Clique para colocar Minério ou Carne">
+            <span class="absolute bottom-1.5 font-label-caps text-[10px] text-on-surface-variant uppercase">INPUT</span>
+          </div>
 
-      <!-- Center: Progress Arrow -->
-      <div style="display:flex; flex-direction:column; align-items:center; gap:4px;">
-        <div style="font-size:12px; font-weight:700; color:#cbd5e1; letter-spacing:1px;">FUNDIÇÃO</div>
-        <div style="width:80px; height:10px; background:rgba(15,23,42,0.9); border-radius:5px; overflow:hidden; border:1px solid rgba(255,255,255,0.15);">
-          <div id="furnace-progress-bar" style="width:0%; height:100%; background:linear-gradient(90deg, #f97316, #eab308); transition:width 0.1s;"></div>
+          <!-- Fire Progress (Fuel Consumption) -->
+          <div class="flex flex-col items-center gap-1">
+            <div class="relative w-12 h-12 flex items-center justify-center overflow-hidden">
+              <span id="furnace-flame-bg" class="material-symbols-outlined text-outline-variant text-4xl opacity-30 leading-none">local_fire_department</span>
+              <div id="furnace-flame-active" class="absolute bottom-0 w-full overflow-hidden transition-all duration-300 ease-linear flex items-end justify-center" style="height: 0%;">
+                <span class="material-symbols-outlined text-tertiary-container text-4xl leading-none" style="font-variation-settings: 'FILL' 1; text-shadow: 0 0 12px #ff6c5c;">local_fire_department</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Fuel Slot -->
+          <div id="furnace-fuel-slot" class="w-24 h-24 bg-surface-container-lowest border border-outline-variant hover:border-primary rounded-xl transition-all cursor-pointer flex items-center justify-center relative group shadow-inner" title="Clique para colocar Carvão ou Madeira">
+            <span class="absolute bottom-1.5 font-label-caps text-[10px] text-on-surface-variant uppercase">FUEL</span>
+          </div>
         </div>
-        <div style="font-size:22px; color:#f97316;">➜</div>
+
+        <!-- Middle: Smelting Progress Arrow -->
+        <div class="md:col-span-2 flex justify-center items-center py-4 md:py-0">
+          <div class="relative flex items-center w-full max-w-[120px]">
+            <div class="w-full h-7 bg-surface-container-high rounded-full overflow-hidden border border-outline-variant relative">
+              <!-- Active Progress Fill -->
+              <div id="furnace-progress-bar" class="absolute top-[2px] bottom-[2px] left-[2px] bg-primary rounded-full transition-all duration-200 ease-linear shadow-[0_0_8px_rgba(120,220,119,0.5)]" style="width: 0%;"></div>
+            </div>
+            <!-- Arrow Head Icon over progress -->
+            <span class="material-symbols-outlined text-primary absolute left-1/2 -translate-x-1/2 text-3xl drop-shadow-[0_0_6px_rgba(120,220,119,0.8)]" style="font-variation-settings: 'FILL' 1;">arrow_right_alt</span>
+          </div>
+        </div>
+
+        <!-- Right Side: Output -->
+        <div class="md:col-span-5 flex flex-col items-center gap-5 bg-surface-container/40 p-6 rounded-xl border border-outline-variant h-full justify-center">
+          <span class="font-label-caps text-label-caps text-primary tracking-widest uppercase font-semibold">Output Forjado</span>
+          <!-- Output Slot -->
+          <div id="furnace-output-slot" class="w-36 h-36 bg-surface-container-lowest border-2 border-primary rounded-2xl shadow-[0_0_20px_rgba(120,220,119,0.3)] transition-all cursor-pointer flex items-center justify-center relative group bg-gradient-to-b from-surface-container-lowest to-surface-variant/20" title="Clique para coletar o item">
+            <span class="absolute bottom-2 font-label-caps text-[11px] text-primary/70 uppercase">PRODUTO</span>
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="flex gap-3 w-full mt-2">
+            <button id="btn-furnace-stop" class="flex-1 bg-surface-container-high border border-outline-variant hover:border-error text-on-surface hover:text-error font-body-md py-2.5 px-3 rounded-lg transition-all flex justify-center items-center gap-1.5 cursor-pointer text-sm font-semibold">
+              <span class="material-symbols-outlined text-lg">stop_circle</span>
+              <span>Parar</span>
+            </button>
+            <button id="btn-furnace-collect" class="flex-1 bg-primary text-on-primary border border-primary-fixed hover:bg-primary-fixed font-body-md py-2.5 px-3 rounded-lg transition-all flex justify-center items-center gap-1.5 shadow-[0_0_15px_rgba(120,220,119,0.4)] cursor-pointer text-sm font-bold">
+              <span class="material-symbols-outlined text-lg" style="font-variation-settings: 'FILL' 1;">download</span>
+              <span>Coletar</span>
+            </button>
+          </div>
+        </div>
       </div>
 
-      <!-- Right Column: Output Product -->
-      <div style="display:flex; flex-direction:column; align-items:center; gap:6px;">
-        <div id="furnace-output-slot" style="width:58px; height:58px; border-radius:10px; background:rgba(15,23,42,0.9); border:2.5px solid #f97316; display:flex; align-items:center; justify-content:center; cursor:pointer; position:relative; box-shadow:0 0 16px rgba(249,115,22,0.3);" title="Clique para coletar o item fundido"></div>
-        <span style="font-size:11px; color:#cbd5e1; font-weight:700;">PRODUTO</span>
+      <!-- Quick Player Hotbar Transfer -->
+      <div class="mt-6 pt-4 border-t border-outline-variant/60">
+        <div class="flex justify-between items-center mb-2">
+          <span class="font-label-caps text-xs text-secondary uppercase font-semibold">Seu Inventário Rápido (Clique para carregar na Fornalha)</span>
+        </div>
+        <div id="furnace-hotbar-grid" class="grid grid-cols-9 gap-2"></div>
       </div>
     </div>
-
-    <!-- Quick Player Hotbar Transfer -->
-    <div style="font-size:12px; font-weight:700; color:#94a3b8; margin-bottom:8px; text-transform:uppercase; letter-spacing:1px;">SEU INVENTÁRIO (Clique para transferir)</div>
-    <div id="furnace-hotbar-grid" style="display:grid; grid-template-columns:repeat(9, 1fr); gap:6px;"></div>
   `;
 
   document.body.appendChild(furnaceModal);
 
   document.getElementById('close-furnace-btn').addEventListener('click', closeFurnace);
 
-  document.getElementById('furnace-output-slot').addEventListener('click', () => {
+  document.getElementById('btn-furnace-collect').addEventListener('click', collectFurnaceOutput);
+  document.getElementById('furnace-output-slot').addEventListener('click', collectFurnaceOutput);
+
+  document.getElementById('btn-furnace-stop').addEventListener('click', () => {
     if (!activeFurnaceKey) return;
     const f = worldFurnaces.get(activeFurnaceKey);
-    if (!f || f.outputItem === 0) return;
-
-    if (addItemToInventory(f.outputItem)) {
-      playCraftSound();
-      f.outputCount--;
-      if (f.outputCount <= 0) {
-        f.outputItem = 0;
-      }
+    if (!f) return;
+    if (f.inputItem > 0) {
+      addItemToInventory(f.inputItem);
+      f.inputCount--;
+      if (f.inputCount <= 0) f.inputItem = 0;
       renderFurnaceSlots();
     }
   });
@@ -229,6 +255,21 @@ function initFurnaceUI() {
   });
 }
 
+function collectFurnaceOutput() {
+  if (!activeFurnaceKey) return;
+  const f = worldFurnaces.get(activeFurnaceKey);
+  if (!f || f.outputItem === 0) return;
+
+  if (addItemToInventory(f.outputItem)) {
+    playCraftSound();
+    f.outputCount--;
+    if (f.outputCount <= 0) {
+      f.outputItem = 0;
+    }
+    renderFurnaceSlots();
+  }
+}
+
 function renderFurnaceSlots() {
   if (!activeFurnaceKey) return;
   const f = worldFurnaces.get(activeFurnaceKey);
@@ -237,40 +278,52 @@ function renderFurnaceSlots() {
   const inputEl = document.getElementById('furnace-input-slot');
   const fuelEl = document.getElementById('furnace-fuel-slot');
   const outputEl = document.getElementById('furnace-output-slot');
-  const flameEl = document.getElementById('furnace-flame');
+  const flameActiveEl = document.getElementById('furnace-flame-active');
   const barEl = document.getElementById('furnace-progress-bar');
   const hotbarEl = document.getElementById('furnace-hotbar-grid');
 
-  if (!inputEl || !fuelEl || !outputEl || !flameEl || !barEl || !hotbarEl) return;
+  if (!inputEl || !fuelEl || !outputEl || !flameActiveEl || !barEl || !hotbarEl) return;
 
   // Render Input Slot
   inputEl.innerHTML = '';
   if (f.inputItem > 0) {
-    const icon = createBlockIconCanvas(f.inputItem, 36);
+    const icon = createBlockIconCanvas(f.inputItem, 48);
     inputEl.appendChild(icon);
     if (f.inputCount > 1) {
       const badge = document.createElement('span');
-      badge.style.cssText = 'position:absolute; bottom:2px; right:4px; font-size:11px; font-weight:800; color:#fff; text-shadow:0 1px 2px #000;';
+      badge.className = 'absolute -top-2 -right-2 bg-error text-on-error font-label-caps text-xs px-2 py-0.5 rounded shadow font-bold';
       badge.textContent = f.inputCount;
       inputEl.appendChild(badge);
     }
+  } else {
+    const label = document.createElement('span');
+    label.className = 'font-label-caps text-[10px] text-on-surface-variant uppercase';
+    label.textContent = 'INPUT';
+    inputEl.appendChild(label);
   }
 
   // Render Fuel Slot
   fuelEl.innerHTML = '';
   if (f.fuelItem > 0) {
-    const icon = createBlockIconCanvas(f.fuelItem, 36);
+    const icon = createBlockIconCanvas(f.fuelItem, 48);
     fuelEl.appendChild(icon);
     if (f.fuelCount > 1) {
       const badge = document.createElement('span');
-      badge.style.cssText = 'position:absolute; bottom:2px; right:4px; font-size:11px; font-weight:800; color:#fff; text-shadow:0 1px 2px #000;';
+      badge.className = 'absolute -top-2 -right-2 bg-error text-on-error font-label-caps text-xs px-2 py-0.5 rounded shadow font-bold';
       badge.textContent = f.fuelCount;
       fuelEl.appendChild(badge);
     }
+  } else {
+    const label = document.createElement('span');
+    label.className = 'font-label-caps text-[10px] text-on-surface-variant uppercase';
+    label.textContent = 'FUEL';
+    fuelEl.appendChild(label);
   }
 
   // Render Flame & Progress
-  flameEl.style.opacity = f.burnTimeRemaining > 0 ? '1' : '0.25';
+  const burnPct = f.maxBurnTime > 0 ? Math.min(100, Math.round((f.burnTimeRemaining / f.maxBurnTime) * 100)) : 0;
+  flameActiveEl.style.height = `${burnPct}%`;
+
   const recipe = f.inputItem > 0 ? SMELT_RECIPES[f.inputItem] : null;
   const pct = recipe ? Math.min(100, Math.round((f.cookProgress / recipe.time) * 100)) : 0;
   barEl.style.width = `${pct}%`;
@@ -278,14 +331,19 @@ function renderFurnaceSlots() {
   // Render Output Slot
   outputEl.innerHTML = '';
   if (f.outputItem > 0) {
-    const icon = createBlockIconCanvas(f.outputItem, 44);
+    const icon = createBlockIconCanvas(f.outputItem, 64);
     outputEl.appendChild(icon);
     if (f.outputCount > 1) {
       const badge = document.createElement('span');
-      badge.style.cssText = 'position:absolute; bottom:2px; right:4px; font-size:13px; font-weight:800; color:#fff; text-shadow:0 1px 2px #000;';
+      badge.className = 'absolute -top-3 -right-3 bg-primary text-on-primary font-label-caps text-sm px-2.5 py-1 rounded shadow-[0_0_10px_rgba(120,220,119,0.8)] font-bold';
       badge.textContent = f.outputCount;
       outputEl.appendChild(badge);
     }
+  } else {
+    const label = document.createElement('span');
+    label.className = 'font-label-caps text-[11px] text-primary/70 uppercase';
+    label.textContent = 'PRODUTO';
+    outputEl.appendChild(label);
   }
 
   // Render Quick Hotbar
@@ -293,7 +351,7 @@ function renderFurnaceSlots() {
   const hotbar = getHotbarSlots();
   hotbar.forEach((type, idx) => {
     const slot = document.createElement('div');
-    slot.style.cssText = 'width:40px; height:40px; border-radius:6px; background:rgba(30,41,59,0.85); border:1.5px solid rgba(255,255,255,0.12); display:flex; align-items:center; justify-content:center; cursor:pointer;';
+    slot.className = 'slot w-full h-11 rounded-lg bg-surface-container-lowest border border-outline-variant hover:border-primary flex items-center justify-center cursor-pointer transition-all';
     if (type > 0) {
       const icon = createBlockIconCanvas(type, 30);
       slot.appendChild(icon);

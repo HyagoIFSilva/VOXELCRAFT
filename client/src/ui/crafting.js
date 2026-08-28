@@ -599,56 +599,50 @@ export function initCraftingTable() {
 
   craftingTableModal = document.createElement('div');
   craftingTableModal.id = 'crafting-table-modal';
-  Object.assign(craftingTableModal.style, {
-    position: 'fixed',
-    top: '50%',
-    left: '50%',
-    transform: 'translate(-50%, -50%)',
-    width: '460px',
-    padding: '24px',
-    borderRadius: '18px',
-    background: 'rgba(15, 23, 42, 0.96)',
-    border: '1px solid rgba(255, 255, 255, 0.2)',
-    boxShadow: '0 25px 60px rgba(0, 0, 0, 0.8), 0 0 40px rgba(34, 197, 94, 0.15)',
-    zIndex: '150',
-    display: 'none',
-    color: '#f8fafc',
-    fontFamily: "'Outfit', 'Segoe UI', sans-serif",
-    backdropFilter: 'blur(16px)',
-  });
+  craftingTableModal.className = 'fixed inset-0 z-[150] hidden items-center justify-center p-4 bg-black/60 backdrop-blur-md select-none';
 
   craftingTableModal.innerHTML = `
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:18px; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:10px;">
-      <div style="display:flex; align-items:center; gap:8px;">
-        <span style="font-size:20px;">🔨</span>
-        <h2 style="margin:0; font-size:18px; font-weight:800; letter-spacing:1px; color:#4ade80;">BANCADA DE TRABALHO (3×3)</h2>
+    <div class="glass-panel w-full max-w-xl bg-surface/90 backdrop-blur-xl border border-outline-variant rounded-xl shadow-[0_0_30px_rgba(15,21,14,0.9)] overflow-hidden p-6 text-on-surface">
+      <!-- Header -->
+      <div class="flex justify-between items-center border-b border-outline-variant pb-3 mb-6">
+        <div class="flex items-center gap-3">
+          <span class="material-symbols-outlined text-primary text-2xl" style="font-variation-settings: 'FILL' 1;">construction</span>
+          <h2 class="font-headline-lg-mobile md:font-headline-lg text-headline-lg-mobile md:text-headline-lg text-primary tracking-tighter uppercase font-bold">Bancada de Trabalho (3×3)</h2>
+        </div>
+        <div class="flex items-center gap-3">
+          <button id="open-recipe-book-table" class="bg-primary/20 hover:bg-primary/30 text-primary border border-primary/40 px-3 py-1.5 rounded-lg text-xs font-label-caps flex items-center gap-1.5 transition-all shadow-[0_0_10px_rgba(120,220,119,0.2)] cursor-pointer">
+            <span class="material-symbols-outlined text-sm">menu_book</span>
+            <span>Receitas</span>
+          </button>
+          <button id="close-table-btn" class="text-on-surface-variant hover:text-primary transition-colors p-1 rounded-lg hover:bg-surface-container cursor-pointer">
+            <span class="material-symbols-outlined">close</span>
+          </button>
+        </div>
       </div>
-      <div style="display:flex; align-items:center; gap:8px;">
-        <button id="open-recipe-book-table" title="Guia com diagramas de montagem" style="background:linear-gradient(135deg, #3b82f6, #1d4ed8); border:1px solid #60a5fa; color:#fff; font-size:12px; font-weight:700; padding:6px 12px; border-radius:8px; cursor:pointer; display:flex; align-items:center; gap:6px; box-shadow:0 4px 12px rgba(59,130,246,0.4);">
-          <span>❓</span> Receitas
-        </button>
-        <button id="close-table-btn" style="background:transparent; border:none; color:#94a3b8; font-size:20px; font-weight:bold; cursor:pointer; padding:4px 8px; border-radius:6px;">✕</button>
+
+      <!-- Crafting Matrix & Output Area -->
+      <div class="flex items-center justify-center gap-6 mb-6 bg-surface-container/50 p-6 rounded-xl border border-outline-variant">
+        <!-- 3×3 Grid -->
+        <div id="table-craft-grid" class="grid grid-cols-3 gap-2"></div>
+
+        <!-- Arrow -->
+        <div class="flex items-center justify-center">
+          <span class="material-symbols-outlined text-4xl text-primary drop-shadow-[0_0_8px_rgba(120,220,119,0.6)]">east</span>
+        </div>
+
+        <!-- Output Slot -->
+        <div class="flex flex-col items-center gap-2">
+          <div id="table-output-slot" class="w-20 h-20 rounded-2xl bg-surface-container-lowest border-2 border-primary shadow-[0_0_16px_rgba(120,220,119,0.5)] flex items-center justify-center cursor-pointer relative" title="Clique para coletar o produto forjado"></div>
+          <span class="font-label-caps text-[11px] text-primary uppercase font-semibold">PRODUTO</span>
+        </div>
+      </div>
+
+      <!-- Player Quick Hotbar Transfer -->
+      <div class="pt-4 border-t border-outline-variant/60">
+        <span class="font-label-caps text-xs text-secondary uppercase font-semibold block mb-2">Seu Inventário (Clique para colocar na bancada)</span>
+        <div id="table-hotbar-grid" class="grid grid-cols-9 gap-2"></div>
       </div>
     </div>
-
-    <!-- Crafting Matrix & Output Area -->
-    <div style="display:flex; align-items:center; justify-content:center; gap:20px; margin-bottom:20px; background:rgba(30,41,59,0.6); padding:16px; border-radius:14px; border:1px solid rgba(255,255,255,0.06);">
-      <!-- 3×3 Grid -->
-      <div id="table-craft-grid" style="display:grid; grid-template-columns:repeat(3, 44px); gap:6px;"></div>
-
-      <!-- Arrow -->
-      <div style="font-size:24px; color:#4ade80;">➜</div>
-
-      <!-- Output Slot -->
-      <div style="display:flex; flex-direction:column; align-items:center; gap:4px;">
-        <div id="table-output-slot" style="width:54px; height:54px; border-radius:10px; background:rgba(15,23,42,0.9); border:2px solid #22c55e; display:flex; align-items:center; justify-content:center; cursor:pointer; position:relative; box-shadow:0 0 16px rgba(34,197,94,0.3);" title="Resultado do Crafting"></div>
-        <span style="font-size:11px; color:#cbd5e1; font-weight:700;">PRODUTO</span>
-      </div>
-    </div>
-
-    <!-- Player Quick Hotbar Transfer -->
-    <div style="font-size:12px; font-weight:700; color:#94a3b8; margin-bottom:8px; text-transform:uppercase; letter-spacing:1px;">SEU INVENTÁRIO (Clique para pegar)</div>
-    <div id="table-hotbar-grid" style="display:grid; grid-template-columns:repeat(9, 1fr); gap:6px;"></div>
   `;
 
   document.body.appendChild(craftingTableModal);
@@ -662,7 +656,7 @@ export function initCraftingTable() {
 
 export function openCraftingTable() {
   if (!craftingTableModal) initCraftingTable();
-  craftingTableModal.style.display = 'block';
+  craftingTableModal.style.display = 'flex';
   openWindow(UIWindow.CRAFTING_TABLE);
   playInventorySound(true);
   renderCraftingTableGrid();
@@ -697,10 +691,10 @@ export function renderCraftingTableGrid() {
   gridEl.innerHTML = '';
   tableSlots.forEach((type, idx) => {
     const slot = document.createElement('div');
-    slot.style.cssText = 'width:44px; height:44px; border-radius:8px; background:rgba(15,23,42,0.85); border:1.5px solid rgba(255,255,255,0.18); display:flex; align-items:center; justify-content:center; cursor:pointer; position:relative;';
+    slot.className = 'slot w-14 h-14 rounded-xl bg-surface-container-lowest border border-outline-variant hover:border-primary flex items-center justify-center cursor-pointer relative transition-all';
 
     if (type > 0) {
-      const icon = createBlockIconCanvas(type, 34);
+      const icon = createBlockIconCanvas(type, 38);
       slot.appendChild(icon);
     }
 
@@ -719,12 +713,12 @@ export function renderCraftingTableGrid() {
   // 2. Render Output Slot
   outputEl.innerHTML = '';
   if (currentTableOutput && currentTableOutput.result > 0) {
-    const icon = createBlockIconCanvas(currentTableOutput.result, 40);
+    const icon = createBlockIconCanvas(currentTableOutput.result, 48);
     outputEl.appendChild(icon);
 
     if (currentTableOutput.count > 1) {
       const badge = document.createElement('span');
-      badge.style.cssText = 'position:absolute; bottom:2px; right:4px; font-size:12px; font-weight:800; color:#fff; text-shadow:0 1px 2px #000;';
+      badge.className = 'absolute -top-2 -right-2 bg-primary text-on-primary font-label-caps text-xs px-2 py-0.5 rounded shadow font-bold';
       badge.textContent = currentTableOutput.count;
       outputEl.appendChild(badge);
     }
@@ -749,7 +743,7 @@ export function renderCraftingTableGrid() {
   const hotbar = getHotbarSlots();
   hotbar.forEach((type, idx) => {
     const slot = document.createElement('div');
-    slot.style.cssText = 'width:40px; height:40px; border-radius:6px; background:rgba(30,41,59,0.85); border:1.5px solid rgba(255,255,255,0.12); display:flex; align-items:center; justify-content:center; cursor:pointer;';
+    slot.className = 'slot w-full h-11 rounded-lg bg-surface-container-lowest border border-outline-variant hover:border-primary flex items-center justify-center cursor-pointer transition-all';
     if (type > 0) {
       const icon = createBlockIconCanvas(type, 30);
       slot.appendChild(icon);
@@ -779,41 +773,28 @@ export function initRecipeBook() {
 
   recipeBookModal = document.createElement('div');
   recipeBookModal.id = 'recipe-book-modal';
-  Object.assign(recipeBookModal.style, {
-    position: 'fixed',
-    top: '50%',
-    left: '50%',
-    transform: 'translate(-50%, -50%)',
-    width: '600px',
-    maxHeight: '82vh',
-    padding: '24px',
-    borderRadius: '18px',
-    background: 'rgba(15, 23, 42, 0.98)',
-    border: '1px solid rgba(59, 130, 246, 0.4)',
-    boxShadow: '0 25px 70px rgba(0, 0, 0, 0.9), 0 0 50px rgba(59, 130, 246, 0.25)',
-    zIndex: '200',
-    display: 'none',
-    color: '#f8fafc',
-    fontFamily: "'Outfit', 'Segoe UI', sans-serif",
-    backdropFilter: 'blur(20px)',
-    flexDirection: 'column',
-  });
+  recipeBookModal.className = 'fixed inset-0 z-[200] hidden items-center justify-center p-4 bg-black/70 backdrop-blur-lg select-none';
 
   recipeBookModal.innerHTML = `
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:10px;">
-      <div style="display:flex; align-items:center; gap:8px;">
-        <span style="font-size:22px;">📖</span>
-        <h2 style="margin:0; font-size:18px; font-weight:800; letter-spacing:1px; color:#60a5fa;">LIVRO DE RECEITAS (GUIA DE FABRICAÇÃO)</h2>
+    <div class="glass-panel w-full max-w-2xl max-h-[85vh] bg-surface/95 backdrop-blur-2xl border border-primary/40 rounded-xl shadow-[0_0_40px_rgba(120,220,119,0.2)] overflow-hidden flex flex-col p-6 text-on-surface">
+      <!-- Header -->
+      <div class="flex justify-between items-center border-b border-outline-variant pb-3 mb-4">
+        <div class="flex items-center gap-3">
+          <span class="material-symbols-outlined text-primary text-2xl" style="font-variation-settings: 'FILL' 1;">auto_stories</span>
+          <h2 class="font-headline-lg-mobile text-headline-lg-mobile text-primary tracking-tighter uppercase font-bold">Livro de Receitas (Guia de Fabricação)</h2>
+        </div>
+        <button id="close-recipe-book-btn" class="text-on-surface-variant hover:text-primary transition-colors p-1 rounded-lg hover:bg-surface-container cursor-pointer">
+          <span class="material-symbols-outlined">close</span>
+        </button>
       </div>
-      <button id="close-recipe-book-btn" style="background:transparent; border:none; color:#94a3b8; font-size:20px; font-weight:bold; cursor:pointer; padding:4px 8px; border-radius:6px;">✕</button>
-    </div>
 
-    <div style="font-size:13px; color:#94a3b8; margin-bottom:14px;">
-      Veja como organizar os blocos e materiais na grade para forjar cada item no jogo:
-    </div>
+      <div class="font-label-caps text-xs text-on-surface-variant mb-4">
+        Veja como organizar os blocos e materiais na grade para forjar cada item:
+      </div>
 
-    <!-- Recipe Cards List -->
-    <div id="recipe-cards-container" style="overflow-y:auto; max-height:60vh; padding-right:8px; display:flex; flex-direction:column; gap:12px;"></div>
+      <!-- Recipe Cards List -->
+      <div id="recipe-cards-container" class="overflow-y-auto max-h-[60vh] pr-2 flex flex-col gap-3"></div>
+    </div>
   `;
 
   document.body.appendChild(recipeBookModal);
@@ -831,19 +812,19 @@ function renderRecipeCards() {
 
   RECIPE_CATALOG.forEach(r => {
     const card = document.createElement('div');
-    card.style.cssText = 'display:flex; align-items:center; justify-content:space-between; background:rgba(30,41,59,0.7); padding:12px 16px; border-radius:12px; border:1px solid rgba(255,255,255,0.08);';
+    card.className = 'flex items-center justify-between bg-surface-container/60 p-3.5 rounded-xl border border-outline-variant hover:border-primary/50 transition-all';
 
     // Left: Result Icon + Name + Description
     const leftDiv = document.createElement('div');
-    leftDiv.style.cssText = 'display:flex; align-items:center; gap:14px; max-width:320px;';
+    leftDiv.className = 'flex items-center gap-3.5 max-w-[340px]';
 
     const resultBox = document.createElement('div');
-    resultBox.style.cssText = 'width:48px; height:48px; border-radius:8px; background:rgba(15,23,42,0.9); border:2px solid #22c55e; display:flex; align-items:center; justify-content:center; position:relative; flex-shrink:0;';
+    resultBox.className = 'w-12 h-12 rounded-xl bg-surface-container-lowest border-2 border-primary flex items-center justify-center relative shrink-0 shadow-[0_0_8px_rgba(120,220,119,0.3)]';
     const resultIcon = createBlockIconCanvas(r.result, 36);
     resultBox.appendChild(resultIcon);
     if (r.count > 1) {
       const countTag = document.createElement('span');
-      countTag.style.cssText = 'position:absolute; bottom:2px; right:4px; font-size:11px; font-weight:800; color:#fff;';
+      countTag.className = 'absolute -bottom-1 -right-1 bg-primary text-on-primary font-label-caps text-[10px] font-bold px-1 rounded';
       countTag.textContent = r.count;
       resultBox.appendChild(countTag);
     }
@@ -851,28 +832,29 @@ function renderRecipeCards() {
 
     const infoDiv = document.createElement('div');
     infoDiv.innerHTML = `
-      <div style="font-size:15px; font-weight:800; color:#f1f5f9;">${r.name}</div>
-      <div style="font-size:11px; font-weight:700; color:#38bdf8; text-transform:uppercase; margin-bottom:2px;">${r.category}</div>
-      <div style="font-size:12px; color:#94a3b8; line-height:1.3;">${r.desc}</div>
+      <div class="font-headline-lg-mobile text-sm font-bold text-on-surface">${r.name}</div>
+      <div class="font-label-caps text-[10px] font-semibold text-primary uppercase mb-0.5">${r.category}</div>
+      <div class="font-body-md text-xs text-on-surface-variant leading-snug">${r.desc}</div>
     `;
     leftDiv.appendChild(infoDiv);
 
     // Right: Visual Grid Layout (2×2 or 3×3)
     const rightDiv = document.createElement('div');
-    rightDiv.style.cssText = 'display:flex; flex-direction:column; align-items:center; gap:4px;';
+    rightDiv.className = 'flex flex-col items-center gap-1 shrink-0';
 
     const gridLabel = document.createElement('span');
-    gridLabel.style.cssText = 'font-size:10px; font-weight:700; color:#64748b; text-transform:uppercase; letter-spacing:0.5px;';
+    gridLabel.className = 'font-label-caps text-[9px] font-bold text-on-surface-variant uppercase tracking-wider';
     gridLabel.textContent = `Grade ${r.gridSize}×${r.gridSize}`;
     rightDiv.appendChild(gridLabel);
 
     const miniGrid = document.createElement('div');
     const cols = r.gridSize;
-    miniGrid.style.cssText = `display:grid; grid-template-columns:repeat(${cols}, 28px); gap:3px; background:rgba(15,23,42,0.85); padding:4px; border-radius:6px; border:1px solid rgba(255,255,255,0.15);`;
+    miniGrid.className = `grid grid-cols-${cols} gap-1 bg-surface-container-lowest p-1.5 rounded-lg border border-outline-variant`;
+    miniGrid.style.gridTemplateColumns = `repeat(${cols}, 28px)`;
 
     r.layout.forEach(itemType => {
       const miniSlot = document.createElement('div');
-      miniSlot.style.cssText = 'width:28px; height:28px; border-radius:4px; background:rgba(30,41,59,0.9); border:1px solid rgba(255,255,255,0.1); display:flex; align-items:center; justify-content:center;';
+      miniSlot.className = 'w-7 h-7 rounded bg-surface-container/80 border border-outline-variant/60 flex items-center justify-center';
       if (itemType > 0) {
         const miniIcon = createBlockIconCanvas(itemType, 22);
         miniSlot.appendChild(miniIcon);
@@ -900,3 +882,4 @@ export function closeRecipeBook() {
   recipeBookModal.style.display = 'none';
   closeWindow(UIWindow.RECIPE_BOOK);
 }
+

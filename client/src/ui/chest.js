@@ -1,6 +1,7 @@
 /**
  * Chest System — Interactive 27-slot Container Storage GUI.
  * Persists chest contents across the world by coordinate key (x,y,z).
+ * Styled with Tailwind dark-green/amber glassmorphism, Space Grotesk, and JetBrains Mono.
  */
 
 import { ITEM_NAMES } from '../world/blockTypes.js';
@@ -45,7 +46,7 @@ export function openChest(x, y, z) {
     initChestUI();
   }
 
-  chestModal.style.display = 'block';
+  chestModal.style.display = 'flex';
   openWindow(UIWindow.CHEST);
   playInventorySound(true);
   renderChestSlots();
@@ -66,40 +67,33 @@ export function isChestOpen() {
 function initChestUI() {
   chestModal = document.createElement('div');
   chestModal.id = 'chest-modal';
-  Object.assign(chestModal.style, {
-    position: 'fixed',
-    top: '50%',
-    left: '50%',
-    transform: 'translate(-50%, -50%)',
-    width: '490px',
-    padding: '24px',
-    borderRadius: '18px',
-    background: 'rgba(15, 23, 42, 0.96)',
-    border: '1px solid rgba(255, 255, 255, 0.2)',
-    boxShadow: '0 25px 60px rgba(0, 0, 0, 0.8), 0 0 35px rgba(234, 179, 8, 0.2)',
-    zIndex: '150',
-    display: 'none',
-    color: '#f8fafc',
-    fontFamily: "'Outfit', 'Segoe UI', sans-serif",
-    backdropFilter: 'blur(16px)',
-  });
+  chestModal.className = 'fixed inset-0 z-[150] hidden items-center justify-center p-4 bg-black/60 backdrop-blur-md select-none';
 
   chestModal.innerHTML = `
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:10px;">
-      <div style="display:flex; align-items:center; gap:8px;">
-        <span style="font-size:20px;">📦</span>
-        <h2 style="margin:0; font-size:18px; font-weight:800; letter-spacing:1px; color:#eab308;">BAÚ DE ARMAZENAMENTO (27 SLOTS)</h2>
+    <div class="glass-panel w-full max-w-xl bg-surface/90 backdrop-blur-xl border border-outline-variant rounded-xl shadow-[0_0_30px_rgba(15,21,14,0.9)] overflow-hidden p-6 text-on-surface">
+      <!-- Header -->
+      <div class="flex justify-between items-center border-b border-outline-variant pb-3 mb-6">
+        <div class="flex items-center gap-3">
+          <span class="material-symbols-outlined text-tertiary text-2xl" style="font-variation-settings: 'FILL' 1;">inventory_2</span>
+          <h2 class="font-headline-lg-mobile md:font-headline-lg text-headline-lg-mobile md:text-headline-lg text-primary tracking-tighter uppercase font-bold">Baú de Armazenamento (27 slots)</h2>
+        </div>
+        <button id="close-chest-btn" class="text-on-surface-variant hover:text-primary transition-colors p-1 rounded-lg hover:bg-surface-container cursor-pointer">
+          <span class="material-symbols-outlined">close</span>
+        </button>
       </div>
-      <button id="close-chest-btn" style="background:transparent; border:none; color:#94a3b8; font-size:20px; font-weight:bold; cursor:pointer; padding:4px 8px; border-radius:6px;">✕</button>
+
+      <!-- Chest 27 Storage Slots -->
+      <div class="mb-6 bg-surface-container/50 p-4 rounded-xl border border-outline-variant">
+        <span class="font-label-caps text-xs text-secondary uppercase font-semibold block mb-2">Conteúdo do Baú (Clique para retirar)</span>
+        <div id="chest-grid" class="grid grid-cols-9 gap-2"></div>
+      </div>
+
+      <!-- Quick Player Hotbar Transfer -->
+      <div class="pt-4 border-t border-outline-variant/60">
+        <span class="font-label-caps text-xs text-primary uppercase font-semibold block mb-2">Seu Inventário Rápido (Clique para guardar no baú)</span>
+        <div id="chest-hotbar-grid" class="grid grid-cols-9 gap-2"></div>
+      </div>
     </div>
-
-    <!-- Chest 27 Storage Slots -->
-    <div style="font-size:11px; font-weight:800; color:#94a3b8; margin-bottom:8px; text-transform:uppercase; letter-spacing:1px;">Conteúdo do Baú (Clique para retirar)</div>
-    <div id="chest-grid" style="display:grid; grid-template-columns:repeat(9, 1fr); gap:6px; margin-bottom:18px; background:rgba(30,41,59,0.5); padding:12px; border-radius:12px; border:1px solid rgba(255,255,255,0.06);"></div>
-
-    <!-- Quick Player Hotbar Transfer -->
-    <div style="font-size:11px; font-weight:800; color:#4ade80; margin-bottom:8px; text-transform:uppercase; letter-spacing:1px;">Seu Inventário Rápido (Clique para guardar no baú)</div>
-    <div id="chest-hotbar-grid" style="display:grid; grid-template-columns:repeat(9, 1fr); gap:6px;"></div>
   `;
 
   document.body.appendChild(chestModal);
@@ -120,18 +114,9 @@ function renderChestSlots() {
   chestGrid.innerHTML = '';
   chestSlots.forEach((itemType, idx) => {
     const slot = document.createElement('div');
-    slot.style.cssText = `
-      width: 42px;
-      height: 42px;
-      border-radius: 8px;
-      background: rgba(15, 23, 42, 0.85);
-      border: 1.5px solid ${itemType > 0 ? 'rgba(234, 179, 8, 0.6)' : 'rgba(255, 255, 255, 0.1)'};
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      position: relative;
-    `;
+    slot.className = `slot w-full h-11 rounded-lg bg-surface-container-lowest border ${
+      itemType > 0 ? 'border-tertiary/70 shadow-[0_0_8px_rgba(255,180,169,0.2)]' : 'border-outline-variant'
+    } hover:border-primary flex items-center justify-center cursor-pointer transition-all`;
 
     if (itemType > 0) {
       const icon = createBlockIconCanvas(itemType, 32);
@@ -157,25 +142,15 @@ function renderChestSlots() {
   const hotbar = getHotbarSlots();
   hotbar.forEach((itemType, idx) => {
     const slot = document.createElement('div');
-    slot.style.cssText = `
-      width: 42px;
-      height: 42px;
-      border-radius: 8px;
-      background: rgba(30, 41, 59, 0.85);
-      border: 1.5px solid ${itemType > 0 ? 'rgba(74, 222, 128, 0.5)' : 'rgba(255, 255, 255, 0.1)'};
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      position: relative;
-    `;
+    slot.className = `slot w-full h-11 rounded-lg bg-surface-container-lowest border ${
+      itemType > 0 ? 'border-primary/60' : 'border-outline-variant'
+    } hover:border-primary flex items-center justify-center cursor-pointer transition-all`;
 
     if (itemType > 0) {
       const icon = createBlockIconCanvas(itemType, 32);
       slot.appendChild(icon);
       slot.title = `${ITEM_NAMES[itemType] || 'Item'} (Clique para guardar no baú)`;
       slot.addEventListener('click', () => {
-        // Find first empty chest slot
         const emptyIdx = chestSlots.findIndex(v => v === 0);
         if (emptyIdx !== -1) {
           chestSlots[emptyIdx] = itemType;

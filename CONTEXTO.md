@@ -166,7 +166,33 @@ O atlas de texturas procedurais agora conta com 36 texturas renderizadas em 64×
 
 ---
 
-## 8. Backlog & Sugestões para os Próximos Passos (v0.5.0)
+## 8. Design System Visual, Modais Glassmorphism & Tailwind UI Tokens (`index.html`, `inventory.js`, `furnace.js`, `crafting.js`, `chest.js`)
+
+- **Tipografia Moderna & Ícones**:
+  - `Space Grotesk`: Títulos e botões principais com impacto visual e efeito `title-glow`.
+  - `JetBrains Mono`: Badges técnicos, tags, contadores numéricos, coordenadas e atalhos de teclado.
+  - `Inter`: Textos de leitura e descrições dos modais.
+  - `Google Material Symbols Outlined`: Ícones dinâmicos de alta definição (`play_arrow`, `local_fire_department`, `backpack`, `construction`, `inventory_2`, `menu_book`, etc.).
+- **Fundo Dinâmico Shader GLSL**:
+  - Shader procedural Simplex Noise com gradiente dark-green/deep-space e partículas de poeira cósmica/voxel flutuantes em tempo real via WebGL canvas (`#shader-canvas-ANIMATION_2`).
+- **Interface do Inventário & Crafting (`inventory.js`)**:
+  - Layout dividido em quadrantes:
+    - **Survival Crafting (2×2)**: Grade de fabricação rápida com seta direcional e slot de saída forjado (`active` glow).
+    - **Personagem & Armadura**: 4 slots de equipamento com ícones semânticos (`security`, `checkroom`, `accessibility`, `directions_run`), silhueta do jogador e slot de escudo.
+    - **Mochila (27 slots)**: Grade 9×3 com bordas adaptativas, contadores em badge e suporte a transferência por clique.
+    - **Barra Rápida (Hotbar 1..9)**: Destaque visual verde brilhante no item atualmente selecionado em mãos.
+- **Interface da Fornalha Industrial (`furnace.js`)**:
+  - Header com ícone de chama ardente.
+  - **Câmara de Combustão**: Slots ampliados de Entrada (`INPUT`) e Combustível (`FUEL`), com animação de calor pulsante e altura da chama mascarada conforme o consumo do carvão/madeira.
+  - **Barra de Progresso de Fundição**: Barra com transição suave e ícone de seta dourada.
+  - **Slot de Saída Master**: Slot ampliado com efeito de brilho suave e botões de ação integrados (*Parar* e *Coletar*).
+  - Faixa inferior de acesso rápido para carregar itens da hotbar direto para a fornalha.
+- **Bancada de Trabalho 3×3 & Livro de Receitas (`crafting.js`)**:
+  - Matriz 3×3 com guia visual de receitas interativo em cards ilustrados com diagramas em miniatura de montagem.
+
+---
+
+## 9. Backlog & Sugestões para os Próximos Passos (v0.5.0)
 
 Caso deseje continuar expandindo o ecossistema nas próximas iterações:
 
