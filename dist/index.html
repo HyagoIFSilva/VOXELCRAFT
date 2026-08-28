@@ -479,7 +479,7 @@
       border: 1px solid rgba(255, 255, 255, 0.2);
     }
   </style>
-  <script type="module" crossorigin src="/assets/index-DvC6FQWY.js"></script>
+  <script type="module" crossorigin src="/assets/index-B-7_yF7e.js"></script>
 </head>
 <body>
   <!-- ── 1. Menu Principal (Tela Inicial) ── -->
@@ -504,13 +504,13 @@
     </div>
 
     <div class="menu-buttons">
-      <button id="btn-play" class="menu-btn primary">
+      <button id="btn-play" class="menu-btn primary" onclick="window.startGame ? window.startGame() : null">
         <span>▶</span> INICIAR JOGO
       </button>
-      <button id="btn-controls" class="menu-btn">
+      <button id="btn-controls" class="menu-btn" onclick="window.openControls ? window.openControls() : null">
         <span>📜</span> COMO JOGAR / CONTROLES
       </button>
-      <button id="btn-settings" class="menu-btn">
+      <button id="btn-settings" class="menu-btn" onclick="window.openSettings ? window.openSettings() : null">
         <span>⚙</span> CONFIGURAÇÕES
       </button>
     </div>
@@ -524,27 +524,27 @@
   <div id="pause-menu">
     <div class="pause-title">⏸ JOGO PAUSADO</div>
     <div class="menu-buttons">
-      <button id="btn-resume" class="menu-btn primary">
+      <button id="btn-resume" class="menu-btn primary" onclick="window.resumeGame ? window.resumeGame() : null">
         <span>▶</span> CONTINUAR JOGO
       </button>
-      <button id="btn-pause-controls" class="menu-btn">
+      <button id="btn-pause-controls" class="menu-btn" onclick="window.openControls ? window.openControls() : null">
         <span>📜</span> GUIA DE CONTROLES
       </button>
-      <button id="btn-pause-settings" class="menu-btn">
+      <button id="btn-pause-settings" class="menu-btn" onclick="window.openSettings ? window.openSettings() : null">
         <span>⚙</span> CONFIGURAÇÕES
       </button>
-      <button id="btn-quit-menu" class="menu-btn" style="border-color: rgba(239, 68, 68, 0.4);">
+      <button id="btn-quit-menu" class="menu-btn" style="border-color: rgba(239, 68, 68, 0.4);" onclick="window.returnToMainMenu ? window.returnToMainMenu() : null">
         <span>🚪</span> MENU PRINCIPAL
       </button>
     </div>
   </div>
 
   <!-- ── 3. Modal de Controles ── -->
-  <div id="controls-modal" class="modal-container">
+  <div id="modal-controls" class="modal-container">
     <div class="modal-card">
       <div class="modal-header">
         <div class="modal-title">📜 Guia de Controles</div>
-        <button class="modal-close-btn">&times;</button>
+        <button id="btn-close-controls" class="modal-close-btn" onclick="document.getElementById('modal-controls').style.display='none'">&times;</button>
       </div>
 
       <div class="controls-grid">
@@ -570,15 +570,15 @@
         </div>
         <div class="control-item">
           <div class="key">BOTÃO DIREITO</div>
-          <div class="desc">Colocar bloco selecionado</div>
+          <div class="desc">Colocar bloco / Abrir bancada ou fornalha / Comer</div>
         </div>
         <div class="control-item">
           <div class="key">TECLA E</div>
-          <div class="desc">Abrir / Fechar inventário de 36 slots</div>
+          <div class="desc">Abrir / Fechar inventário e armadura</div>
         </div>
         <div class="control-item">
           <div class="key">1 a 9 / SCROLL</div>
-          <div class="desc">Selecionar item ou arma da hotbar</div>
+          <div class="desc">Selecionar item ou arma da barra rápida</div>
         </div>
         <div class="control-item">
           <div class="key">TECLA ESC</div>
@@ -593,11 +593,19 @@
   </div>
 
   <!-- ── 4. Modal de Configurações ── -->
-  <div id="settings-modal" class="modal-container">
+  <div id="modal-settings" class="modal-container">
     <div class="modal-card">
       <div class="modal-header">
         <div class="modal-title">⚙ Configurações de Jogo</div>
-        <button class="modal-close-btn">&times;</button>
+        <button id="btn-close-settings" class="modal-close-btn" onclick="document.getElementById('modal-settings').style.display='none'">&times;</button>
+      </div>
+
+      <div class="setting-row">
+        <div class="setting-label">Distância de Renderização</div>
+        <div class="setting-control">
+          <input type="range" id="setting-distance" class="setting-slider" min="3" max="8" value="5" step="1">
+          <div id="distance-val" class="setting-val">5 Chunks</div>
+        </div>
       </div>
 
       <div class="setting-row">

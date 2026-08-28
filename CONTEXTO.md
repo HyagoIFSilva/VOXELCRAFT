@@ -92,6 +92,7 @@ Para garantir zero bugs de dependência circular e transições 100% fluidas de 
 - **`uiManager.js`** centraliza o `currentGameState` (`TITLE_SCREEN`, `PLAYING`, `PAUSED`) e a `activeWindow` (`NONE`, `INVENTORY`, `CRAFTING_TABLE`, `FURNACE`, `RECIPE_BOOK`, `CONTROLS`, `SETTINGS`).
 - **Controle de Pointer Lock**:
   - Durante o jogo em primeira pessoa, o mouse fica travado para girar a câmera.
+  - Ao clicar em "INICIAR JOGO", a transição assíncrona do navegador é protegida por `wasPointerLocked`, evitando pausas indevidas no arranque.
   - Ao abrir qualquer menu (<kbd>E</kbd>, Bancada 3x3, Fornalha, Livro de Receitas), o cursor é liberado automaticamente para interação rápida com os slots.
   - Ao fechar o menu (com <kbd>E</kbd>, <kbd>ESC</kbd> ou botão ✕), o ponteiro do mouse é **automaticamente recapturado (`requestPointerLock`)**, voltando direto ao jogo sem exigir cliques manuais.
   - Clicar na tela durante o jogo ativo reativa o Pointer Lock de forma resiliente.
