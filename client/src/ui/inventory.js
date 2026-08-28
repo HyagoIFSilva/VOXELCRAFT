@@ -197,6 +197,21 @@ export function addItemToInventory(itemType) {
   return false;
 }
 
+export function hasItemInInventory(itemType) {
+  return slots.some(item => item === itemType);
+}
+
+export function consumeItemFromInventory(itemType) {
+  const idx = slots.findIndex(item => item === itemType);
+  if (idx !== -1) {
+    slots[idx] = 0;
+    renderInventorySlots();
+    syncSelectedHotbar();
+    return true;
+  }
+  return false;
+}
+
 export function removeItemFromHotbar(index) {
   if (index >= 0 && index < 9) {
     slots[index] = 0;

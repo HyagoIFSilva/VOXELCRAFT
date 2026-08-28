@@ -425,6 +425,162 @@ export const RECIPE_CATALOG = [
       );
     },
   },
+
+  // ── 17. Bow (3 Sticks + 3 Strings) ──
+  {
+    id: 'bow',
+    name: 'Arco de Caça',
+    category: 'Armas',
+    result: BlockType.BOW,
+    count: 1,
+    gridSize: 3,
+    layout: [
+      0,               BlockType.STICK, BlockType.STRING,
+      BlockType.STICK, 0,               BlockType.STRING,
+      0,               BlockType.STICK, BlockType.STRING,
+    ],
+    desc: '3 Gravetos e 3 Linhas de Teia na bancada 3×3.',
+    check: (grid, w, h) => {
+      if (w !== 3 || h !== 3) return false;
+      const sticks = grid.filter(v => v === BlockType.STICK).length;
+      const strings = grid.filter(v => v === BlockType.STRING).length;
+      const others = grid.filter(v => v !== 0 && v !== BlockType.STICK && v !== BlockType.STRING).length;
+      return sticks === 3 && strings === 3 && others === 0;
+    },
+  },
+
+  // ── 18. Wooden Hoe ──
+  {
+    id: 'wooden_hoe',
+    name: 'Enxada de Madeira',
+    category: 'Ferramentas',
+    result: BlockType.WOODEN_HOE,
+    count: 1,
+    gridSize: 3,
+    layout: [
+      BlockType.WOOD_PLANKS, BlockType.WOOD_PLANKS, 0,
+      0,                     BlockType.STICK,       0,
+      0,                     BlockType.STICK,       0,
+    ],
+    desc: '2 Tábuas no topo e 2 Gravetos verticais.',
+    check: (grid, w, h) => {
+      if (w !== 3 || h !== 3) return false;
+      const match = (
+        (grid[0] === BlockType.WOOD_PLANKS && grid[1] === BlockType.WOOD_PLANKS && grid[4] === BlockType.STICK && grid[7] === BlockType.STICK) ||
+        (grid[1] === BlockType.WOOD_PLANKS && grid[2] === BlockType.WOOD_PLANKS && grid[4] === BlockType.STICK && grid[7] === BlockType.STICK)
+      );
+      const sticks = grid.filter(v => v === BlockType.STICK).length;
+      const planks = grid.filter(v => v === BlockType.WOOD_PLANKS).length;
+      const others = grid.filter(v => v !== 0 && v !== BlockType.STICK && v !== BlockType.WOOD_PLANKS).length;
+      return match && sticks === 2 && planks === 2 && others === 0;
+    },
+  },
+
+  // ── 19. Stone Hoe ──
+  {
+    id: 'stone_hoe',
+    name: 'Enxada de Pedra',
+    category: 'Ferramentas',
+    result: BlockType.STONE_HOE,
+    count: 1,
+    gridSize: 3,
+    layout: [
+      BlockType.COBBLESTONE, BlockType.COBBLESTONE, 0,
+      0,                     BlockType.STICK,       0,
+      0,                     BlockType.STICK,       0,
+    ],
+    desc: '2 Pedregulhos no topo e 2 Gravetos verticais.',
+    check: (grid, w, h) => {
+      if (w !== 3 || h !== 3) return false;
+      const match = (
+        (grid[0] === BlockType.COBBLESTONE && grid[1] === BlockType.COBBLESTONE && grid[4] === BlockType.STICK && grid[7] === BlockType.STICK) ||
+        (grid[1] === BlockType.COBBLESTONE && grid[2] === BlockType.COBBLESTONE && grid[4] === BlockType.STICK && grid[7] === BlockType.STICK)
+      );
+      const sticks = grid.filter(v => v === BlockType.STICK).length;
+      const cobble = grid.filter(v => v === BlockType.COBBLESTONE).length;
+      const others = grid.filter(v => v !== 0 && v !== BlockType.STICK && v !== BlockType.COBBLESTONE).length;
+      return match && sticks === 2 && cobble === 2 && others === 0;
+    },
+  },
+
+  // ── 20. Iron Hoe ──
+  {
+    id: 'iron_hoe',
+    name: 'Enxada de Ferro',
+    category: 'Ferramentas',
+    result: BlockType.IRON_HOE,
+    count: 1,
+    gridSize: 3,
+    layout: [
+      BlockType.IRON_INGOT, BlockType.IRON_INGOT, 0,
+      0,                    BlockType.STICK,      0,
+      0,                    BlockType.STICK,      0,
+    ],
+    desc: '2 Barras de Ferro no topo e 2 Gravetos verticais.',
+    check: (grid, w, h) => {
+      if (w !== 3 || h !== 3) return false;
+      const match = (
+        (grid[0] === BlockType.IRON_INGOT && grid[1] === BlockType.IRON_INGOT && grid[4] === BlockType.STICK && grid[7] === BlockType.STICK) ||
+        (grid[1] === BlockType.IRON_INGOT && grid[2] === BlockType.IRON_INGOT && grid[4] === BlockType.STICK && grid[7] === BlockType.STICK)
+      );
+      const sticks = grid.filter(v => v === BlockType.STICK).length;
+      const iron = grid.filter(v => v === BlockType.IRON_INGOT).length;
+      const others = grid.filter(v => v !== 0 && v !== BlockType.STICK && v !== BlockType.IRON_INGOT).length;
+      return match && sticks === 2 && iron === 2 && others === 0;
+    },
+  },
+
+  // ── 21. Bread (3 Wheat horizontally) ──
+  {
+    id: 'bread',
+    name: 'Pão Dourado',
+    category: 'Alimentação',
+    result: BlockType.BREAD,
+    count: 1,
+    gridSize: 3,
+    layout: [
+      0,               0,               0,
+      BlockType.WHEAT, BlockType.WHEAT, BlockType.WHEAT,
+      0,               0,               0,
+    ],
+    desc: '3 Trigos colhidos em linha horizontal (+5 Vida).',
+    check: (grid, w, h) => {
+      if (w !== 3 || h !== 3) return false;
+      for (let row = 0; row < 3; row++) {
+        const i0 = row * 3;
+        const i1 = row * 3 + 1;
+        const i2 = row * 3 + 2;
+        if (grid[i0] === BlockType.WHEAT && grid[i1] === BlockType.WHEAT && grid[i2] === BlockType.WHEAT) {
+          const othersEmpty = grid.every((v, i) => (i === i0 || i === i1 || i === i2) ? true : v === 0);
+          if (othersEmpty) return true;
+        }
+      }
+      return false;
+    },
+  },
+
+  // ── 22. TNT (4 Sand + 5 Gunpowder) ──
+  {
+    id: 'tnt',
+    name: 'Bloco de TNT',
+    category: 'Explosivos',
+    result: BlockType.TNT,
+    count: 1,
+    gridSize: 3,
+    layout: [
+      BlockType.GUNPOWDER, BlockType.SAND,      BlockType.GUNPOWDER,
+      BlockType.SAND,      BlockType.GUNPOWDER, BlockType.SAND,
+      BlockType.GUNPOWDER, BlockType.SAND,      BlockType.GUNPOWDER,
+    ],
+    desc: '5 Pólvoras (drop de Creeper) intercaladas com 4 Areias.',
+    check: (grid, w, h) => {
+      if (w !== 3 || h !== 3) return false;
+      const gp = grid.filter(v => v === BlockType.GUNPOWDER).length;
+      const sand = grid.filter(v => v === BlockType.SAND).length;
+      const others = grid.filter(v => v !== 0 && v !== BlockType.GUNPOWDER && v !== BlockType.SAND).length;
+      return gp === 5 && sand === 4 && others === 0;
+    },
+  },
 ];
 
 export function evaluateCrafting(grid, width, height) {

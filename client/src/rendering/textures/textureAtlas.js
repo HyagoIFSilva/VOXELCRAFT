@@ -7,9 +7,9 @@ import * as THREE from 'three';
 import { generateAllTextures, TEXTURE_DEFS, TEX_SIZE } from './textureGenerator.js';
 
 export const ATLAS_COLS = 4;
-export const ATLAS_ROWS = 8;
+export const ATLAS_ROWS = 16;
 const ATLAS_WIDTH = ATLAS_COLS * TEX_SIZE;   // 64px
-const ATLAS_HEIGHT = ATLAS_ROWS * TEX_SIZE; // 128px
+const ATLAS_HEIGHT = ATLAS_ROWS * TEX_SIZE; // 256px
 
 let atlasTexture = null;
 

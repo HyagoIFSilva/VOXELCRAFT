@@ -14,11 +14,19 @@
  */
 
 import * as THREE from 'three';
-import { isWorldBlockSolid, getHeight } from '../world/worldManager.js';
-import { BlockType } from '../world/blockTypes.js';
+import { isWorldBlockSolid, getHeight, setBlockAtWorld, getBlockAtWorld } from '../world/worldManager.js';
+import { BlockType, getBlockDrop } from '../world/blockTypes.js';
 import { getPlayerPosition, damage as damagePlayer } from './player.js';
-import { playPigSound, playZombieSound, playMobHitSound, playSwordSwingSound } from '../engine/soundFx.js';
-import { spawnHitParticles } from '../rendering/particles.js';
+import {
+  playPigSound,
+  playZombieSound,
+  playMobHitSound,
+  playSwordSwingSound,
+  playBowShootSound,
+  playCreeperFuseSound,
+  playExplosionSound,
+} from '../engine/soundFx.js';
+import { spawnHitParticles, spawnBlockBreakParticles } from '../rendering/particles.js';
 import { isDaytime, isNighttime } from '../world/dayNightCycle.js';
 import { spawnDrop } from './dropManager.js';
 
@@ -27,11 +35,13 @@ export const MobType = {
   ZOMBIE:   'zombie',
   SKELETON: 'skeleton',
   SPIDER:   'spider',
+  CREEPER:  'creeper',
 };
 
 let scene = null;
 const mobs = [];
 const arrows = [];
+const tntEntities = [];
 let spawnTimer = 0;
 const MAX_MOBS = 12;
 
@@ -270,6 +280,67 @@ function createSpiderModel() {
   };
 }
 
+function createCreeperModel() {
+  const group = new THREE.Group();
+  const greenMat = new THREE.MeshLambertMaterial({ color: 0x22c55e });
+  const darkGreenMat = new THREE.MeshLambertMaterial({ color: 0x15803d });
+  const blackMat = new THREE.MeshLambertMaterial({ color: 0x0f172a });
+
+  // Body / Torso
+  const body = new THREE.Mesh(new THREE.BoxGeometry(0.48, 0.70, 0.28), greenMat);
+  body.position.set(0, 0.75, 0);
+  group.add(body);
+
+  // Head
+  const head = new THREE.Mesh(new THREE.BoxGeometry(0.48, 0.48, 0.48), greenMat);
+  head.position.set(0, 1.34, 0);
+  group.add(head);
+
+  // Creeper Face: Eyes & Frown
+  const leftEye = new THREE.Mesh(new THREE.BoxGeometry(0.10, 0.10, 0.02), blackMat);
+  leftEye.position.set(-0.11, 1.38, -0.25);
+  const rightEye = new THREE.Mesh(new THREE.BoxGeometry(0.10, 0.10, 0.02), blackMat);
+  rightEye.position.set(0.11, 1.38, -0.25);
+  group.add(leftEye);
+  group.add(rightEye);
+
+  const nose = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.12, 0.02), blackMat);
+  nose.position.set(0, 1.30, -0.25);
+  group.add(nose);
+
+  const mouthLeft = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.14, 0.02), blackMat);
+  mouthLeft.position.set(-0.08, 1.20, -0.25);
+  const mouthRight = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.14, 0.02), blackMat);
+  mouthRight.position.set(0.08, 1.20, -0.25);
+  group.add(mouthLeft);
+  group.add(mouthRight);
+
+  // 4 Stubby Legs
+  const legGeo = new THREE.BoxGeometry(0.20, 0.40, 0.20);
+  const legs = [];
+  const legPositions = [
+    [-0.14, 0.20, -0.16],
+    [0.14, 0.20, -0.16],
+    [-0.14, 0.20, 0.16],
+    [0.14, 0.20, 0.16],
+  ];
+
+  for (const pos of legPositions) {
+    const leg = new THREE.Mesh(legGeo, darkGreenMat);
+    leg.position.set(...pos);
+    group.add(leg);
+    legs.push(leg);
+  }
+
+  return {
+    group,
+    legs,
+    head,
+    body,
+    originalMats: [greenMat, darkGreenMat],
+  };
+}
+
 // ── Spawn Function ─────────────────────────────────────────
 
 export function spawnMob(type, x, y, z) {
@@ -279,6 +350,7 @@ export function spawnMob(type, x, y, z) {
   if (type === MobType.PIG) modelData = createPigModel();
   else if (type === MobType.SKELETON) modelData = createSkeletonModel();
   else if (type === MobType.SPIDER) modelData = createSpiderModel();
+  else if (type === MobType.CREEPER) modelData = createCreeperModel();
   else modelData = createZombieModel();
 
   modelData.group.position.set(x, y, z);
@@ -307,6 +379,8 @@ export function spawnMob(type, x, y, z) {
     burnTimer: 0,
     isBurning: false,
     shootCooldown: 1.0 + Math.random() * 1.5,
+    fuseTimer: 0,
+    isFusing: false,
   };
 
   mobs.push(mob);
@@ -370,7 +444,7 @@ export function hitMob(mob, damage, knockbackDir) {
   }
 }
 
-function killMob(mob) {
+export function killMob(mob) {
   scene.remove(mob.model.group);
   const idx = mobs.indexOf(mob);
   if (idx !== -1) mobs.splice(idx, 1);
@@ -389,12 +463,144 @@ function killMob(mob) {
   } else if (mob.type === MobType.SPIDER) {
     spawnDrop(mob.pos.x, mob.pos.y + 0.5, mob.pos.z, BlockType.STRING);
     spawnDrop(mob.pos.x, mob.pos.y + 0.5, mob.pos.z, BlockType.SPIDER_EYE);
+  } else if (mob.type === MobType.CREEPER) {
+    spawnDrop(mob.pos.x, mob.pos.y + 0.5, mob.pos.z, BlockType.GUNPOWDER);
   }
 }
 
-// ── Projectile Arrow Spawn & Physics ──────────────────────
+// ── Voxel Spherical Explosions (Creeper & TNT) ─────────────
 
-function spawnArrow(origin, targetPos) {
+export function createVoxelExplosion(x, y, z, radius = 2.8, maxDamage = 16) {
+  if (!scene) return;
+
+  playExplosionSound();
+
+  const center = new THREE.Vector3(x, y, z);
+  const playerPos = getPlayerPosition();
+  const toPlayer = playerPos.clone().add(new THREE.Vector3(0, 0.9, 0)).sub(center);
+  const distToPlayer = toPlayer.length();
+
+  // Damage Player
+  if (distToPlayer < radius * 2.2) {
+    const falloff = 1 - (distToPlayer / (radius * 2.2));
+    const dmg = Math.max(2, Math.round(maxDamage * falloff));
+    damagePlayer(dmg, toPlayer.clone().normalize());
+  }
+
+  // Damage surrounding Mobs
+  for (let i = mobs.length - 1; i >= 0; i--) {
+    const mob = mobs[i];
+    const distToMob = mob.pos.distanceTo(center);
+    if (distToMob < radius * 2.0) {
+      const dmg = Math.round(maxDamage * (1 - distToMob / (radius * 2.0)));
+      hitMob(mob, dmg, mob.pos.clone().sub(center).normalize());
+    }
+  }
+
+  // Spherical Voxel Crater Destruction
+  const minX = Math.floor(x - radius);
+  const maxX = Math.ceil(x + radius);
+  const minY = Math.max(1, Math.floor(y - radius));
+  const maxY = Math.min(63, Math.ceil(y + radius));
+  const minZ = Math.floor(z - radius);
+  const maxZ = Math.ceil(z + radius);
+
+  for (let bz = minZ; bz <= maxZ; bz++) {
+    for (let bx = minX; bx <= maxX; bx++) {
+      for (let by = minY; by <= maxY; by++) {
+        const d = Math.hypot(bx + 0.5 - x, by + 0.5 - y, bz + 0.5 - z);
+        if (d <= radius) {
+          const currentType = getBlockAtWorld(bx, by, bz);
+          if (currentType !== BlockType.AIR && currentType !== BlockType.WATER) {
+            spawnBlockBreakParticles(bx, by, bz, currentType);
+            setBlockAtWorld(scene, bx, by, bz, BlockType.AIR);
+
+            // 40% chance drop loose items from exploded blocks
+            if (Math.random() < 0.40) {
+              const dropItem = getBlockDrop(currentType);
+              if (dropItem > 0) {
+                spawnDrop(bx + 0.5, by + 0.5, bz + 0.5, dropItem);
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+// ── Active TNT Ignition Entity ─────────────────────────────
+
+export function igniteTNT(x, y, z) {
+  if (!scene) return;
+
+  setBlockAtWorld(scene, x, y, z, BlockType.AIR);
+
+  const tntGeo = new THREE.BoxGeometry(0.98, 0.98, 0.98);
+  const tntMat = new THREE.MeshLambertMaterial({ color: 0xef4444 });
+  const mesh = new THREE.Mesh(tntGeo, tntMat);
+  mesh.position.set(x + 0.5, y + 0.5, z + 0.5);
+  scene.add(mesh);
+
+  playCreeperFuseSound();
+
+  tntEntities.push({
+    mesh,
+    mat: tntMat,
+    pos: new THREE.Vector3(x + 0.5, y + 0.5, z + 0.5),
+    timer: 2.2,
+    blinkTimer: 0,
+  });
+}
+
+function updateTNTEntities(dt) {
+  for (let i = tntEntities.length - 1; i >= 0; i--) {
+    const tnt = tntEntities[i];
+    tnt.timer -= dt;
+    tnt.blinkTimer += dt * 10;
+
+    // Flash white periodically
+    if (Math.floor(tnt.blinkTimer) % 2 === 0) {
+      tnt.mat.color.setHex(0xffffff);
+    } else {
+      tnt.mat.color.setHex(0xef4444);
+    }
+
+    if (tnt.timer <= 0) {
+      scene.remove(tnt.mesh);
+      tntEntities.splice(i, 1);
+      createVoxelExplosion(tnt.pos.x, tnt.pos.y, tnt.pos.z, 3.8, 20);
+    }
+  }
+}
+
+// ── Player Bow Projectile Arrow ────────────────────────────
+
+export function spawnPlayerArrow(origin, direction) {
+  if (!scene) return;
+
+  playBowShootSound();
+
+  const arrowGeo = new THREE.BoxGeometry(0.08, 0.08, 0.6);
+  const arrowMat = new THREE.MeshBasicMaterial({ color: 0xf8fafc });
+  const mesh = new THREE.Mesh(arrowGeo, arrowMat);
+
+  mesh.position.copy(origin);
+  scene.add(mesh);
+
+  const dir = direction.clone().normalize();
+  const vel = dir.multiplyScalar(26); // 26 blocks/s fast player shot
+
+  arrows.push({
+    mesh,
+    pos: origin.clone(),
+    vel,
+    life: 5.0,
+    isPlayerShot: true,
+  });
+}
+
+function spawnMobArrow(origin, targetPos) {
   if (!scene) return;
 
   const arrowGeo = new THREE.BoxGeometry(0.08, 0.08, 0.5);
@@ -412,6 +618,7 @@ function spawnArrow(origin, targetPos) {
     pos: origin.clone(),
     vel,
     life: 4.0,
+    isPlayerShot: false,
   });
 }
 
@@ -426,13 +633,29 @@ function updateArrows(dt) {
     a.pos.addScaledVector(a.vel, dt);
     a.mesh.position.copy(a.pos);
 
-    // Collision with Player
-    const distToPlayer = a.pos.distanceTo(playerPos.clone().add(new THREE.Vector3(0, 0.9, 0)));
-    if (distToPlayer < 0.75) {
-      damagePlayer(4, a.vel.clone().normalize());
-      scene.remove(a.mesh);
-      arrows.splice(i, 1);
-      continue;
+    if (a.isPlayerShot) {
+      // Check collision with any Mob
+      let hitAny = false;
+      for (const mob of mobs) {
+        const mobCenter = mob.pos.clone().add(new THREE.Vector3(0, mob.eyeHeight * 0.5, 0));
+        if (a.pos.distanceTo(mobCenter) < 0.9) {
+          hitMob(mob, 9, a.vel.clone().normalize()); // 9 Critical Bow Damage
+          scene.remove(a.mesh);
+          arrows.splice(i, 1);
+          hitAny = true;
+          break;
+        }
+      }
+      if (hitAny) continue;
+    } else {
+      // Collision with Player
+      const distToPlayer = a.pos.distanceTo(playerPos.clone().add(new THREE.Vector3(0, 0.9, 0)));
+      if (distToPlayer < 0.75) {
+        damagePlayer(4, a.vel.clone().normalize());
+        scene.remove(a.mesh);
+        arrows.splice(i, 1);
+        continue;
+      }
     }
 
     // Collision with solid voxels
@@ -456,6 +679,7 @@ export function updateMobs(dt) {
   }
 
   updateArrows(dt);
+  updateTNTEntities(dt);
 
   for (let i = mobs.length - 1; i >= 0; i--) {
     const mob = mobs[i];
@@ -476,8 +700,9 @@ function trySpawnNaturalMob(playerPos) {
       spawnMob(MobType.PIG, sx + 0.5, sy + 1, sz + 0.5);
     } else {
       const r = Math.random();
-      if (r < 0.4) spawnMob(MobType.ZOMBIE, sx + 0.5, sy + 1, sz + 0.5);
-      else if (r < 0.75) spawnMob(MobType.SKELETON, sx + 0.5, sy + 1, sz + 0.5);
+      if (r < 0.35) spawnMob(MobType.ZOMBIE, sx + 0.5, sy + 1, sz + 0.5);
+      else if (r < 0.60) spawnMob(MobType.SKELETON, sx + 0.5, sy + 1, sz + 0.5);
+      else if (r < 0.80) spawnMob(MobType.CREEPER, sx + 0.5, sy + 1, sz + 0.5);
       else spawnMob(MobType.SPIDER, sx + 0.5, sy + 1, sz + 0.5);
     }
   }
@@ -525,6 +750,8 @@ function updateSingleMob(mob, dt, playerPos) {
     updateSkeletonAI(mob, dt, playerPos, distToPlayer);
   } else if (mob.type === MobType.SPIDER) {
     updateSpiderAI(mob, dt, playerPos, distToPlayer);
+  } else if (mob.type === MobType.CREEPER) {
+    updateCreeperAI(mob, dt, playerPos, distToPlayer);
   } else {
     updateZombieAI(mob, dt, playerPos, distToPlayer);
   }
@@ -545,6 +772,43 @@ function updateSingleMob(mob, dt, playerPos) {
 
   mob.model.group.position.copy(mob.pos);
   mob.model.group.rotation.y = mob.yaw;
+}
+
+function updateCreeperAI(mob, dt, playerPos, distToPlayer) {
+  if (mob.state === 'chase') {
+    mob.yaw = Math.atan2(playerPos.x - mob.pos.x, playerPos.z - mob.pos.z);
+    const speed = 2.8;
+    mob.vel.x = Math.sin(mob.yaw) * speed;
+    mob.vel.z = Math.cos(mob.yaw) * speed;
+
+    // Approach and ignite fuse
+    if (distToPlayer < 3.2) {
+      if (!mob.isFusing) {
+        mob.isFusing = true;
+        playCreeperFuseSound();
+      }
+
+      mob.fuseTimer += dt;
+      mob.vel.x = 0;
+      mob.vel.z = 0;
+
+      // Pulsing white inflation visual
+      const scale = 1.0 + (mob.fuseTimer / 1.5) * 0.3;
+      mob.model.group.scale.set(scale, scale, scale);
+
+      if (mob.fuseTimer >= 1.5) {
+        // BOOM!
+        createVoxelExplosion(mob.pos.x, mob.pos.y + 0.5, mob.pos.z, 2.8, 16);
+        killMob(mob);
+        return;
+      }
+    } else if (distToPlayer > 5.5 && mob.isFusing) {
+      // Player ran away, defuse
+      mob.isFusing = false;
+      mob.fuseTimer = 0;
+      mob.model.group.scale.set(1, 1, 1);
+    }
+  }
 }
 
 function updateZombieAI(mob, dt, playerPos, distToPlayer) {
@@ -568,23 +832,19 @@ function updateSkeletonAI(mob, dt, playerPos, distToPlayer) {
   mob.yaw = Math.atan2(playerPos.x - mob.pos.x, playerPos.z - mob.pos.z);
 
   if (mob.canSeePlayer) {
-    // Keep 8 to 12 blocks distance
     if (distToPlayer < 7.0) {
-      // Back away
       mob.vel.x = -Math.sin(mob.yaw) * 2.8;
       mob.vel.z = -Math.cos(mob.yaw) * 2.8;
     } else if (distToPlayer > 12.0) {
-      // Advance
       mob.vel.x = Math.sin(mob.yaw) * 2.8;
       mob.vel.z = Math.cos(mob.yaw) * 2.8;
     }
 
-    // Shoot arrow
     mob.shootCooldown -= dt;
     if (mob.shootCooldown <= 0 && distToPlayer < 18) {
       mob.shootCooldown = 2.2;
       playSwordSwingSound();
-      spawnArrow(
+      spawnMobArrow(
         mob.pos.clone().add(new THREE.Vector3(0, 1.2, 0)),
         playerPos.clone().add(new THREE.Vector3(0, 0.9, 0))
       );
@@ -599,7 +859,6 @@ function updateSpiderAI(mob, dt, playerPos, distToPlayer) {
     mob.vel.x = Math.sin(mob.yaw) * speed;
     mob.vel.z = Math.cos(mob.yaw) * speed;
 
-    // Spider Pounce Leap
     if (distToPlayer < 4.5 && mob.onGround && Math.random() < 0.05) {
       mob.vel.y = 5.5;
       mob.vel.x *= 1.5;

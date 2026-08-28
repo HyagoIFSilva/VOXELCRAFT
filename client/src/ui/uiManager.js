@@ -14,6 +14,7 @@ export const UIWindow = {
   INVENTORY:      'inventory',
   CRAFTING_TABLE: 'crafting_table',
   FURNACE:        'furnace',
+  CHEST:          'chest',
   RECIPE_BOOK:    'recipe_book',
   CONTROLS:       'controls',
   SETTINGS:       'settings',

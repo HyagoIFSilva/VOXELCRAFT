@@ -1,8 +1,3 @@
-/**
- * Block Interaction & Combat — Progressive block breaking with durability & cracking stages,
- * block placing, weapon combat, floating drops, Crafting Table 3x3 activation, Furnace GUI, and Food eating.
- */
-
 import * as THREE from 'three';
 import { raycastVoxel } from './raycast.js';
 import { setBlockAtWorld, getBlockAtWorld } from '../world/worldManager.js';
@@ -13,9 +8,10 @@ import {
   playSwordSwingSound,
   playBlockHitTickSound,
   playCraftSound,
+  playHoeSound,
 } from './soundFx.js';
 import { spawnBlockBreakParticles } from '../rendering/particles.js';
-import { raycastMob, hitMob } from '../entities/mobManager.js';
+import { raycastMob, hitMob, spawnPlayerArrow, igniteTNT } from '../entities/mobManager.js';
 import {
   BlockType,
   isPlaceableBlock,
@@ -23,14 +19,16 @@ import {
   getMiningSpeed,
   getBlockDrop,
   isFood,
+  isHoe,
   getFoodNutrition,
 } from '../world/blockTypes.js';
 import { spawnDrop } from '../entities/dropManager.js';
 import { openCraftingTable } from '../ui/crafting.js';
 import { openFurnace } from '../ui/furnace.js';
+import { openChest, getChestItems, clearChest } from '../ui/chest.js';
 import { isAnyWindowOpen } from '../ui/uiManager.js';
 import { healPlayer } from '../entities/player.js';
-import { removeItemFromHotbar } from '../ui/inventory.js';
+import { removeItemFromHotbar, hasItemInInventory, consumeItemFromInventory } from '../ui/inventory.js';
 
 let scene = null;
 let highlightMesh = null;
@@ -44,6 +42,9 @@ let isBreakingBlock = false;
 let breakProgress = 0.0; // 0.0 to 1.0
 let breakingBlockPos = { x: NaN, y: NaN, z: NaN };
 let hitTickTimer = 0.0;
+
+// Active Crops in world for growth simulation
+const activeCrops = new Map(); // key 'x,y,z' -> { x, y, z, stage: 1, timer: 0 }
 
 // Highlight selection box
 const highlightGeo = new THREE.BoxGeometry(1.002, 1.002, 1.002);
@@ -86,6 +87,9 @@ export function initInteraction(s) {
 }
 
 export function updateInteraction(dt = 0.016) {
+  // Update planted crop growth over time
+  updateCrops(dt);
+
   if (!isPointerLocked() || isAnyWindowOpen()) {
     highlightMesh.visible = false;
     crackMesh.visible = false;
@@ -146,14 +150,30 @@ export function updateInteraction(dt = 0.016) {
           playBlockBreakSound(blockType);
           spawnBlockBreakParticles(result.hit.x, result.hit.y, result.hit.z, blockType);
 
-          const dropItem = getBlockDrop(blockType);
-          if (dropItem > 0) {
-            spawnDrop(
-              result.hit.x + 0.5,
-              result.hit.y + 0.5,
-              result.hit.z + 0.5,
-              dropItem
-            );
+          // If broke a Chest: spill all contained items
+          if (blockType === BlockType.CHEST) {
+            const chestItems = getChestItems(result.hit.x, result.hit.y, result.hit.z);
+            chestItems.forEach(ci => {
+              spawnDrop(result.hit.x + 0.5, result.hit.y + 0.5, result.hit.z + 0.5, ci);
+            });
+            clearChest(result.hit.x, result.hit.y, result.hit.z);
+          }
+
+          // Special drops: Grass can drop Wheat Seeds
+          if (blockType === BlockType.GRASS && Math.random() < 0.35) {
+            spawnDrop(result.hit.x + 0.5, result.hit.y + 0.5, result.hit.z + 0.5, BlockType.WHEAT_SEEDS);
+          }
+
+          // Special drops: Wheat Stage 3 drops Wheat + Seeds
+          if (blockType === BlockType.WHEAT_STAGE_3) {
+            spawnDrop(result.hit.x + 0.5, result.hit.y + 0.5, result.hit.z + 0.5, BlockType.WHEAT);
+            spawnDrop(result.hit.x + 0.5, result.hit.y + 0.5, result.hit.z + 0.5, BlockType.WHEAT_SEEDS);
+            activeCrops.delete(`${result.hit.x},${result.hit.y},${result.hit.z}`);
+          } else {
+            const dropItem = getBlockDrop(blockType);
+            if (dropItem > 0) {
+              spawnDrop(result.hit.x + 0.5, result.hit.y + 0.5, result.hit.z + 0.5, dropItem);
+            }
           }
 
           setBlockAtWorld(scene, result.hit.x, result.hit.y, result.hit.z, BlockType.AIR);
@@ -173,6 +193,23 @@ export function updateInteraction(dt = 0.016) {
     crackMesh.visible = false;
     breakProgress = 0.0;
     isBreakingBlock = false;
+  }
+}
+
+function updateCrops(dt) {
+  for (const [key, crop] of activeCrops.entries()) {
+    crop.timer += dt;
+    // Stage growth every 16 seconds
+    if (crop.timer >= 16.0) {
+      crop.timer = 0;
+      if (crop.stage === 1) {
+        crop.stage = 2;
+        setBlockAtWorld(scene, crop.x, crop.y, crop.z, BlockType.WHEAT_STAGE_2);
+      } else if (crop.stage === 2) {
+        crop.stage = 3;
+        setBlockAtWorld(scene, crop.x, crop.y, crop.z, BlockType.WHEAT_STAGE_3);
+      }
+    }
   }
 }
 
@@ -210,23 +247,38 @@ function onMouseDown(e) {
       return;
     }
 
-    // Start Mining Block
+    // Left click on TNT immediately ignites it!
     if (currentTarget) {
+      const targetBlock = getBlockAtWorld(currentTarget.hit.x, currentTarget.hit.y, currentTarget.hit.z);
+      if (targetBlock === BlockType.TNT) {
+        igniteTNT(currentTarget.hit.x, currentTarget.hit.y, currentTarget.hit.z);
+        return;
+      }
+
+      // Start Mining Block
       isBreakingBlock = true;
       breakingBlockPos = { x: currentTarget.hit.x, y: currentTarget.hit.y, z: currentTarget.hit.z };
     }
   } else if (e.button === 2) {
-    // ── Right Click: Food / Crafting Table / Furnace / Place Block ───
+    // ── Right Click: Bow / Food / Hoe / Seeds / Container / Place Block ───
     e.preventDefault();
 
-    // 1. Eat food if holding food
+    // 1. Shoot Bow & Arrow
+    if (selectedBlockType === BlockType.BOW) {
+      if (hasItemInInventory(BlockType.ARROW)) {
+        consumeItemFromInventory(BlockType.ARROW);
+        spawnPlayerArrow(cam.position, dir);
+        return;
+      }
+    }
+
+    // 2. Eat food if holding food
     if (isFood(selectedBlockType)) {
       const nutrition = getFoodNutrition(selectedBlockType);
       if (nutrition > 0) {
         healPlayer(nutrition);
         playCraftSound();
-        // Remove eaten food from hotbar
-        removeItemFromHotbar(0); // sync with selected
+        consumeItemFromInventory(selectedBlockType);
         return;
       }
     }
@@ -234,19 +286,50 @@ function onMouseDown(e) {
     if (currentTarget) {
       const hitBlock = getBlockAtWorld(currentTarget.hit.x, currentTarget.hit.y, currentTarget.hit.z);
 
-      // 2. Open Crafting Table 3×3 GUI
+      // 3. Hoe Tilling: Transforms Grass/Dirt into Farmland
+      if (isHoe(selectedBlockType) && (hitBlock === BlockType.GRASS || hitBlock === BlockType.DIRT)) {
+        playHoeSound();
+        setBlockAtWorld(scene, currentTarget.hit.x, currentTarget.hit.y, currentTarget.hit.z, BlockType.FARMLAND);
+        return;
+      }
+
+      // 4. Plant Wheat Seeds on Farmland
+      if (selectedBlockType === BlockType.WHEAT_SEEDS && hitBlock === BlockType.FARMLAND) {
+        const cropY = currentTarget.hit.y + 1;
+        if (cropY < 64 && getBlockAtWorld(currentTarget.hit.x, cropY, currentTarget.hit.z) === BlockType.AIR) {
+          playBlockPlaceSound();
+          setBlockAtWorld(scene, currentTarget.hit.x, cropY, currentTarget.hit.z, BlockType.WHEAT_STAGE_1);
+          activeCrops.set(`${currentTarget.hit.x},${cropY},${currentTarget.hit.z}`, {
+            x: currentTarget.hit.x,
+            y: cropY,
+            z: currentTarget.hit.z,
+            stage: 1,
+            timer: 0,
+          });
+          consumeItemFromInventory(BlockType.WHEAT_SEEDS);
+          return;
+        }
+      }
+
+      // 5. Open Crafting Table 3×3 GUI
       if (hitBlock === BlockType.CRAFTING_TABLE) {
         openCraftingTable();
         return;
       }
 
-      // 3. Open Furnace GUI
+      // 6. Open Furnace GUI
       if (hitBlock === BlockType.FURNACE || hitBlock === BlockType.FURNACE_LIT) {
         openFurnace(currentTarget.hit.x, currentTarget.hit.y, currentTarget.hit.z);
         return;
       }
 
-      // 4. Place Block
+      // 7. Open Chest GUI
+      if (hitBlock === BlockType.CHEST) {
+        openChest(currentTarget.hit.x, currentTarget.hit.y, currentTarget.hit.z);
+        return;
+      }
+
+      // 8. Place Block
       if (isPlaceableBlock(selectedBlockType)) {
         const { prev } = currentTarget;
         if (prev.y >= 0 && prev.y < 64) {

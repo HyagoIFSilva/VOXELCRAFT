@@ -398,3 +398,127 @@ export function playCraftSound() {
   osc1.stop(now + 0.22);
   osc2.stop(now + 0.22);
 }
+
+export function playBowShootSound() {
+  const ctx = getAudioContext();
+  if (!ctx) return;
+
+  const now = ctx.currentTime;
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+
+  osc.type = 'sawtooth';
+  osc.frequency.setValueAtTime(550, now);
+  osc.frequency.exponentialRampToValueAtTime(160, now + 0.14);
+
+  gain.gain.setValueAtTime(0.3, now);
+  gain.gain.exponentialRampToValueAtTime(0.01, now + 0.14);
+
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+
+  osc.start(now);
+  osc.stop(now + 0.14);
+}
+
+export function playCreeperFuseSound() {
+  const ctx = getAudioContext();
+  if (!ctx) return;
+
+  const now = ctx.currentTime;
+  const bufferSize = Math.floor(ctx.sampleRate * 0.45);
+  const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+  const data = buffer.getChannelData(0);
+
+  for (let i = 0; i < bufferSize; i++) {
+    data[i] = (Math.random() * 2 - 1) * 0.7;
+  }
+
+  const noise = ctx.createBufferSource();
+  noise.buffer = buffer;
+
+  const filter = ctx.createBiquadFilter();
+  filter.type = 'bandpass';
+  filter.frequency.setValueAtTime(3200, now);
+  filter.Q.setValueAtTime(4.0, now);
+
+  const gain = ctx.createGain();
+  gain.gain.setValueAtTime(0.25, now);
+  gain.gain.exponentialRampToValueAtTime(0.01, now + 0.45);
+
+  noise.connect(filter);
+  filter.connect(gain);
+  gain.connect(ctx.destination);
+
+  noise.start(now);
+}
+
+export function playExplosionSound() {
+  const ctx = getAudioContext();
+  if (!ctx) return;
+
+  const now = ctx.currentTime;
+  // 1. Noise boom
+  const bufferSize = Math.floor(ctx.sampleRate * 0.85);
+  const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+  const data = buffer.getChannelData(0);
+
+  for (let i = 0; i < bufferSize; i++) {
+    data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (bufferSize * 0.4));
+  }
+
+  const noise = ctx.createBufferSource();
+  noise.buffer = buffer;
+
+  const filter = ctx.createBiquadFilter();
+  filter.type = 'lowpass';
+  filter.frequency.setValueAtTime(450, now);
+  filter.frequency.exponentialRampToValueAtTime(40, now + 0.85);
+
+  const gainNoise = ctx.createGain();
+  gainNoise.gain.setValueAtTime(0.7, now);
+  gainNoise.gain.exponentialRampToValueAtTime(0.001, now + 0.85);
+
+  noise.connect(filter);
+  filter.connect(gainNoise);
+  gainNoise.connect(ctx.destination);
+  noise.start(now);
+
+  // 2. Sub-bass punch
+  const osc = ctx.createOscillator();
+  const gainOsc = ctx.createGain();
+  osc.type = 'sine';
+  osc.frequency.setValueAtTime(120, now);
+  osc.frequency.exponentialRampToValueAtTime(25, now + 0.5);
+
+  gainOsc.gain.setValueAtTime(0.6, now);
+  gainOsc.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
+
+  osc.connect(gainOsc);
+  gainOsc.connect(ctx.destination);
+  osc.start(now);
+  osc.stop(now + 0.5);
+}
+
+export function playHoeSound() {
+  const ctx = getAudioContext();
+  if (!ctx) return;
+
+  const now = ctx.currentTime;
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+
+  osc.type = 'triangle';
+  osc.frequency.setValueAtTime(280, now);
+  osc.frequency.exponentialRampToValueAtTime(90, now + 0.08);
+
+  gain.gain.setValueAtTime(0.2, now);
+  gain.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
+
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+
+  osc.start(now);
+  osc.stop(now + 0.08);
+}
+

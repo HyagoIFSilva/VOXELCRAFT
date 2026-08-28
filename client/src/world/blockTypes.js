@@ -24,6 +24,11 @@ export const BlockType = {
   FURNACE:         18,
   FURNACE_LIT:     19,
   CHEST:           20,
+  FARMLAND:        21,
+  WHEAT_STAGE_1:   22,
+  WHEAT_STAGE_2:   23,
+  WHEAT_STAGE_3:   24,
+  TNT:             25,
   // Items / Weapons / Tools
   IRON_SWORD:      101,
   IRON_PICKAXE:    102,
@@ -46,6 +51,15 @@ export const BlockType = {
   BONE:            117,
   STRING:          118,
   SPIDER_EYE:      119,
+  // Expansion: Combat, Farming & Explosives
+  BOW:             120,
+  WOODEN_HOE:      121,
+  STONE_HOE:       122,
+  IRON_HOE:        123,
+  WHEAT_SEEDS:     124,
+  WHEAT:           125,
+  BREAD:           126,
+  GUNPOWDER:       127,
 };
 
 export const ITEM_NAMES = {
@@ -69,6 +83,11 @@ export const ITEM_NAMES = {
   [BlockType.FURNACE]:         'Fornalha',
   [BlockType.FURNACE_LIT]:     'Fornalha (Acesa)',
   [BlockType.CHEST]:           'Baú de Madeira',
+  [BlockType.FARMLAND]:        'Terra Arada',
+  [BlockType.WHEAT_STAGE_1]:   'Brotos de Trigo',
+  [BlockType.WHEAT_STAGE_2]:   'Trigo em Crescimento',
+  [BlockType.WHEAT_STAGE_3]:   'Trigo Maduro',
+  [BlockType.TNT]:             'Bloco de TNT',
   [BlockType.IRON_SWORD]:      'Espada de Ferro',
   [BlockType.IRON_PICKAXE]:    'Picareta de Ferro',
   [BlockType.PORKCHOP]:        'Costela de Porco Crua',
@@ -88,6 +107,14 @@ export const ITEM_NAMES = {
   [BlockType.BONE]:            'Osso',
   [BlockType.STRING]:          'Linha de Teia',
   [BlockType.SPIDER_EYE]:      'Olho de Aranha',
+  [BlockType.BOW]:             'Arco e Flecha',
+  [BlockType.WOODEN_HOE]:      'Enxada de Madeira',
+  [BlockType.STONE_HOE]:       'Enxada de Pedra',
+  [BlockType.IRON_HOE]:        'Enxada de Ferro',
+  [BlockType.WHEAT_SEEDS]:     'Sementes de Trigo',
+  [BlockType.WHEAT]:           'Trigo',
+  [BlockType.BREAD]:           'Pão',
+  [BlockType.GUNPOWDER]:       'Pólvora',
 };
 
 /**
@@ -112,8 +139,13 @@ export const BlockTextures = {
   [BlockType.CRAFTING_TABLE]: { top: 20, side: 21, bottom: 16 },
   [BlockType.TORCH]:          { top: 22, side: 22, bottom: 22 },
   [BlockType.FURNACE]:        { top: 3,  side: 23, bottom: 3 },
-  [BlockType.FURNACE_LIT]:    { top: 3,  side: 24, bottom: 3 },
-  [BlockType.CHEST]:          { top: 25, side: 26, bottom: 16 },
+  [BlockType.FURNACE_LIT]:    { top: 3,  side: 25, bottom: 3 },
+  [BlockType.CHEST]:          { top: 26, side: 27, bottom: 16 },
+  [BlockType.FARMLAND]:       { top: 28, side: 29, bottom: 2 },
+  [BlockType.WHEAT_STAGE_1]:  { top: 30, side: 30, bottom: 30 },
+  [BlockType.WHEAT_STAGE_2]:  { top: 31, side: 31, bottom: 31 },
+  [BlockType.WHEAT_STAGE_3]:  { top: 32, side: 32, bottom: 32 },
+  [BlockType.TNT]:            { top: 33, side: 34, bottom: 35 },
 };
 
 export function isSolid(type) {
@@ -123,7 +155,10 @@ export function isSolid(type) {
     type !== BlockType.WATER &&
     type !== BlockType.FLOWER_RED &&
     type !== BlockType.FLOWER_YELLOW &&
-    type !== BlockType.TORCH
+    type !== BlockType.TORCH &&
+    type !== BlockType.WHEAT_STAGE_1 &&
+    type !== BlockType.WHEAT_STAGE_2 &&
+    type !== BlockType.WHEAT_STAGE_3
   );
 }
 
@@ -135,7 +170,8 @@ export function isWeapon(type) {
   return (
     type === BlockType.IRON_SWORD ||
     type === BlockType.STONE_SWORD ||
-    type === BlockType.WOODEN_SWORD
+    type === BlockType.WOODEN_SWORD ||
+    type === BlockType.BOW
   );
 }
 
@@ -147,8 +183,21 @@ export function isPickaxe(type) {
   );
 }
 
+export function isHoe(type) {
+  return (
+    type === BlockType.IRON_HOE ||
+    type === BlockType.STONE_HOE ||
+    type === BlockType.WOODEN_HOE
+  );
+}
+
 export function isFood(type) {
-  return type === BlockType.PORKCHOP || type === BlockType.COOKED_PORKCHOP || type === BlockType.ROTTEN_FLESH;
+  return (
+    type === BlockType.PORKCHOP ||
+    type === BlockType.COOKED_PORKCHOP ||
+    type === BlockType.ROTTEN_FLESH ||
+    type === BlockType.BREAD
+  );
 }
 
 export function isArmor(type) {
@@ -173,8 +222,9 @@ export function getArmorDefense(type) {
 export function getFoodNutrition(type) {
   switch (type) {
     case BlockType.COOKED_PORKCHOP: return 8; // 4 full hearts
-    case BlockType.PORKCHOP: return 3;        // 1.5 hearts
-    case BlockType.ROTTEN_FLESH: return 1;    // 0.5 heart
+    case BlockType.BREAD:           return 5; // 2.5 hearts
+    case BlockType.PORKCHOP:        return 3; // 1.5 hearts
+    case BlockType.ROTTEN_FLESH:    return 1; // 0.5 heart
     default: return 0;
   }
 }
@@ -186,6 +236,9 @@ export function isTransparent(type) {
     type === BlockType.FLOWER_RED ||
     type === BlockType.FLOWER_YELLOW ||
     type === BlockType.TORCH ||
+    type === BlockType.WHEAT_STAGE_1 ||
+    type === BlockType.WHEAT_STAGE_2 ||
+    type === BlockType.WHEAT_STAGE_3 ||
     type >= 100
   );
 }
@@ -195,12 +248,18 @@ export function getBlockHardness(type) {
     case BlockType.LEAVES:
     case BlockType.FLOWER_RED:
     case BlockType.FLOWER_YELLOW:
+    case BlockType.WHEAT_STAGE_1:
+    case BlockType.WHEAT_STAGE_2:
+    case BlockType.WHEAT_STAGE_3:
       return 0.15;
     case BlockType.DIRT:
     case BlockType.GRASS:
     case BlockType.SAND:
     case BlockType.SNOW:
+    case BlockType.FARMLAND:
       return 0.55;
+    case BlockType.TNT:
+      return 0.1;
     case BlockType.WOOD_LOG:
     case BlockType.WOOD_PLANKS:
     case BlockType.CRAFTING_TABLE:
@@ -246,8 +305,15 @@ export function getMiningSpeed(blockType, toolType) {
     return 0.65; // By hand
   }
 
-  // Sword on leaves/plants
-  if (blockType === BlockType.LEAVES || blockType === BlockType.FLOWER_RED || blockType === BlockType.FLOWER_YELLOW) {
+  // Sword on leaves/plants/crops
+  if (
+    blockType === BlockType.LEAVES ||
+    blockType === BlockType.FLOWER_RED ||
+    blockType === BlockType.FLOWER_YELLOW ||
+    blockType === BlockType.WHEAT_STAGE_1 ||
+    blockType === BlockType.WHEAT_STAGE_2 ||
+    blockType === BlockType.WHEAT_STAGE_3
+  ) {
     if (isIronSword || isStoneSword || isWoodSword) return 6.0;
     return 2.0;
   }
@@ -270,12 +336,21 @@ export function getBlockDrop(type) {
     case BlockType.COAL_ORE:
       return BlockType.COAL_ORE;
     case BlockType.IRON_ORE:
-      return BlockType.IRON_ORE; // Drops raw ore to be smelted in furnace!
+      return BlockType.IRON_ORE;
     case BlockType.FURNACE:
     case BlockType.FURNACE_LIT:
       return BlockType.FURNACE;
+    case BlockType.FARMLAND:
+      return BlockType.DIRT;
+    case BlockType.WHEAT_STAGE_3:
+      return BlockType.WHEAT;
+    case BlockType.WHEAT_STAGE_1:
+    case BlockType.WHEAT_STAGE_2:
+      return BlockType.WHEAT_SEEDS;
     case BlockType.LEAVES:
       return Math.random() < 0.35 ? BlockType.LEAVES : 0;
+    case BlockType.TNT:
+      return BlockType.TNT;
     default:
       return type;
   }

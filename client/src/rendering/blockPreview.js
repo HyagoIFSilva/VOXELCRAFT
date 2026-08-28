@@ -11,39 +11,31 @@ const meshCache = new Map();
 /**
  * Create a 3D Iron Sword mesh.
  */
-function createSwordMesh() {
+function createSwordMesh(color = 0xdbeafe) {
   const group = new THREE.Group();
 
-  // Blade (shiny steel with center ridge)
-  const bladeMat = new THREE.MeshLambertMaterial({ color: 0xdbeafe, depthTest: true });
+  // Blade
+  const bladeMat = new THREE.MeshLambertMaterial({ color, depthTest: true });
   const blade = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.48, 0.025), bladeMat);
   blade.position.set(0, 0.24, 0);
   group.add(blade);
 
-  // Crossguard (metal guard)
+  // Crossguard
   const guardMat = new THREE.MeshLambertMaterial({ color: 0x475569, depthTest: true });
   const guard = new THREE.Mesh(new THREE.BoxGeometry(0.20, 0.035, 0.045), guardMat);
   guard.position.set(0, 0.02, 0);
   group.add(guard);
 
-  // Handle (leather/wood grip)
+  // Handle
   const handleMat = new THREE.MeshLambertMaterial({ color: 0x854d0e, depthTest: true });
   const handle = new THREE.Mesh(new THREE.BoxGeometry(0.038, 0.12, 0.038), handleMat);
   handle.position.set(0, -0.06, 0);
   group.add(handle);
 
-  // Pommel (metal bottom)
-  const pommel = new THREE.Mesh(new THREE.BoxGeometry(0.055, 0.03, 0.045), guardMat);
-  pommel.position.set(0, -0.13, 0);
-  group.add(pommel);
-
   return group;
 }
 
-/**
- * Create a 3D Pickaxe mesh.
- */
-function createPickaxeMesh() {
+function createPickaxeMesh(headColor = 0x94a3b8) {
   const group = new THREE.Group();
 
   // Handle
@@ -52,11 +44,55 @@ function createPickaxeMesh() {
   handle.position.set(0, 0.10, 0);
   group.add(handle);
 
-  // Head (curved pick)
-  const headMat = new THREE.MeshLambertMaterial({ color: 0x94a3b8, depthTest: true });
+  // Head
+  const headMat = new THREE.MeshLambertMaterial({ color: headColor, depthTest: true });
   const head = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.06, 0.05), headMat);
   head.position.set(0, 0.32, 0);
   group.add(head);
+
+  return group;
+}
+
+function createHoeMesh(headColor = 0x94a3b8) {
+  const group = new THREE.Group();
+
+  // Handle
+  const handleMat = new THREE.MeshLambertMaterial({ color: 0x854d0e, depthTest: true });
+  const handle = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.48, 0.04), handleMat);
+  handle.position.set(0, 0.10, 0);
+  group.add(handle);
+
+  // Hoe head
+  const headMat = new THREE.MeshLambertMaterial({ color: headColor, depthTest: true });
+  const head = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.06, 0.05), headMat);
+  head.position.set(0.06, 0.32, 0);
+  group.add(head);
+
+  return group;
+}
+
+function createBowMesh() {
+  const group = new THREE.Group();
+  const woodMat = new THREE.MeshLambertMaterial({ color: 0x78350f, depthTest: true });
+  const stringMat = new THREE.MeshBasicMaterial({ color: 0xf8fafc, depthTest: true });
+
+  const upperLim = new THREE.Mesh(new THREE.BoxGeometry(0.035, 0.26, 0.035), woodMat);
+  upperLim.position.set(0.06, 0.14, 0);
+  upperLim.rotation.z = -0.35;
+  group.add(upperLim);
+
+  const lowerLim = new THREE.Mesh(new THREE.BoxGeometry(0.035, 0.26, 0.035), woodMat);
+  lowerLim.position.set(0.06, -0.14, 0);
+  lowerLim.rotation.z = 0.35;
+  group.add(lowerLim);
+
+  const grip = new THREE.Mesh(new THREE.BoxGeometry(0.045, 0.10, 0.045), woodMat);
+  grip.position.set(0.11, 0, 0);
+  group.add(grip);
+
+  const string = new THREE.Mesh(new THREE.BoxGeometry(0.012, 0.48, 0.012), stringMat);
+  string.position.set(0, 0, 0);
+  group.add(string);
 
   return group;
 }
@@ -68,16 +104,37 @@ function createPickaxeMesh() {
  * @returns {THREE.Object3D|null}
  */
 export function getBlockPreviewMesh(itemType, size = 0.22) {
-  if (itemType === BlockType.IRON_SWORD) {
-    return createSwordMesh();
+  if (itemType === BlockType.IRON_SWORD) return createSwordMesh(0xdbeafe);
+  if (itemType === BlockType.STONE_SWORD) return createSwordMesh(0x94a3b8);
+  if (itemType === BlockType.WOODEN_SWORD) return createSwordMesh(0xb45309);
+
+  if (itemType === BlockType.IRON_PICKAXE) return createPickaxeMesh(0xdbeafe);
+  if (itemType === BlockType.STONE_PICKAXE) return createPickaxeMesh(0x64748b);
+  if (itemType === BlockType.WOODEN_PICKAXE) return createPickaxeMesh(0xb45309);
+
+  if (itemType === BlockType.IRON_HOE) return createHoeMesh(0xdbeafe);
+  if (itemType === BlockType.STONE_HOE) return createHoeMesh(0x64748b);
+  if (itemType === BlockType.WOODEN_HOE) return createHoeMesh(0xb45309);
+
+  if (itemType === BlockType.BOW) return createBowMesh();
+
+  if (itemType === BlockType.BREAD) {
+    const mat = new THREE.MeshLambertMaterial({ color: 0xb45309, depthTest: true });
+    return new THREE.Mesh(new THREE.BoxGeometry(size * 0.9, size * 0.45, size * 0.6), mat);
   }
 
-  if (itemType === BlockType.IRON_PICKAXE) {
-    return createPickaxeMesh();
+  if (itemType === BlockType.WHEAT) {
+    const mat = new THREE.MeshLambertMaterial({ color: 0xeab308, depthTest: true });
+    return new THREE.Mesh(new THREE.BoxGeometry(size * 0.35, size * 0.9, size * 0.35), mat);
   }
 
   if (itemType === BlockType.PORKCHOP) {
     const mat = new THREE.MeshLambertMaterial({ color: 0xf472b6, depthTest: true });
+    return new THREE.Mesh(new THREE.BoxGeometry(size, size * 0.4, size * 0.8), mat);
+  }
+
+  if (itemType === BlockType.COOKED_PORKCHOP) {
+    const mat = new THREE.MeshLambertMaterial({ color: 0x9a3412, depthTest: true });
     return new THREE.Mesh(new THREE.BoxGeometry(size, size * 0.4, size * 0.8), mat);
   }
 

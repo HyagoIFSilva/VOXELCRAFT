@@ -296,6 +296,127 @@ export function createBlockIconCanvas(blockType, size = 46) {
     return canvas;
   }
 
+  if (blockType === BlockType.BOW) {
+    // Bow wooden curve
+    ctx.lineWidth = 3.5;
+    ctx.strokeStyle = '#78350f';
+    ctx.beginPath();
+    ctx.arc(size * 0.4, size * 0.5, size * 0.35, -Math.PI * 0.45, Math.PI * 0.45);
+    ctx.stroke();
+
+    // Bow string
+    ctx.lineWidth = 1.5;
+    ctx.strokeStyle = '#f8fafc';
+    ctx.beginPath();
+    ctx.moveTo(size * 0.4 + Math.cos(-Math.PI * 0.45) * (size * 0.35), size * 0.5 + Math.sin(-Math.PI * 0.45) * (size * 0.35));
+    ctx.lineTo(size * 0.4 + Math.cos(Math.PI * 0.45) * (size * 0.35), size * 0.5 + Math.sin(Math.PI * 0.45) * (size * 0.35));
+    ctx.stroke();
+    return canvas;
+  }
+
+  if (
+    blockType === BlockType.IRON_HOE ||
+    blockType === BlockType.STONE_HOE ||
+    blockType === BlockType.WOODEN_HOE
+  ) {
+    const isIron = blockType === BlockType.IRON_HOE;
+    const isStone = blockType === BlockType.STONE_HOE;
+    const bladeColor = isIron ? '#cbd5e1' : isStone ? '#64748b' : '#b45309';
+
+    // Handle
+    ctx.lineWidth = 4;
+    ctx.strokeStyle = '#78350f';
+    ctx.beginPath();
+    ctx.moveTo(size * 0.25, size * 0.75);
+    ctx.lineTo(size * 0.65, size * 0.30);
+    ctx.stroke();
+
+    // Hoe head blade
+    ctx.lineWidth = 5;
+    ctx.strokeStyle = bladeColor;
+    ctx.beginPath();
+    ctx.moveTo(size * 0.65, size * 0.30);
+    ctx.lineTo(size * 0.85, size * 0.30);
+    ctx.lineTo(size * 0.85, size * 0.45);
+    ctx.stroke();
+    return canvas;
+  }
+
+  if (blockType === BlockType.WHEAT_SEEDS) {
+    ctx.fillStyle = '#65a30d';
+    ctx.strokeStyle = '#365314';
+    ctx.lineWidth = 1.5;
+    const seedCoords = [
+      [size * 0.35, size * 0.4],
+      [size * 0.55, size * 0.35],
+      [size * 0.45, size * 0.6],
+      [size * 0.65, size * 0.55],
+    ];
+    seedCoords.forEach(([sx, sy]) => {
+      ctx.beginPath();
+      ctx.arc(sx, sy, size * 0.08, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+    });
+    return canvas;
+  }
+
+  if (blockType === BlockType.WHEAT) {
+    // Sheaf of golden wheat
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = '#eab308';
+    ctx.beginPath();
+    ctx.moveTo(size * 0.3, size * 0.8);
+    ctx.lineTo(size * 0.5, size * 0.25);
+    ctx.moveTo(size * 0.5, size * 0.8);
+    ctx.lineTo(size * 0.5, size * 0.2);
+    ctx.moveTo(size * 0.7, size * 0.8);
+    ctx.lineTo(size * 0.5, size * 0.25);
+    ctx.stroke();
+
+    // Red ribbon tie
+    ctx.fillStyle = '#ef4444';
+    ctx.fillRect(size * 0.38, size * 0.55, size * 0.24, 4);
+    return canvas;
+  }
+
+  if (blockType === BlockType.BREAD) {
+    ctx.fillStyle = '#b45309';
+    ctx.strokeStyle = '#78350f';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.roundRect(size * 0.2, size * 0.35, size * 0.6, size * 0.32, 8);
+    ctx.fill();
+    ctx.stroke();
+
+    // Scoring cuts on top of loaf
+    ctx.fillStyle = '#fef08a';
+    ctx.fillRect(size * 0.32, size * 0.42, 3, size * 0.18);
+    ctx.fillRect(size * 0.48, size * 0.42, 3, size * 0.18);
+    ctx.fillRect(size * 0.64, size * 0.42, 3, size * 0.18);
+    return canvas;
+  }
+
+  if (blockType === BlockType.GUNPOWDER) {
+    ctx.fillStyle = '#475569';
+    ctx.strokeStyle = '#1e293b';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(size * 0.25, size * 0.7);
+    ctx.lineTo(size * 0.5, size * 0.3);
+    ctx.lineTo(size * 0.75, size * 0.7);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // Grains
+    ctx.fillStyle = '#94a3b8';
+    ctx.fillRect(size * 0.45, size * 0.45, 2, 2);
+    ctx.fillRect(size * 0.55, size * 0.55, 2, 2);
+    ctx.fillRect(size * 0.35, size * 0.6, 2, 2);
+    return canvas;
+  }
+
   if (blockType === BlockType.ROTTEN_FLESH) {
     ctx.fillStyle = '#65a30d';
     ctx.strokeStyle = '#365314';

@@ -449,6 +449,103 @@ function drawChestSide(ctx, size) {
   ctx.fillRect(7, 8, 2, 1);
 }
 
+function drawFarmlandTop(ctx, size) {
+  fillWithNoise(ctx, size, '#3b1d0c', ['#2e1507', '#45220e', '#230f04', '#4d2812'], 0.4, 2101);
+  // Furrow lines
+  ctx.fillStyle = '#1c0b03';
+  ctx.fillRect(0, 3, size, 1);
+  ctx.fillRect(0, 7, size, 1);
+  ctx.fillRect(0, 11, size, 1);
+  ctx.fillRect(0, 15, size, 1);
+}
+
+function drawFarmlandSide(ctx, size) {
+  fillWithNoise(ctx, size, '#86652d', ['#775924', '#957134', '#664c1e'], 0.35, 2201);
+  // Dark rich top layer
+  ctx.fillStyle = '#3b1d0c';
+  ctx.fillRect(0, 0, size, 3);
+  ctx.fillStyle = '#230f04';
+  ctx.fillRect(0, 2, size, 1);
+}
+
+function drawWheatStage1(ctx, size) {
+  ctx.clearRect(0, 0, size, size);
+  ctx.fillStyle = '#65a30d';
+  for (let x = 2; x < size; x += 3) {
+    ctx.fillRect(x, 12, 1, 4);
+    ctx.fillRect(x - 1, 11, 1, 2);
+  }
+}
+
+function drawWheatStage2(ctx, size) {
+  ctx.clearRect(0, 0, size, size);
+  ctx.fillStyle = '#84cc16';
+  for (let x = 1; x < size; x += 3) {
+    ctx.fillRect(x, 6, 2, 10);
+    ctx.fillStyle = '#ca8a04';
+    ctx.fillRect(x, 6, 2, 3);
+    ctx.fillStyle = '#84cc16';
+  }
+}
+
+function drawWheatStage3(ctx, size) {
+  ctx.clearRect(0, 0, size, size);
+  for (let x = 1; x < size; x += 2) {
+    // Golden wheat stalk
+    ctx.fillStyle = '#ca8a04';
+    ctx.fillRect(x, 4, 1, 12);
+    // Yellow wheat grains head
+    ctx.fillStyle = '#eab308';
+    ctx.fillRect(x - (x > 1 ? 1 : 0), 1, 2, 5);
+    ctx.fillStyle = '#fef08a';
+    ctx.fillRect(x, 2, 1, 3);
+  }
+}
+
+function drawTntTop(ctx, size) {
+  ctx.fillStyle = '#dc2626';
+  ctx.fillRect(0, 0, size, size);
+  // Center dark circle
+  ctx.fillStyle = '#475569';
+  ctx.beginPath();
+  ctx.arc(8, 8, 4, 0, Math.PI * 2);
+  ctx.fill();
+  // Center fuse
+  ctx.fillStyle = '#0f172a';
+  ctx.fillRect(7, 7, 2, 2);
+}
+
+function drawTntSide(ctx, size) {
+  ctx.fillStyle = '#dc2626';
+  ctx.fillRect(0, 0, size, size);
+
+  // White center band
+  ctx.fillStyle = '#f8fafc';
+  ctx.fillRect(0, 5, size, 6);
+
+  // Bold black TNT lettering
+  ctx.fillStyle = '#0f172a';
+  // T
+  ctx.fillRect(1, 6, 4, 1);
+  ctx.fillRect(2, 7, 2, 3);
+  // N
+  ctx.fillRect(6, 6, 1, 4);
+  ctx.fillRect(7, 7, 1, 2);
+  ctx.fillRect(8, 6, 1, 4);
+  // T
+  ctx.fillRect(10, 6, 4, 1);
+  ctx.fillRect(11, 7, 2, 3);
+}
+
+function drawTntBottom(ctx, size) {
+  ctx.fillStyle = '#b91c1c';
+  ctx.fillRect(0, 0, size, size);
+  ctx.fillStyle = '#7f1d1d';
+  ctx.fillRect(3, 3, 10, 10);
+  ctx.fillStyle = '#450a0a';
+  ctx.fillRect(7, 7, 2, 2);
+}
+
 // ── Export: texture definitions ───────────────────────────
 
 export const TEXTURE_DEFS = [
@@ -480,6 +577,14 @@ export const TEXTURE_DEFS = [
   { name: 'furnace_front_lit',   draw: drawFurnaceFrontLit },    // 25
   { name: 'chest_top',           draw: drawChestTop },           // 26
   { name: 'chest_side',          draw: drawChestSide },          // 27
+  { name: 'farmland_top',        draw: drawFarmlandTop },        // 28
+  { name: 'farmland_side',       draw: drawFarmlandSide },       // 29
+  { name: 'wheat_stage1',        draw: drawWheatStage1 },        // 30
+  { name: 'wheat_stage2',        draw: drawWheatStage2 },        // 31
+  { name: 'wheat_stage3',        draw: drawWheatStage3 },        // 32
+  { name: 'tnt_top',             draw: drawTntTop },             // 33
+  { name: 'tnt_side',            draw: drawTntSide },            // 34
+  { name: 'tnt_bottom',          draw: drawTntBottom },          // 35
 ];
 
 /**
