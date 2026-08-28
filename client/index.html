@@ -3,11 +3,11 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="VoxelCraft — Jogo sandbox voxel 3D no navegador, estilo Minecraft." />
+  <meta name="description" content="VoxelCraft 3D — Jogo sandbox voxel procedural no navegador com IA realista, biomas e ciclo dia/noite." />
   <title>VoxelCraft 3D</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
   <style>
     * {
       margin: 0;
@@ -19,9 +19,10 @@
       width: 100%;
       height: 100%;
       overflow: hidden;
-      background: #000;
+      background: #050816;
       font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
       user-select: none;
+      color: #f1f5f9;
     }
 
     canvas {
@@ -30,7 +31,286 @@
       height: 100%;
     }
 
-    /* HUD overlay */
+    /* ── Title Screen (Menu Principal) ────────────────────────── */
+    #title-screen {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: radial-gradient(circle at center, rgba(15, 23, 42, 0.45) 0%, rgba(5, 8, 22, 0.85) 100%);
+      z-index: 100;
+      backdrop-filter: blur(4px);
+      transition: opacity 0.3s ease, visibility 0.3s;
+    }
+
+    .title-logo-container {
+      position: relative;
+      margin-bottom: 36px;
+      text-align: center;
+    }
+
+    .game-logo {
+      font-size: 64px;
+      font-weight: 900;
+      letter-spacing: 8px;
+      text-transform: uppercase;
+      background: linear-gradient(180deg, #86efac 0%, #22c55e 50%, #15803d 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      filter: drop-shadow(0 6px 0 #0f5132) drop-shadow(0 12px 25px rgba(34, 197, 94, 0.45));
+      line-height: 1.1;
+    }
+
+    .logo-badge {
+      display: inline-block;
+      margin-top: 4px;
+      font-size: 14px;
+      font-weight: 800;
+      letter-spacing: 4px;
+      color: #cbd5e1;
+      text-transform: uppercase;
+      background: rgba(15, 23, 42, 0.7);
+      padding: 4px 14px;
+      border-radius: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+    }
+
+    #splash-text {
+      position: absolute;
+      right: -40px;
+      bottom: -16px;
+      transform: rotate(-14deg);
+      background: #facc15;
+      color: #451a03;
+      font-size: 15px;
+      font-weight: 800;
+      padding: 5px 12px;
+      border-radius: 6px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5), 0 0 10px rgba(250, 204, 21, 0.6);
+      animation: splashBounce 1.2s infinite ease-in-out;
+      pointer-events: none;
+      white-space: nowrap;
+      text-shadow: 0 1px 0 rgba(255, 255, 255, 0.5);
+    }
+
+    @keyframes splashBounce {
+      0%, 100% { transform: rotate(-14deg) scale(1); }
+      50% { transform: rotate(-14deg) scale(1.08); }
+    }
+
+    .menu-buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      width: 320px;
+    }
+
+    .menu-btn {
+      position: relative;
+      width: 100%;
+      padding: 14px 20px;
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-align: center;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: 12px;
+      background: rgba(30, 41, 59, 0.85);
+      color: #f1f5f9;
+      cursor: pointer;
+      backdrop-filter: blur(12px);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+      transition: transform 0.18s, background 0.18s, border-color 0.18s, box-shadow 0.18s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    .menu-btn:hover {
+      transform: translateY(-2px) scale(1.02);
+      border-color: rgba(74, 222, 128, 0.6);
+      background: rgba(51, 65, 85, 0.95);
+      box-shadow: 0 12px 28px rgba(74, 222, 128, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    }
+
+    .menu-btn.primary {
+      background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+      color: #052e16;
+      font-size: 18px;
+      font-weight: 800;
+      border-color: #4ade80;
+      box-shadow: 0 10px 25px rgba(34, 197, 94, 0.45);
+    }
+
+    .menu-btn.primary:hover {
+      background: linear-gradient(135deg, #4ade80 0%, #22c55e 100%);
+      box-shadow: 0 14px 35px rgba(34, 197, 94, 0.6);
+    }
+
+    .menu-footer {
+      position: absolute;
+      bottom: 20px;
+      font-size: 13px;
+      color: #64748b;
+      letter-spacing: 0.5px;
+    }
+
+    /* ── Pause Menu (In-Game ESC) ────────────────────────────── */
+    #pause-menu {
+      position: fixed;
+      inset: 0;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: rgba(5, 8, 22, 0.75);
+      backdrop-filter: blur(12px);
+      z-index: 90;
+    }
+
+    #pause-menu .pause-title {
+      font-size: 36px;
+      font-weight: 800;
+      letter-spacing: 4px;
+      color: #f8fafc;
+      margin-bottom: 28px;
+      text-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+    }
+
+    /* ── Modais (Controles & Configurações) ───────────────────── */
+    .modal-container {
+      position: fixed;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(8px);
+      z-index: 120;
+    }
+
+    .modal-card {
+      width: 520px;
+      max-width: 90vw;
+      max-height: 85vh;
+      overflow-y: auto;
+      background: rgba(15, 23, 42, 0.95);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 18px;
+      padding: 28px;
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .modal-title {
+      font-size: 22px;
+      font-weight: 800;
+      color: #4ade80;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .modal-close-btn {
+      background: rgba(255, 255, 255, 0.1);
+      border: none;
+      color: #94a3b8;
+      font-size: 18px;
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.2s, color 0.2s;
+    }
+
+    .modal-close-btn:hover {
+      background: #ef4444;
+      color: #fff;
+    }
+
+    /* Controls Grid */
+    .controls-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .control-item {
+      background: rgba(30, 41, 59, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 10px;
+      padding: 10px 14px;
+    }
+
+    .control-item .key {
+      display: inline-block;
+      background: #334155;
+      color: #f8fafc;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 6px;
+      border-bottom: 2px solid #0f172a;
+      margin-bottom: 4px;
+    }
+
+    .control-item .desc {
+      font-size: 13px;
+      color: #cbd5e1;
+    }
+
+    /* Settings list */
+    .setting-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .setting-label {
+      font-size: 15px;
+      font-weight: 600;
+      color: #e2e8f0;
+    }
+
+    .setting-control {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .setting-slider {
+      width: 140px;
+      accent-color: #22c55e;
+      cursor: pointer;
+    }
+
+    .setting-val {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      color: #4ade80;
+      min-width: 40px;
+      text-align: right;
+    }
+
+    /* ── In-Game HUD Elements ────────────────────────────────── */
     #hud {
       position: fixed;
       top: 0;
@@ -41,7 +321,6 @@
       z-index: 10;
     }
 
-    /* Crosshair */
     #crosshair {
       position: absolute;
       top: 50%;
@@ -56,63 +335,6 @@
       display: none;
     }
 
-    /* Pointer lock prompt */
-    #lock-prompt {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      color: #e2e8f0;
-      text-align: center;
-      user-select: none;
-      pointer-events: auto;
-      cursor: pointer;
-      padding: 32px 48px;
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      border-radius: 16px;
-      background: rgba(15, 23, 42, 0.85);
-      backdrop-filter: blur(16px);
-      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.1);
-      transition: border-color 0.25s, transform 0.25s, box-shadow 0.25s;
-    }
-
-    #lock-prompt:hover {
-      border-color: rgba(74, 222, 128, 0.7);
-      transform: translate(-50%, -50%) scale(1.02);
-      box-shadow: 0 25px 60px rgba(74, 222, 128, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.2);
-    }
-
-    #lock-prompt .title {
-      font-size: 38px;
-      font-weight: 800;
-      letter-spacing: 6px;
-      background: linear-gradient(135deg, #4ade80 0%, #22c55e 50%, #16a34a 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      margin-bottom: 12px;
-      text-shadow: 0 4px 12px rgba(74, 222, 128, 0.3);
-    }
-
-    #lock-prompt .play-btn {
-      display: inline-block;
-      margin-top: 14px;
-      padding: 10px 24px;
-      background: #22c55e;
-      color: #052e16;
-      font-weight: 700;
-      font-size: 15px;
-      border-radius: 8px;
-      box-shadow: 0 4px 14px rgba(34, 197, 94, 0.4);
-    }
-
-    #lock-prompt .subtitle {
-      font-size: 13px;
-      color: #94a3b8;
-      margin-top: 16px;
-      line-height: 1.6;
-    }
-
-    /* Debug info */
     #debug-info {
       position: absolute;
       top: 14px;
@@ -120,34 +342,32 @@
       color: #f1f5f9;
       font-family: 'JetBrains Mono', monospace;
       font-size: 12px;
-      padding: 6px 12px;
-      border-radius: 8px;
-      background: rgba(15, 23, 42, 0.6);
-      border: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 8px 14px;
+      border-radius: 10px;
+      background: rgba(15, 23, 42, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.12);
       backdrop-filter: blur(8px);
       user-select: none;
-      line-height: 1.5;
+      line-height: 1.6;
     }
 
-    /* Controls hint */
     #controls-hint {
       position: absolute;
       bottom: 105px;
       left: 50%;
       transform: translateX(-50%);
-      color: rgba(255, 255, 255, 0.7);
+      color: rgba(255, 255, 255, 0.75);
       font-size: 12px;
-      padding: 5px 14px;
-      border-radius: 12px;
-      background: rgba(15, 23, 42, 0.5);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      backdrop-filter: blur(4px);
+      padding: 6px 16px;
+      border-radius: 14px;
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(6px);
       user-select: none;
       display: none;
       white-space: nowrap;
     }
 
-    /* Health bar */
     #health-bar {
       position: absolute;
       top: 14px;
@@ -176,7 +396,6 @@
     .heart.half  { color: #f97316; }
     .heart.empty { color: rgba(255, 255, 255, 0.18); }
 
-    /* Damage vignette */
     #damage-vignette {
       position: absolute;
       inset: 0;
@@ -186,7 +405,6 @@
       transition: opacity 0.15s;
     }
 
-    /* Death overlay */
     #death-overlay {
       position: absolute;
       inset: 0;
@@ -215,26 +433,135 @@
       background: rgba(0, 0, 0, 0.5);
       border: 1px solid rgba(255, 255, 255, 0.2);
     }
-
-    @keyframes pulse {
-      0%, 100% { opacity: 1; transform: translateX(-50%) scale(1); }
-      50% { opacity: 0.85; transform: translateX(-50%) scale(1.03); }
-    }
   </style>
 </head>
 <body>
-  <div id="hud">
-    <div id="crosshair">+</div>
-    <div id="lock-prompt">
-      <div class="title">VOXELCRAFT</div>
-      <div class="play-btn">CLIQUE PARA JOGAR</div>
-      <div class="subtitle">
-        <b>WASD:</b> Mover &nbsp;|&nbsp; <b>Mouse:</b> Olhar<br>
-        <b>Espaço:</b> Pular &nbsp;|&nbsp; <b>3x Espaço:</b> Voar &nbsp;|&nbsp; <b>E:</b> Inventário<br>
-        <b>Botão Esq:</b> Atacar Mobs / Quebrar &nbsp;|&nbsp; <b>Botão Dir:</b> Colocar<br>
-        <b>1-9 / Scroll:</b> Selecionar Item/Arma
+  <!-- ── 1. Menu Principal (Tela Inicial) ── -->
+  <div id="title-screen">
+    <div class="title-logo-container">
+      <div class="game-logo">VOXELCRAFT</div>
+      <div class="logo-badge">3D SANDBOX</div>
+      <div id="splash-text">Mundo infinito com Biomas!</div>
+    </div>
+
+    <div class="menu-buttons">
+      <button id="btn-play" class="menu-btn primary">
+        <span>▶</span> INICIAR JOGO
+      </button>
+      <button id="btn-controls" class="menu-btn">
+        <span>📜</span> COMO JOGAR / CONTROLES
+      </button>
+      <button id="btn-settings" class="menu-btn">
+        <span>⚙</span> CONFIGURAÇÕES
+      </button>
+    </div>
+
+    <div class="menu-footer">
+      VoxelCraft 3D • IA de Mobs com Visão Realista • Biomas & Ciclo Dia/Noite
+    </div>
+  </div>
+
+  <!-- ── 2. Menu de Pausa in-game (ESC) ── -->
+  <div id="pause-menu">
+    <div class="pause-title">⏸ JOGO PAUSADO</div>
+    <div class="menu-buttons">
+      <button id="btn-resume" class="menu-btn primary">
+        <span>▶</span> CONTINUAR JOGO
+      </button>
+      <button id="btn-pause-controls" class="menu-btn">
+        <span>📜</span> GUIA DE CONTROLES
+      </button>
+      <button id="btn-pause-settings" class="menu-btn">
+        <span>⚙</span> CONFIGURAÇÕES
+      </button>
+      <button id="btn-quit-menu" class="menu-btn" style="border-color: rgba(239, 68, 68, 0.4);">
+        <span>🚪</span> MENU PRINCIPAL
+      </button>
+    </div>
+  </div>
+
+  <!-- ── 3. Modal de Controles ── -->
+  <div id="controls-modal" class="modal-container">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div class="modal-title">📜 Guia de Controles</div>
+        <button class="modal-close-btn">&times;</button>
+      </div>
+
+      <div class="controls-grid">
+        <div class="control-item">
+          <div class="key">W A S D</div>
+          <div class="desc">Movimentação pelo terreno</div>
+        </div>
+        <div class="control-item">
+          <div class="key">ESPAÇO</div>
+          <div class="desc">Pular obstáculos</div>
+        </div>
+        <div class="control-item">
+          <div class="key">3x ESPAÇO</div>
+          <div class="desc">Ativar / Desativar modo voo livre</div>
+        </div>
+        <div class="control-item">
+          <div class="key">MOUSE</div>
+          <div class="desc">Olhar e mirar em primeira pessoa</div>
+        </div>
+        <div class="control-item">
+          <div class="key">BOTÃO ESQUERDO</div>
+          <div class="desc">Atacar mobs / Quebrar blocos</div>
+        </div>
+        <div class="control-item">
+          <div class="key">BOTÃO DIREITO</div>
+          <div class="desc">Colocar bloco selecionado</div>
+        </div>
+        <div class="control-item">
+          <div class="key">TECLA E</div>
+          <div class="desc">Abrir / Fechar inventário de 36 slots</div>
+        </div>
+        <div class="control-item">
+          <div class="key">1 a 9 / SCROLL</div>
+          <div class="desc">Selecionar item ou arma da hotbar</div>
+        </div>
+        <div class="control-item">
+          <div class="key">TECLA ESC</div>
+          <div class="desc">Pausar jogo e liberar o mouse</div>
+        </div>
+        <div class="control-item">
+          <div class="key">SHIFT (VOANDO)</div>
+          <div class="desc">Descer suavemente no modo voo</div>
+        </div>
       </div>
     </div>
+  </div>
+
+  <!-- ── 4. Modal de Configurações ── -->
+  <div id="settings-modal" class="modal-container">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div class="modal-title">⚙ Configurações de Jogo</div>
+        <button class="modal-close-btn">&times;</button>
+      </div>
+
+      <div class="setting-row">
+        <div class="setting-label">Campo de Visão (FOV)</div>
+        <div class="setting-control">
+          <input type="range" id="setting-fov" class="setting-slider" min="60" max="100" value="75" step="1">
+          <div id="fov-val" class="setting-val">75°</div>
+        </div>
+      </div>
+
+      <div class="setting-row">
+        <div class="setting-label">Sensibilidade do Mouse</div>
+        <div class="setting-control">
+          <input type="range" id="setting-sens" class="setting-slider" min="0.5" max="2.5" value="1.0" step="0.1">
+          <div id="sens-val" class="setting-val">1.0x</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 5. HUD do Jogo ── -->
+  <div id="hud">
+    <div id="crosshair">+</div>
     <div id="debug-info"></div>
     <div id="controls-hint">
       <b>WASD:</b> Mover &nbsp;|&nbsp;
@@ -246,6 +573,7 @@
       <b>ESC:</b> Menu
     </div>
   </div>
+
   <script type="module" src="/src/main.js"></script>
 </body>
 </html>

@@ -25,10 +25,14 @@ const INITIAL_STORAGE = [
   BlockType.COAL_ORE,
   BlockType.IRON_ORE,
   BlockType.SNOW,
+  BlockType.CACTUS,
+  BlockType.WOOD_PLANKS,
+  BlockType.COBBLESTONE,
+  BlockType.FLOWER_RED,
+  BlockType.FLOWER_YELLOW,
   BlockType.PORKCHOP,
   BlockType.ROTTEN_FLESH,
-  0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 0,
 ];
 

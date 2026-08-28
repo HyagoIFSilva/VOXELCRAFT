@@ -257,23 +257,116 @@ function drawWater(ctx, size) {
   }
 }
 
+function drawCactusTop(ctx, size) {
+  fillWithNoise(ctx, size, '#15803d', ['#166534', '#14532d', '#22c55e'], 0.4, 1501);
+  ctx.fillStyle = '#14532d';
+  ctx.fillRect(7, 7, 2, 2);
+}
+
+function drawCactusSide(ctx, size) {
+  fillWithNoise(ctx, size, '#15803d', ['#166534', '#15803d', '#22c55e', '#14532d'], 0.35, 1601);
+  const rng = seededRandom(1602);
+  // Vertical green ribs
+  for (let x = 0; x < size; x += 4) {
+    ctx.fillStyle = '#14532d';
+    ctx.fillRect(x, 0, 1, size);
+  }
+  // Spikes
+  for (let i = 0; i < 6; i++) {
+    const x = Math.floor(rng() * (size - 2)) + 1;
+    const y = Math.floor(rng() * (size - 2)) + 1;
+    ctx.fillStyle = '#fef08a';
+    ctx.fillRect(x, y, 1, 1);
+  }
+}
+
+function drawWoodPlanks(ctx, size) {
+  fillWithNoise(ctx, size, '#b45309', ['#92400e', '#78350f', '#d97706', '#a16207'], 0.35, 1701);
+  // Plank divider horizontal lines
+  ctx.fillStyle = '#451a03';
+  ctx.fillRect(0, 3, size, 1);
+  ctx.fillRect(0, 7, size, 1);
+  ctx.fillRect(0, 11, size, 1);
+  ctx.fillRect(0, 15, size, 1);
+  // Vertical joints
+  ctx.fillRect(5, 0, 1, 3);
+  ctx.fillRect(11, 4, 1, 3);
+  ctx.fillRect(4, 8, 1, 3);
+  ctx.fillRect(12, 12, 1, 3);
+}
+
+function drawCobblestone(ctx, size) {
+  fillWithNoise(ctx, size, '#64748b', ['#475569', '#334155', '#94a3b8', '#1e293b'], 0.45, 1801);
+  const rng = seededRandom(1802);
+  ctx.fillStyle = '#1e293b';
+  for (let i = 0; i < 5; i++) {
+    const x = Math.floor(rng() * (size - 4));
+    const y = Math.floor(rng() * (size - 4));
+    ctx.fillRect(x, y, 3, 2);
+  }
+}
+
+function drawFlowerRed(ctx, size) {
+  ctx.clearRect(0, 0, size, size);
+  // Green stem
+  ctx.fillStyle = '#15803d';
+  ctx.fillRect(7, 7, 2, 9);
+  ctx.fillRect(5, 11, 2, 2);
+  ctx.fillRect(9, 9, 2, 2);
+  // Red petals
+  ctx.fillStyle = '#dc2626';
+  ctx.fillRect(6, 3, 4, 4);
+  ctx.fillStyle = '#ef4444';
+  ctx.fillRect(7, 2, 2, 1);
+  ctx.fillRect(5, 4, 1, 2);
+  ctx.fillRect(10, 4, 1, 2);
+  // Center
+  ctx.fillStyle = '#450a0a';
+  ctx.fillRect(7, 4, 2, 2);
+}
+
+function drawFlowerYellow(ctx, size) {
+  ctx.clearRect(0, 0, size, size);
+  // Green stem
+  ctx.fillStyle = '#15803d';
+  ctx.fillRect(7, 6, 2, 10);
+  ctx.fillRect(5, 10, 2, 2);
+  ctx.fillRect(9, 12, 2, 2);
+  // Yellow petals
+  ctx.fillStyle = '#eab308';
+  ctx.fillRect(6, 2, 4, 4);
+  ctx.fillStyle = '#facc15';
+  ctx.fillRect(7, 1, 2, 1);
+  ctx.fillRect(5, 3, 1, 2);
+  ctx.fillRect(10, 3, 1, 2);
+  // Center
+  ctx.fillStyle = '#ca8a04';
+  ctx.fillRect(7, 3, 2, 2);
+}
+
 // ── Export: texture definitions ───────────────────────────
 
 export const TEXTURE_DEFS = [
-  { name: 'grass_top',    draw: drawGrassTop },      // 0
-  { name: 'grass_side',   draw: drawGrassSide },     // 1
-  { name: 'dirt',         draw: drawDirt },          // 2
-  { name: 'stone',        draw: drawStone },         // 3
-  { name: 'sand',         draw: drawSand },          // 4
-  { name: 'snow',         draw: drawSnow },          // 5
-  { name: 'wood_log',     draw: drawWoodLog },       // 6
-  { name: 'wood_log_top', draw: drawWoodLogTop },    // 7
-  { name: 'leaves',       draw: drawLeaves },        // 8
-  { name: 'coal_ore',     draw: drawCoalOre },       // 9
-  { name: 'iron_ore',     draw: drawIronOre },       // 10
-  { name: 'water',        draw: drawWater },         // 11
-  { name: 'stone_bricks', draw: drawStoneBricks },   // 12
-  { name: 'snow_side',    draw: drawSnowSide },      // 13
+  { name: 'grass_top',     draw: drawGrassTop },      // 0
+  { name: 'grass_side',    draw: drawGrassSide },     // 1
+  { name: 'dirt',          draw: drawDirt },          // 2
+  { name: 'stone',         draw: drawStone },         // 3
+  { name: 'sand',          draw: drawSand },          // 4
+  { name: 'snow',          draw: drawSnow },          // 5
+  { name: 'wood_log',      draw: drawWoodLog },       // 6
+  { name: 'wood_log_top',  draw: drawWoodLogTop },    // 7
+  { name: 'leaves',        draw: drawLeaves },        // 8
+  { name: 'coal_ore',      draw: drawCoalOre },       // 9
+  { name: 'iron_ore',      draw: drawIronOre },       // 10
+  { name: 'water',         draw: drawWater },         // 11
+  { name: 'stone_bricks',  draw: drawStoneBricks },   // 12
+  { name: 'snow_side',     draw: drawSnowSide },      // 13
+  { name: 'cactus_top',    draw: drawCactusTop },     // 14
+  { name: 'cactus_side',   draw: drawCactusSide },    // 15
+  { name: 'wood_planks',   draw: drawWoodPlanks },    // 16
+  { name: 'cobblestone',   draw: drawCobblestone },   // 17
+  { name: 'flower_red',    draw: drawFlowerRed },     // 18
+  { name: 'flower_yellow', draw: drawFlowerYellow },  // 19
 ];
 
 /**

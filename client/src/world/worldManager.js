@@ -75,6 +75,7 @@ function fractalNoise(x, z, octaves = 4, persistence = 0.5, lacunarity = 2.0) {
 export const Biome = {
   OCEAN: 'ocean',
   PLAINS: 'plains',
+  FOREST: 'forest',
   DESERT: 'desert',
   SNOWY_MOUNTAINS: 'snowy_mountains',
 };
@@ -84,21 +85,26 @@ export const Biome = {
  */
 export function getBiomeAt(wx, wz) {
   // Continentalness: Low = Ocean/Beach, High = Land/Mountains
-  const continent = fractalNoise(wx * 0.003, wz * 0.003, 3);
+  const continent = fractalNoise(wx * 0.0025, wz * 0.0025, 3);
 
-  if (continent < 0.35) {
+  if (continent < 0.32) {
     return Biome.OCEAN;
   }
 
-  // Temperature: Low = Snow/Mountains, High = Desert, Mid = Plains
-  const temp = fractalNoise(wx * 0.004 + 100, wz * 0.004 + 100, 3);
+  // Temperature & Moisture evaluation
+  const temp = fractalNoise(wx * 0.0035 + 150, wz * 0.0035 + 150, 3);
+  const moisture = fractalNoise(wx * 0.004 + 300, wz * 0.004 + 300, 3);
 
-  if (continent > 0.65 && temp < 0.42) {
+  if (continent > 0.58 && temp < 0.38) {
     return Biome.SNOWY_MOUNTAINS;
   }
 
-  if (temp > 0.62) {
+  if (temp > 0.62 && moisture < 0.48) {
     return Biome.DESERT;
+  }
+
+  if (moisture > 0.52) {
+    return Biome.FOREST;
   }
 
   return Biome.PLAINS;
@@ -129,6 +135,12 @@ export function getHeight(wx, wz) {
       const mountain = fractalNoise(wx * 0.015, wz * 0.015, 4);
       const h = 28 + Math.pow(mountain, 1.8) * 32 + detail * 4;
       return Math.max(24, Math.min(CHUNK_HEIGHT - 4, Math.floor(h)));
+    }
+    case Biome.FOREST: {
+      // Rich rolling forest ridges
+      const hill = Math.sin(wx * 0.022) * 5 + Math.cos(wz * 0.028) * 4 + Math.sin((wx - wz) * 0.035) * 2.5;
+      const h = 23 + hill + detail * 3.0;
+      return Math.max(SEA_LEVEL + 1, Math.min(CHUNK_HEIGHT - 6, Math.floor(h)));
     }
     case Biome.PLAINS:
     default: {
@@ -191,6 +203,22 @@ function tryPlacePineTree(chunk, lx, lz, trunkBase, trunkH) {
   }
 }
 
+function tryPlaceCactus(chunk, lx, lz, baseH, cactusH) {
+  for (let y = baseH; y < baseH + cactusH; y++) {
+    if (y < CHUNK_HEIGHT && chunk.getBlock(lx, y, lz) === BlockType.AIR) {
+      chunk.setBlock(lx, y, lz, BlockType.CACTUS);
+    }
+  }
+}
+
+function tryPlaceFlower(chunk, lx, y, lz, flowerType) {
+  if (lx >= 0 && lx < CHUNK_WIDTH && lz >= 0 && lz < CHUNK_WIDTH && y < CHUNK_HEIGHT) {
+    if (chunk.getBlock(lx, y, lz) === BlockType.AIR) {
+      chunk.setBlock(lx, y, lz, flowerType);
+    }
+  }
+}
+
 // ── Procedural Chunk Generation ───────────────────────────
 
 function generateChunk(cx, cz) {
@@ -244,25 +272,46 @@ function generateChunk(cx, cz) {
     }
   }
 
-  // 2. Flora & Tree pass
-  for (let z = 2; z < CHUNK_WIDTH - 2; z++) {
-    for (let x = 2; x < CHUNK_WIDTH - 2; x++) {
+  // 2. Flora, Trees & Desert Cacti pass
+  for (let z = 1; z < CHUNK_WIDTH - 1; z++) {
+    for (let x = 1; x < CHUNK_WIDTH - 1; x++) {
       const wx = offX + x;
       const wz = offZ + z;
       const height = getHeight(wx, wz);
       const biome = getBiomeAt(wx, wz);
       const topBlock = chunk.getBlock(x, height, z);
+      const noiseVal = hash2D(wx, wz);
 
       if (height > SEA_LEVEL) {
-        if (biome === Biome.PLAINS && topBlock === BlockType.GRASS && hash2D(wx, wz) < 0.038) {
-          const th = 4 + Math.floor(hash2D(wx + 555, wz + 777) * 3);
-          if (height + th + 4 < CHUNK_HEIGHT) {
-            tryPlaceOakTree(chunk, x, z, height + 1, th);
+        if (biome === Biome.PLAINS && topBlock === BlockType.GRASS) {
+          // Sparse oak trees
+          if (noiseVal < 0.025 && x >= 2 && x < CHUNK_WIDTH - 2 && z >= 2 && z < CHUNK_WIDTH - 2) {
+            const th = 4 + Math.floor(hash2D(wx + 555, wz + 777) * 3);
+            if (height + th + 4 < CHUNK_HEIGHT) tryPlaceOakTree(chunk, x, z, height + 1, th);
+          } else if (noiseVal > 0.94 && noiseVal < 0.97) {
+            tryPlaceFlower(chunk, x, height + 1, z, BlockType.FLOWER_RED);
+          } else if (noiseVal >= 0.97) {
+            tryPlaceFlower(chunk, x, height + 1, z, BlockType.FLOWER_YELLOW);
           }
-        } else if (biome === Biome.SNOWY_MOUNTAINS && (topBlock === BlockType.GRASS || topBlock === BlockType.SNOW) && hash2D(wx, wz) < 0.025) {
-          const th = 5 + Math.floor(hash2D(wx + 333, wz + 888) * 3);
-          if (height + th + 4 < CHUNK_HEIGHT) {
-            tryPlacePineTree(chunk, x, z, height + 1, th);
+        } else if (biome === Biome.FOREST && topBlock === BlockType.GRASS) {
+          // Dense forest trees
+          if (noiseVal < 0.085 && x >= 2 && x < CHUNK_WIDTH - 2 && z >= 2 && z < CHUNK_WIDTH - 2) {
+            const th = 4 + Math.floor(hash2D(wx + 444, wz + 666) * 4);
+            if (height + th + 4 < CHUNK_HEIGHT) tryPlaceOakTree(chunk, x, z, height + 1, th);
+          } else if (noiseVal > 0.96) {
+            tryPlaceFlower(chunk, x, height + 1, z, BlockType.FLOWER_RED);
+          }
+        } else if (biome === Biome.DESERT && topBlock === BlockType.SAND) {
+          // Cacti in desert
+          if (noiseVal < 0.028) {
+            const ch = 2 + (noiseVal > 0.015 ? 1 : 0);
+            tryPlaceCactus(chunk, x, z, height + 1, ch);
+          }
+        } else if (biome === Biome.SNOWY_MOUNTAINS && (topBlock === BlockType.GRASS || topBlock === BlockType.SNOW)) {
+          // Pine trees in snowy mountains
+          if (noiseVal < 0.035 && x >= 2 && x < CHUNK_WIDTH - 2 && z >= 2 && z < CHUNK_WIDTH - 2) {
+            const th = 5 + Math.floor(hash2D(wx + 333, wz + 888) * 4);
+            if (height + th + 4 < CHUNK_HEIGHT) tryPlacePineTree(chunk, x, z, height + 1, th);
           }
         }
       }
@@ -279,9 +328,9 @@ function generateChunk(cx, cz) {
       for (let y = 1; y < height - 3; y++) {
         if (chunk.getBlock(x, y, z) === BlockType.STONE) {
           const r = hash2D(wx * 31 + y * 97, wz * 53 + y * 13);
-          if (r < 0.016) {
+          if (r < 0.018) {
             chunk.setBlock(x, y, z, BlockType.COAL_ORE);
-          } else if (r > 0.984) {
+          } else if (r > 0.982) {
             chunk.setBlock(x, y, z, BlockType.IRON_ORE);
           }
         }

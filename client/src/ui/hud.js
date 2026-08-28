@@ -4,6 +4,7 @@
 
 import { isPlayerFlying } from '../entities/player.js';
 import { getBiomeAt, Biome } from '../world/worldManager.js';
+import { getGameTimeString, isDaytime } from '../world/dayNightCycle.js';
 
 const debugEl = document.getElementById('debug-info');
 let flyBadge = null;
@@ -13,10 +14,11 @@ let fpsTimer = 0;
 let currentFps = 60;
 
 const BIOME_NAMES = {
-  [Biome.PLAINS]: 'Planície / Floresta',
-  [Biome.DESERT]: 'Deserto',
-  [Biome.SNOWY_MOUNTAINS]: 'Montanhas Nevadas',
-  [Biome.OCEAN]: 'Praia / Oceano',
+  [Biome.PLAINS]: 'Planície Florida',
+  [Biome.FOREST]: 'Floresta Densa',
+  [Biome.DESERT]: 'Deserto de Dunas',
+  [Biome.SNOWY_MOUNTAINS]: 'Picos Nevados',
+  [Biome.OCEAN]: 'Costa / Oceano',
 };
 
 function ensureFlyBadge() {
@@ -67,16 +69,20 @@ export function update(dt, data) {
     fpsTimer = 0;
   }
 
-  // Debug display with Biome info
+  // Debug display with Biome info & Game Time
   if (debugEl && data.position) {
     const p = data.position;
     const biome = getBiomeAt(Math.floor(p.x), Math.floor(p.z));
     const biomeName = BIOME_NAMES[biome] || 'Desconhecido';
+    const timeStr = getGameTimeString();
+    const day = isDaytime();
+    const timeIcon = day ? '☀️' : '🌙';
 
     debugEl.innerHTML =
-      `<b>FPS:</b> ${currentFps}<br>` +
+      `<b>FPS:</b> <span style="color:${currentFps >= 50 ? '#4ade80' : '#f87171'}">${currentFps}</span><br>` +
       `<b>XYZ:</b> ${p.x.toFixed(1)} / ${p.y.toFixed(1)} / ${p.z.toFixed(1)}<br>` +
-      `<b>Bioma:</b> <span style="color:#4ade80;">${biomeName}</span>`;
+      `<b>Bioma:</b> <span style="color:#38bdf8;">${biomeName}</span><br>` +
+      `<b>Hora:</b> ${timeIcon} <span style="color:#fde047;">${timeStr}</span> (${day ? 'Dia' : 'Noite'})`;
   }
 
   // Fly badge visibility
