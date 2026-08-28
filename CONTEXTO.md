@@ -1,58 +1,84 @@
-# CONTEXTO GLOBAL DO PROJETO: VOXELCRAFT 3D
+# CONTEXTO GLOBAL DO PROJETO: VOXELCRAFT 3D (v0.3.0)
 
-Este documento é a referência técnica e de arquitetura central do **VoxelCraft**. Ele foi elaborado para que qualquer inteligência artificial, agente ou desenvolvedor humano possa se orientar imediatamente, compreender o código-fonte, respeitar os padrões estabelecidos e continuar o desenvolvimento a partir do ponto atual.
+Este documento é a referência técnica, de arquitetura e de design central do **VoxelCraft 3D**. Ele foi elaborado para que qualquer inteligência artificial, agente ou desenvolvedor humano possa se orientar imediatamente, compreender o código-fonte, respeitar os padrões estabelecidos, entender a visão macro do jogo e continuar o desenvolvimento com máxima solidez.
 
----
-
-## 1. Visão Geral do Projeto
-
-O **VoxelCraft** é um jogo sandbox voxel 3D no estilo Minecraft clássico, desenvolvido para rodar com alta performance e estética moderna diretamente no navegador web.
-
-- **Stack Tecnológico**:
-  - **Linguagem**: JavaScript (ES Modules modernos).
-  - **Renderizador 3D**: [Three.js](https://threejs.org/) (versão `^0.170.0`).
-  - **Build Tool / Dev Server**: [Vite](https://vite.dev/) (`^6.0.0`).
-  - **Áudio**: Web Audio API sintetizada proceduralmente (zero dependência de arquivos externos).
-  - **Interface**: HTML5 + CSS3 (Glassmorphism, tipografia Outfit e JetBrains Mono).
+> [!IMPORTANT]
+> **Filosofia de Desenvolvimento & O Ciclo da Vida do Jogo**:
+> O VoxelCraft opera sobre uma visão macro interconectada onde **toda nova adição deve se integrar harmonicamente às outras partes do ecossistema**.
+> Nenhuma funcionalidade existe isolada: upgrades, matérias-primas e ferramentas seguem uma cadeia lógica de causa e efeito (*bloco bruto $\rightarrow$ refinamento $\rightarrow$ ferramentas $\rightarrow$ novas capacidades $\rightarrow$ sobrevivência e combate*).
+> **Regra de Ouro**: A cada nova funcionalidade, refatoração ou melhoria concluída, este documento `CONTEXTO.md` **deve ser rigorosamente atualizado** com as novas estruturas, mecânicas implementadas e sugestões para os próximos passos. Pense antes de aplicar, elabore antes de mexer, nunca quebre o que já está funcionando!
 
 ---
 
-## 2. Estrutura de Diretórios e Arquivos
+## 1. Visão Geral do Projeto & Cadeia de Progressão
+
+O **VoxelCraft** é um jogo sandbox voxel 3D no estilo Minecraft autêntico, desenvolvido para rodar com 60 FPS constantes, estética visual premium e zero assets externos pesados diretamente no navegador web.
+
+### 🌳 O Ciclo Autêntico de Progressão (*Progression Loop*):
+```
+[Tronco de Carvalho] (Minerado com mão)
+        ↓ (Crafting 2x2 ou 3x3)
+[Tábuas de Madeira] ──→ [Gravetos] & [Bancada de Trabalho 3x3]
+        ↓
+[Picareta de Madeira] ──→ Minera [Pedregulho / Pedra]
+        ↓
+[Fornalha 3x3] (8 Pedregulhos) + [Ferramentas de Pedra] ──→ Minera [Minério de Ferro] & [Carvão]
+        ↓
+[Fundição na Fornalha] (Minério de Ferro + Carvão/Madeira)
+        ↓
+[Barra de Ferro (Lingote)] & [Bife Assado] (Carne crua assada na fornalha)
+        ↓
+[Era do Ferro]: Picareta de Ferro + Espada de Ferro + Armadura Completa (Capacete, Peitoral, Calças, Botas)
+        ↓
+[Sobrevivência & Combate]: Exploração de Cavernas 3D com Tochas, Combate contra Zumbis, Esqueletos e Aranhas!
+```
+
+---
+
+## 2. Estrutura de Diretórios e Módulos
 
 ```
-c:\Users\gabri\jogo\
+VOXELCRAFT/
 ├── client/
-│   ├── index.html                 # Ponto de entrada HTML, estilos CSS e canvas
+│   ├── index.html                 # Layout HTML, tela inicial premium, HUD de escudos e corações, modais CSS
 │   └── src/
-│       ├── main.js                # Bootstrap e loop central do jogo
+│       ├── main.js                # Bootstrap e loop central do jogo (conecta mundo, IA, fornalha, clima e saves)
 │       ├── engine/
-│       │   ├── camera.js          # Câmera FPS, Pointer Lock, yaw/pitch
+│       │   ├── camera.js          # Câmera FPS, Pointer Lock, sensibilidade e FOV
 │       │   ├── input.js           # Gerenciador de eventos de teclado
-│       │   ├── interaction.js     # Quebra/colocação de blocos e combate a mobs
+│       │   ├── interaction.js     # Quebra progressiva de blocos, combate, fornalha, bancada e alimentação
 │       │   ├── loop.js            # Game Loop baseado em requestAnimationFrame
 │       │   ├── raycast.js         # Raycaster DDA através da grade voxel
-│       │   └── soundFx.js         # Sintetizador procedural Web Audio API
+│       │   ├── saveManager.js     # Persistência automática no LocalStorage (mundo, inventário, posição, vida)
+│       │   └── soundFx.js         # Sintetizador procedural Web Audio API (passos, ticks, fundição, combate)
 │       ├── entities/
-│       │   ├── player.js          # Física AABB, pulo, voo 3x Espaço, dano de queda
-│       │   ├── hand.js            # Braço 3D em primeira pessoa, empunhadura e animações
-│       │   └── mobManager.js      # Sistema de mobs (IA, modelos 3D, Porco, Zumbi)
+│       │   ├── player.js          # Física AABB, pulo, passos dinâmicos, mitigação de armadura e regeneração
+│       │   ├── hand.js            # Braço 3D em primeira pessoa, empunhadura e animações de ataque
+│       │   ├── mobManager.js      # IA tática: Zumbis melee, Esqueletos arqueiros (flechas), Aranhas e Porcos
+│       │   └── dropManager.js     # Entidades de drops 3D flutuantes com magnetismo ao jogador
 │       ├── rendering/
-│       │   ├── sceneSetup.js      # Criação de Renderer, Scene, Luzes, Fog
+│       │   ├── sceneSetup.js      # Criação de Renderer, Scene, Luzes direcionais/ambientais e Fog
 │       │   ├── blockPreview.js    # Modelos 3D de blocos e armas segurados na mão
-│       │   ├── particles.js       # Sistema de partículas 3D (mineração e combate)
+│       │   ├── particles.js       # Sistema de partículas 3D (mineração, dano e combate)
 │       │   └── textures/
-│       │       ├── textureGenerator.js # Gerador procedural de texturas 16x16
-│       │       └── textureAtlas.js     # Atlas de texturas 4x4 (64x64) e UVs
+│       │       ├── textureGenerator.js # Gerador procedural de texturas 16x16 (fornalha, baú, minérios)
+│       │       └── textureAtlas.js     # Atlas de texturas 4x8 (32 slots) e coordenadas UVs
 │       ├── ui/
-│       │   ├── hud.js             # Overlay de FPS, Coordenadas XYZ, Bioma e Voo
-│       │   ├── hotbar.js          # Barra rápida inferior sincronizada
-│       │   ├── inventory.js       # Inventário completo estilo Minecraft (Tecla E)
-│       │   ├── health.js          # Barra de corações e vinheta de dano
-│       │   └── blockIcon.js       # Gerador de ícones isométricos e 2D de itens
+│       │   ├── uiManager.js       # Autoridade central de estados (Game State, modais e Pointer Lock)
+│       │   ├── titleScreen.js     # Gerenciador da tela inicial premium, modais de controles/configurações e pausa
+│       │   ├── hud.js             # Overlay de FPS, Coordenadas XYZ, Bioma, Relógio ☀️/🌙 e Voo
+│       │   ├── hotbar.js          # Barra rápida inferior sincronizada (slots 1..9)
+│       │   ├── inventory.js       # Inventário completo (27 storage + 9 hotbar), 4 slots de armadura e 2x2 crafting
+│       │   ├── crafting.js        # Catálogo de receitas 2x2/3x3, Bancada 3x3 e Livro de Receitas (?)
+│       │   ├── furnace.js         # GUI e lógica da Fornalha (combustível, fundição de ferro, assar carnes)
+│       │   ├── health.js          # Barra de corações e barra de escudos/armadura
+│       │   └── blockIcon.js       # Gerador de ícones 2D e isométricos de itens, armas, armaduras e comidas
 │       └── world/
-│           ├── blockTypes.js      # Registro de tipos de blocos, armas e itens
+│           ├── blockTypes.js      # Registro completo de blocos, ferramentas, armaduras, comidas e durezas
 │           ├── chunk.js           # Volume 16x64x16 de blocos e geração de mesh
-│           └── worldManager.js    # Biomas procedurais e streaming infinito
+│           ├── dayNightCycle.js   # Ciclo 24h orbital de Sol e Lua 3D com atmosfera e névoa dinâmica
+│           ├── weather.js         # Clima dinâmico (chuva 3D procedural e escurecimento do céu)
+│           └── worldManager.js    # Biomas procedurais, Cavernas 3D com entradas e streaming infinito
 ├── package.json                   # Dependências e scripts npm
 ├── vite.config.js                 # Configuração do Vite
 └── CONTEXTO.md                    # Documento mestre de arquitetura
@@ -60,84 +86,114 @@ c:\Users\gabri\jogo\
 
 ---
 
-## 3. Convenções de Coordenadas e Física
+## 3. Arquitetura Desacoplada de UI & Cursor (`uiManager.js`)
 
-1. **Escala**:
-   - $1 \text{ bloco} = 1.0 \times 1.0 \times 1.0 \text{ unidade no Three.js}$.
-   - Posição dos blocos: inteiros discretos `(x, y, z)`.
-   - Voxel $(x, y, z)$ ocupa o volume de $[x, x+1] \times [y, y+1] \times [z, z+1]$.
-2. **Jogador (`player.js`)**:
-   - Raio horizontal: `HALF_W = 0.3`.
-   - Altura total: `HEIGHT = 1.8`.
-   - Altura dos olhos da câmera: `EYE = 1.62` acima dos pés (`pos.y`).
-   - Posição da câmera: `camera.position.set(pos.x, pos.y + EYE, pos.z)`.
-3. **Vetores de Movimento**:
-   - Frente (<kbd>W</kbd>): $\vec{F} = (-\sin(\text{yaw}), -\cos(\text{yaw}))$.
-   - Trás (<kbd>S</kbd>): $-\vec{F}$.
-   - Direita (<kbd>D</kbd>): $\vec{R} = (\cos(\text{yaw}), -\sin(\text{yaw}))$.
-   - Esquerda (<kbd>A</kbd>): $-\vec{R}$.
-4. **Voo e Pulo**:
-   - Pulo: <kbd>ESPAÇO</kbd> com Jump Buffer e Coyote Time.
-   - Voo: Ativado/desativado ao pressionar <kbd>ESPAÇO</kbd> **3 vezes seguidas** em menos de 0.55s.
-   - Dano de Queda: Quedas de até 3 blocos são seguras; acima disso, $\text{dano} = \lfloor \text{altura} - 3 \rfloor \times 1.5$.
+Para garantir zero bugs de dependência circular e transições 100% fluidas de mouse:
+- **`uiManager.js`** centraliza o `currentGameState` (`TITLE_SCREEN`, `PLAYING`, `PAUSED`) e a `activeWindow` (`NONE`, `INVENTORY`, `CRAFTING_TABLE`, `FURNACE`, `RECIPE_BOOK`, `CONTROLS`, `SETTINGS`).
+- **Controle de Pointer Lock**:
+  - Durante o jogo em primeira pessoa, o mouse fica travado para girar a câmera.
+  - Ao clicar em "INICIAR JOGO", a transição assíncrona do navegador é protegida por `wasPointerLocked`, evitando pausas indevidas no arranque.
+  - Ao abrir qualquer menu (<kbd>E</kbd>, Bancada 3x3, Fornalha, Livro de Receitas), o cursor é liberado automaticamente para interação rápida com os slots.
+  - Ao fechar o menu (com <kbd>E</kbd>, <kbd>ESC</kbd> ou botão ✕), o ponteiro do mouse é **automaticamente recapturado (`requestPointerLock`)**, voltando direto ao jogo sem exigir cliques manuais.
+  - Clicar na tela durante o jogo ativo reativa o Pointer Lock de forma resiliente.
 
 ---
 
-## 4. Atlas de Texturas e Renderização
+## 4. Fornalha e Sistema de Fundição (`furnace.js`)
 
-- **Atlas**: Grade uniforme $4 \times 4$ de texturas $16 \times 16$ pixels em um canvas de $64 \times 64$ pixels.
-- **Filtro WebGL**: `NearestFilter` com `generateMipmaps = false` e `sRGBColorSpace`.
-- **UV Mapping**: Cada face possui mapeamento exato sem sangramento de pixels (*bleed-free*).
-
----
-
-## 5. Sistema de Biomas Procedurais e Mundo Infinito
-
-- **Biomas Atuais**:
-  1. `Biome.PLAINS`: Planícies/florestas verdes com árvores de carvalho.
-  2. `Biome.DESERT`: Dunas onduladas de areia dourada.
-  3. `Biome.SNOWY_MOUNTAINS`: Picos elevados (acima de 45 blocos) com neve e pinheiros.
-  4. `Biome.OCEAN`: Praias de areia ao nível do mar (`y = 18`) e águas profundas.
-- **Streaming de Chunks**:
-  - `RENDER_RADIUS = 5` (11x11 chunks ativos ao redor do jogador).
-  - `UNLOAD_RADIUS = 7` (descarrega e libera memória de chunks distantes).
-  - Chunks novos são criados e renderizados incrementalmente (até 2 por frame) para manter 60 FPS estáveis.
+- **Bloco de Fornalha (`FURNACE`)**:
+  - Fabricado na Bancada 3×3 com 8 Pedregulhos ao redor do centro.
+  - Ao clicar com **Botão Direito** no bloco de fornalha no mundo 3D, abre a GUI de Fundição.
+- **Funcionamento & Receitas**:
+  - **Slot Superior (Input)**:
+    - Minério de Ferro $\rightarrow$ **Barra de Ferro (`IRON_INGOT`)** (tempo: 3.5s)
+    - Costela de Porco Crua $\rightarrow$ **Bife Assado (`COOKED_PORKCHOP`)** (tempo: 2.5s)
+    - Pedregulho $\rightarrow$ **Pedra Lisa (`STONE`)** (tempo: 3.0s)
+  - **Slot Inferior (Combustível / Fuel)**:
+    - Carvão: 16 segundos de queima contínua (rende ~5 fundições)
+    - Tronco de Madeira: 6 segundos
+    - Tábuas de Madeira: 3 segundos
+    - Graveto: 1.5 segundo
+  - **Slot Direito (Produto)**: Coleta do lingote ou alimento assado com som de sucesso.
+  - Animação de chama acesa e barra de progresso visual de fundição.
 
 ---
 
-## 6. Mobs e Combate
+## 5. Sistema de Armaduras, Saúde & Alimentação
 
-- **Mobs Atuais (`mobManager.js`)**:
-  - `MobType.PIG` (Pacífico): Vagueia, foge ao ser atacado, dropa costela de porco.
-  - `MobType.ZOMBIE` (Hostil): Detecta o jogador até 18 blocos, persegue e ataca corpo a corpo.
-- **Combate (`interaction.js`)**:
-  - Botão Esquerdo ataca mobs no raio de alcance com a arma equipada.
-  - Espada de Ferro causa 7 de dano + knockback forte.
-  - Punho causa 2 de dano + knockback padrão.
-  - Mobs piscam em vermelho (*Damage Flash*) e soltam partículas de impacto.
-
----
-
-## 7. Sistema de Inventário
-
-- **Atalho**: Tecla <kbd>E</kbd> abre e fecha a interface.
-- **Estrutura**:
-  - 9 Slots de Hotbar (índices `0..8`).
-  - 27 Slots de Armazenamento Geral (índices `9..35`).
-- **Interação**: Clique em um slot para pegar o item no cursor e clique em outro para mover ou trocar.
+- **Slots de Equipamento no Inventário** (<kbd>E</kbd>):
+  - 4 slots dedicados: Capacete, Peitoral, Calças e Botas.
+  - Clicar em qualquer armadura no inventário a equipa automaticamente no slot correto.
+- **Valores de Defesa & Mitigação de Dano (`player.js`)**:
+  - Capacete de Ferro: +2 Defesa
+  - Peitoral de Ferro: +6 Defesa
+  - Calças de Ferro: +5 Defesa
+  - Botas de Ferro: +2 Defesa
+  - Armadura Completa: 15 Defesa $\rightarrow$ Reduz até 60% de todo dano recebido de mobs e quedas!
+  - Barra de 10 Escudos (`🛡️`) exibida no HUD acima dos corações de vida.
+- **Alimentação Regenerativa**:
+  - Clicar com **Botão Direito** segurando `COOKED_PORKCHOP` restaura +8 pontos de vida (4 corações).
+  - Clicar segurando `PORKCHOP` cru restaura +3 pontos de vida (1.5 coração).
 
 ---
 
-## 8. Backlog e Sugestões de Próximos Passos
+## 6. Inteligência Artificial Expandida & Novos Mobs (`mobManager.js`)
 
-Caso deseje continuar expandindo o jogo em sessões futuras, aqui estão as metas recomendadas:
-1. **Sistema de Crafting (Bancada de Trabalho 3x3 e Fabricação Básica 2x2)**.
-2. **Ciclo Dia/Noite com Sol, Lua e Iluminação Dinâmica**.
-3. **Novos Mobs (ex: Esqueleto arqueiro que atira flechas, Creeper que explode, Ovelha com lã)**.
-4. **Armaduras (Capacete, Peitoral, Calça e Botas)**.
-5. **Sistema de Sons de Passos por tipo de bloco (Grama, Pedra, Areia, Madeira, Água)**.
-6. **Sistema de Salvamento no LocalStorage (Salvar mundo e inventário do jogador)**.
+1. **Esqueleto Arqueiro (`MobType.SKELETON`)**:
+   - Modelo 3D com ossos, arco e órbitas escuras.
+   - **IA de Combate à Distância**: Mantém distância tática de 8 a 12 blocos do jogador (recua se o jogador avança e persegue se o jogador foge).
+   - Atira projéteis de **Flechas** 3D com física e gravidade a cada 2.2s.
+   - Queima sob a luz do sol durante o dia.
+   - Dropa `BONE` (Osso) e `ARROW` (Flecha).
+2. **Aranha Noturna/Subterrânea (`MobType.SPIDER`)**:
+   - Modelo 3D com 8 patas articuladas e olhos vermelhos brilhantes (`0xef4444`).
+   - Movimentação ágil (velocidade 4.5) e ataque com salto (*pounce leap*) quando a menos de 4.5 blocos.
+   - Dropa `STRING` (Linha de teia) e `SPIDER_EYE` (Olho de aranha).
+3. **Zumbi (`MobType.ZOMBIE`)**:
+   - Ataque corpo-a-corpo com braços estendidos e queima solar durante o dia.
+   - Dropa `ROTTEN_FLESH` e raramente `IRON_INGOT`.
+4. **Porco (`MobType.PIG`)**:
+   - Mob pacífico diurno que vaga pelos campos e foge em disparada ao receber dano.
+   - Dropa `PORKCHOP`.
 
 ---
 
-*Documento gerado e mantido atualizado pelo assistente Antigravity.*
+## 7. Clima Dinâmico & Atmosfera (`weather.js`)
+
+- Alternância natural entre dias ensolarados e **Chuva / Tempestades**.
+- Efeito de 800 partículas de chuva 3D caindo ao redor do jogador com aceleração gravitacional e transição suave de opacidade.
+- Névoa e céu escurecem dinamicamente durante o período chuvoso.
+
+---
+
+## 8. Persistência & Salvamento Local (`saveManager.js`)
+
+- Salva o estado completo no `localStorage`:
+  - Posição tridimensional do jogador `(x, y, z)`
+  - Pontos de vida atuais
+  - Itens da Barra Rápida (Hotbar)
+  - Peças de Armadura equipadas
+- Auto-save periódico a cada 30 segundos de gameplay.
+- Carregamento automático ao abrir o jogo.
+
+---
+
+## 9. Backlog & Sugestões para os Próximos Passos (v0.4.0)
+
+Caso deseje continuar expandindo o jogo em sessões futuras, aqui estão as metas prioritárias recomendadas:
+
+1. **Baú de Armazenamento Interativo (*Chest Storage GUI*)**:
+   - Bloco `CHEST` com menu de 27 slots para guardar itens permanentemente no mundo.
+2. **Arco e Flechas Funcionais para o Jogador**:
+   - Craftar Arco (`BOW`) com 3 Gravetos e 3 Linhas de Teia.
+   - Disparar flechas com o botão direito mirando na primeira pessoa!
+3. **Creeper (Mob Icônico)**:
+   - Mob silencioso que persegue o jogador, infla com contagem regressiva e explode abrindo crateras no cenário voxel.
+4. **Ciclo de Cultivo e Agricultura (*Farming*)**:
+   - Enxada de Madeira/Pedra/Ferro, arar terra, plantar sementes e colher Trigo para fazer Pão.
+5. **Bioma de Taiga e Cavernas com Estalactites**:
+   - Pinheiros gigantes e formações de estalactites rochosas no teto das cavernas subterrâneas.
+
+---
+
+*Documento gerado e mantido rigorosamente atualizado pelo assistente Antigravity para a versão v0.3.0.*

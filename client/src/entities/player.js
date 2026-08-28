@@ -7,7 +7,7 @@ import { getCamera, isPointerLocked } from '../engine/camera.js';
 import { getBlockAtWorld, getSpawnPosition } from '../world/worldManager.js';
 import { BlockType, isSolid } from '../world/blockTypes.js';
 import { isKeyDown } from '../engine/input.js';
-import { playJumpSound, playFlyToggleSound, playHurtSound } from '../engine/soundFx.js';
+import { playJumpSound, playFlyToggleSound, playHurtSound, playStepSound } from '../engine/soundFx.js';
 
 // ── Tuning constants ──────────────────────────────────────
 const HALF_W = 0.3;
@@ -22,6 +22,8 @@ const FLY_VERTICAL_SPEED = 10.0;
 const SWIM_SPEED = 3.6;
 const ACCEL = 65;
 const FRICTION = 14;
+
+let stepTimer = 0.0;
 
 const MAX_HEALTH = 20;
 const DROWN_TOLERANCE = 6.0;
@@ -78,17 +80,33 @@ export function isPlayerFlying() { return isFlying; }
 export function getPlayerPosition() { return pos; }
 export function getPlayerState() { return { onGround, moving, inWater, submerged, isFlying }; }
 
-export function damage(amount) {
+import { getEquippedArmorDefense } from '../ui/inventory.js';
+
+export function damage(amount, knockbackDir = null) {
   if (health <= 0) return;
-  health = Math.max(0, health - amount);
+  const def = getEquippedArmorDefense();
+  const mitigation = Math.min(0.80, def * 0.04);
+  const finalDamage = Math.max(1, amount * (1 - mitigation));
+
+  health = Math.max(0, health - finalDamage);
   damageFlash = 1.0;
   regenTimer = 0;
   playHurtSound();
+
+  if (knockbackDir) {
+    velocity.x += knockbackDir.x * 5;
+    velocity.z += knockbackDir.z * 5;
+    velocity.y = 3.5;
+  }
 }
 
 export function heal(amount) {
   if (health <= 0) return;
   health = Math.min(MAX_HEALTH, health + amount);
+}
+
+export function healPlayer(amount) {
+  heal(amount);
 }
 
 export function respawn() {
@@ -283,10 +301,23 @@ export function updatePlayer(dt) {
       const k = 1 - Math.exp(-ACCEL * dt);
       velocity.x += (tx * speed - velocity.x) * k;
       velocity.z += (tz * speed - velocity.z) * k;
+
+      const horizSpeed = Math.hypot(velocity.x, velocity.z);
+      if (onGround && !inWater && horizSpeed > 1.2 && !isFlying) {
+        stepTimer += dt;
+        if (stepTimer >= 0.42) {
+          stepTimer = 0.0;
+          const underBlock = getBlockAtWorld(Math.floor(pos.x), Math.floor(pos.y - 0.2), Math.floor(pos.z));
+          playStepSound(underBlock);
+        }
+      } else {
+        stepTimer = 0.0;
+      }
     } else {
       const damp = Math.exp(-FRICTION * dt);
       velocity.x *= damp;
       velocity.z *= damp;
+      stepTimer = 0.0;
     }
 
     const tryStepUp = (dx, dz) => {

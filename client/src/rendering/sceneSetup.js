@@ -29,6 +29,10 @@ export function createRenderer() {
   return renderer;
 }
 
+let hemiLight = null;
+let ambientLight = null;
+let sunlight = null;
+
 /**
  * Create the scene with atmospheric lighting.
  * @returns {THREE.Scene}
@@ -37,16 +41,15 @@ export function createScene() {
   scene = new THREE.Scene();
 
   // Hemisphere light — sky color above, ground color below
-  // This gives natural ambient lighting variation
-  const hemiLight = new THREE.HemisphereLight(0x87CEEB, 0x556633, 0.6);
+  hemiLight = new THREE.HemisphereLight(0x87CEEB, 0x556633, 0.6);
   scene.add(hemiLight);
 
   // Ambient light — soft base fill
-  const ambient = new THREE.AmbientLight(0xffffff, 0.3);
-  scene.add(ambient);
+  ambientLight = new THREE.AmbientLight(0xffffff, 0.3);
+  scene.add(ambientLight);
 
-  // Directional light — sun simulation
-  const sunlight = new THREE.DirectionalLight(0xfff5e0, 1.0);
+  // Directional light — sun/moon simulation
+  sunlight = new THREE.DirectionalLight(0xfff5e0, 1.0);
   sunlight.position.set(80, 120, 50);
   scene.add(sunlight);
 
@@ -54,6 +57,14 @@ export function createScene() {
   scene.fog = new THREE.Fog(0x78b9e8, 50, 160);
 
   return scene;
+}
+
+export function getLights() {
+  return {
+    hemiLight,
+    ambientLight,
+    dirLight: sunlight,
+  };
 }
 
 /**

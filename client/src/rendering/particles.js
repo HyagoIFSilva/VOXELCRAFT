@@ -6,16 +6,21 @@ import * as THREE from 'three';
 import { BlockType } from '../world/blockTypes.js';
 
 const BLOCK_COLORS = {
-  [BlockType.GRASS]: 0x5a9e37,
-  [BlockType.DIRT]: 0x8B6914,
-  [BlockType.STONE]: 0x888888,
-  [BlockType.SAND]: 0xe8d68a,
-  [BlockType.SNOW]: 0xf0f0f0,
-  [BlockType.WOOD_LOG]: 0x6b4226,
-  [BlockType.LEAVES]: 0x3a7a20,
-  [BlockType.COAL_ORE]: 0x444444,
-  [BlockType.IRON_ORE]: 0xb8956a,
-  [BlockType.WATER]: 0x3880d0,
+  [BlockType.GRASS]:         0x5a9e37,
+  [BlockType.DIRT]:          0x8B6914,
+  [BlockType.STONE]:         0x888888,
+  [BlockType.SAND]:          0xe8d68a,
+  [BlockType.SNOW]:          0xf0f0f0,
+  [BlockType.WOOD_LOG]:      0x6b4226,
+  [BlockType.LEAVES]:        0x3a7a20,
+  [BlockType.COAL_ORE]:      0x444444,
+  [BlockType.IRON_ORE]:      0xb8956a,
+  [BlockType.WATER]:         0x3880d0,
+  [BlockType.CACTUS]:        0x16a34a,
+  [BlockType.WOOD_PLANKS]:   0xb45309,
+  [BlockType.COBBLESTONE]:   0x64748b,
+  [BlockType.FLOWER_RED]:    0xdc2626,
+  [BlockType.FLOWER_YELLOW]: 0xeab308,
 };
 
 let scene = null;

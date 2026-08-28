@@ -268,3 +268,133 @@ export function playInventorySound(open = true) {
   osc.start(now);
   osc.stop(now + 0.08);
 }
+
+export function playStepSound(blockType = 1) {
+  const ctx = getAudioContext();
+  if (!ctx) return;
+
+  const now = ctx.currentTime;
+  const bufferSize = Math.floor(ctx.sampleRate * 0.04);
+  const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+  const data = buffer.getChannelData(0);
+
+  for (let i = 0; i < bufferSize; i++) {
+    data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (bufferSize * 0.25));
+  }
+
+  const noise = ctx.createBufferSource();
+  noise.buffer = buffer;
+
+  const filter = ctx.createBiquadFilter();
+  filter.type = 'lowpass';
+
+  // Soft muted acoustic footsteps
+  let freq = 380;
+  let gainVol = 0.06;
+
+  if (blockType === 3 || blockType === 8 || blockType === 9 || blockType === 13) {
+    // Stone: crisp tap
+    freq = 650;
+    gainVol = 0.07;
+  } else if (blockType === 4) {
+    // Sand: soft rustle
+    freq = 300;
+    gainVol = 0.05;
+  } else if (blockType === 5) {
+    // Snow: soft crunch
+    freq = 400;
+    gainVol = 0.06;
+  } else if (blockType === 6 || blockType === 12 || blockType === 16) {
+    // Wood: warm thud
+    freq = 480;
+    gainVol = 0.06;
+  }
+
+  filter.frequency.setValueAtTime(freq, now);
+
+  const gain = ctx.createGain();
+  gain.gain.setValueAtTime(gainVol, now);
+  gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.04);
+
+  noise.connect(filter);
+  filter.connect(gain);
+  gain.connect(ctx.destination);
+
+  noise.start(now);
+}
+
+export function playBlockHitTickSound(blockType = 1) {
+  const ctx = getAudioContext();
+  if (!ctx) return;
+
+  const now = ctx.currentTime;
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+
+  osc.type = 'triangle';
+  const freq = (blockType === 3 || blockType === 8 || blockType === 9 || blockType === 13) ? 280 : 180;
+  osc.frequency.setValueAtTime(freq, now);
+  osc.frequency.exponentialRampToValueAtTime(60, now + 0.03);
+
+  gain.gain.setValueAtTime(0.06, now);
+  gain.gain.exponentialRampToValueAtTime(0.001, now + 0.03);
+
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+
+  osc.start(now);
+  osc.stop(now + 0.03);
+}
+
+export function playPickupSound() {
+  const ctx = getAudioContext();
+  if (!ctx) return;
+
+  const now = ctx.currentTime;
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+
+  osc.type = 'sine';
+  osc.frequency.setValueAtTime(440, now);
+  osc.frequency.exponentialRampToValueAtTime(880, now + 0.09);
+
+  gain.gain.setValueAtTime(0.22, now);
+  gain.gain.exponentialRampToValueAtTime(0.01, now + 0.09);
+
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+
+  osc.start(now);
+  osc.stop(now + 0.09);
+}
+
+export function playCraftSound() {
+  const ctx = getAudioContext();
+  if (!ctx) return;
+
+  const now = ctx.currentTime;
+
+  // 2-tone melodic chime for crafting success
+  const osc1 = ctx.createOscillator();
+  const osc2 = ctx.createOscillator();
+  const gain = ctx.createGain();
+
+  osc1.type = 'triangle';
+  osc2.type = 'sine';
+
+  osc1.frequency.setValueAtTime(523.25, now); // C5
+  osc1.frequency.setValueAtTime(659.25, now + 0.07); // E5
+  osc2.frequency.setValueAtTime(783.99, now + 0.07); // G5
+
+  gain.gain.setValueAtTime(0.25, now);
+  gain.gain.exponentialRampToValueAtTime(0.01, now + 0.22);
+
+  osc1.connect(gain);
+  osc2.connect(gain);
+  gain.connect(ctx.destination);
+
+  osc1.start(now);
+  osc2.start(now + 0.07);
+  osc1.stop(now + 0.22);
+  osc2.stop(now + 0.22);
+}
