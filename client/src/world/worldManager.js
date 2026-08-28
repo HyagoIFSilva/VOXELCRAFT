@@ -219,6 +219,61 @@ function tryPlaceFlower(chunk, lx, y, lz, flowerType) {
   }
 }
 
+// ── 3D Noise for Caves & Caverns ──────────────────────────
+
+function hash3D(x, y, z) {
+  let h = (x * 374761393 + y * 668265263 + z * 982451653 + 1234567) | 0;
+  h = ((h ^ (h >> 13)) * 1274126177) | 0;
+  return (h & 0x7fffffff) / 0x7fffffff;
+}
+
+function smoothNoise3D(x, y, z) {
+  const ix = Math.floor(x);
+  const iy = Math.floor(y);
+  const iz = Math.floor(z);
+  const fx = x - ix;
+  const fy = y - iy;
+  const fz = z - iz;
+
+  const wx = fx * fx * (3 - 2 * fx);
+  const wy = fy * fy * (3 - 2 * fy);
+  const wz = fz * fz * (3 - 2 * fz);
+
+  const c000 = hash3D(ix, iy, iz);
+  const c100 = hash3D(ix + 1, iy, iz);
+  const c010 = hash3D(ix, iy + 1, iz);
+  const c110 = hash3D(ix + 1, iy + 1, iz);
+  const c001 = hash3D(ix, iy, iz + 1);
+  const c101 = hash3D(ix + 1, iy, iz + 1);
+  const c011 = hash3D(ix, iy + 1, iz + 1);
+  const c111 = hash3D(ix + 1, iy + 1, iz + 1);
+
+  const x00 = c000 * (1 - wx) + c100 * wx;
+  const x10 = c010 * (1 - wx) + c110 * wx;
+  const x01 = c001 * (1 - wx) + c101 * wx;
+  const x11 = c011 * (1 - wx) + c111 * wx;
+
+  const y0 = x00 * (1 - wy) + x10 * wy;
+  const y1 = x01 * (1 - wy) + x11 * wy;
+
+  return y0 * (1 - wz) + y1 * wz;
+}
+
+export function isCaveAir(wx, wy, wz, surfaceHeight) {
+  // Caves form from y=2 up to near surface height
+  if (wy < 2 || wy > surfaceHeight) return false;
+
+  // Protect ocean beds from leaking water everywhere
+  if (surfaceHeight <= SEA_LEVEL + 1 && wy >= surfaceHeight - 2) return false;
+
+  // Two 3D noise fields intersecting (Worm Cave model)
+  const n1 = smoothNoise3D(wx * 0.045, wy * 0.075, wz * 0.045) - 0.5;
+  const n2 = smoothNoise3D(wx * 0.045 + 137, wy * 0.075 + 137, wz * 0.045 + 137) - 0.5;
+
+  const density = n1 * n1 + n2 * n2;
+  return density < 0.022; // Tunnel threshold
+}
+
 // ── Procedural Chunk Generation ───────────────────────────
 
 function generateChunk(cx, cz) {
@@ -260,6 +315,16 @@ function generateChunk(cx, cz) {
             block = BlockType.GRASS;
           }
         }
+
+        // 3D Cave Carving Pass: Hollows out tunnels and cave entrances
+        if (y >= 2 && isCaveAir(wx, y, wz, height)) {
+          if (y <= SEA_LEVEL - 8) {
+            block = BlockType.WATER; // Underground cave pool
+          } else {
+            block = BlockType.AIR; // Hollow cave passage
+          }
+        }
+
         chunk.setBlock(x, y, z, block);
       }
 
@@ -362,6 +427,11 @@ export function getBlockAtWorld(wx, wy, wz) {
   if (wy > height) {
     return wy <= SEA_LEVEL ? BlockType.WATER : BlockType.AIR;
   }
+
+  if (wy >= 2 && isCaveAir(wx, wy, wz, height)) {
+    return wy <= SEA_LEVEL - 8 ? BlockType.WATER : BlockType.AIR;
+  }
+
   if (wy === height) {
     const biome = getBiomeAt(wx, wz);
     if (biome === Biome.DESERT || height <= SEA_LEVEL + 1) return BlockType.SAND;

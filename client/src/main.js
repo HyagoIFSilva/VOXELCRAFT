@@ -14,13 +14,19 @@ import { update as updateHud } from './ui/hud.js';
 import { initHotbar, updateHotbar } from './ui/hotbar.js';
 import { initInventory } from './ui/inventory.js';
 import { initInteraction, updateInteraction } from './engine/interaction.js';
-import { initPlayer, updatePlayer } from './entities/player.js';
+import { initPlayer, updatePlayer, getPlayerPosition } from './entities/player.js';
 import { initMobManager, updateMobs, spawnMob, MobType } from './entities/mobManager.js';
 import { initHealthHud, updateHealthHud } from './ui/health.js';
 import { initHand, updateHand } from './entities/hand.js';
 import { initParticles, updateParticles } from './rendering/particles.js';
 import { initDayNightCycle, updateDayNightCycle } from './world/dayNightCycle.js';
-import { initTitleScreen, isTitleScreenActive, isGamePaused, updateTitleCamera } from './ui/titleScreen.js';
+import { initTitleScreen } from './ui/titleScreen.js';
+import { isTitleScreenActive, isGamePaused } from './ui/uiManager.js';
+import { initDropManager, updateDrops } from './entities/dropManager.js';
+import { initCraftingTable } from './ui/crafting.js';
+import { updateFurnaces } from './ui/furnace.js';
+import { initWeather, updateWeather } from './world/weather.js';
+import { saveWorld, loadWorld } from './engine/saveManager.js';
 
 // ── Bootstrap ──────────────────────────────────────────────
 
@@ -38,50 +44,60 @@ const scene = createScene();
 // 4. Day & Night Celestial Cycle & Atmosphere
 initDayNightCycle(scene, getLights());
 
-// 5. Particles
-initParticles(scene);
+// 5. Weather & Rain
+initWeather(scene);
 
-// 6. World (generates initial biomes)
-console.log('[VoxelCraft] Generating world biomes...');
+// 6. Particles & Drops
+initParticles(scene);
+initDropManager(scene);
+
+// 7. World (generates initial biomes and 3D caves)
+console.log('[VoxelCraft] Generating world biomes & 3D caves...');
 generateWorld(scene);
 
-// 7. Camera — spawn above terrain center
+// 8. Camera — spawn above terrain center
 const spawn = getSpawnPosition();
 const camera = createCamera(window.innerWidth / window.innerHeight, spawn);
 scene.add(camera);
 setupCameraResize(camera);
 initPointerLock(getCanvas());
 
-// 8. Title Screen & Menus
+// 9. Title Screen & Central UI Manager
 initTitleScreen(getCanvas());
 
-// 9. Mobs (Pacíficos e Hostis)
+// 10. Mobs (Pacíficos e Hostis)
 initMobManager(scene);
 spawnMob(MobType.PIG, spawn.x + 4, spawn.y, spawn.z + 4);
-spawnMob(MobType.PIG, spawn.x - 4, spawn.y, spawn.z + 5);
 spawnMob(MobType.ZOMBIE, spawn.x + 14, spawn.y, spawn.z + 12);
+spawnMob(MobType.SKELETON, spawn.x - 12, spawn.y, spawn.z + 10);
+spawnMob(MobType.SPIDER, spawn.x + 8, spawn.y, spawn.z - 14);
 
-// 10. Block interaction & Combat
+// 11. Block interaction & Combat
 initInteraction(scene);
 
-// 11. Inventory & Hotbar UI
+// 12. Inventory, Crafting Table & Hotbar UI
 initInventory();
+initCraftingTable();
 initHotbar();
 
-// 12. Player physics + health
+// 13. Player physics + health
 initPlayer();
 initHealthHud();
 
-// 13. First-person hand & weapons (attached to camera)
+// 14. First-person hand & weapons (attached to camera)
 initHand();
 
-console.log(`[VoxelCraft] Ready! Spawn at (${spawn.x}, ${spawn.y}, ${spawn.z})`);
+// Load saved data if available
+loadWorld();
+
+console.log(`[VoxelCraft v0.3.0] Ready! Spawn at (${spawn.x}, ${spawn.y}, ${spawn.z})`);
 
 // ── Game Loop ──────────────────────────────────────────────
 
+let autoSaveTimer = 0;
+
 function update(dt, time) {
   if (isTitleScreenActive()) {
-    updateTitleCamera(dt, camera);
     updateWorld(camera.position, scene);
     updateDayNightCycle(dt, scene, camera, renderer);
     return;
@@ -95,13 +111,23 @@ function update(dt, time) {
   updatePlayer(dt);
   updateWorld(camera.position, scene);
   updateDayNightCycle(dt, scene, camera, renderer);
+  updateWeather(dt, getPlayerPosition());
+  updateFurnaces(dt);
   updateMobs(dt);
+  updateDrops(dt, time);
   updateParticles(dt);
-  updateInteraction();
+  updateInteraction(dt);
   updateHotbar();
   updateHealthHud();
   updateHand(dt, time);
   updateHud(dt, { position: camera.position });
+
+  // Auto-save every 30s
+  autoSaveTimer += dt;
+  if (autoSaveTimer >= 30.0) {
+    autoSaveTimer = 0;
+    saveWorld();
+  }
 }
 
 function renderFrame() {
@@ -109,4 +135,3 @@ function renderFrame() {
 }
 
 startLoop(update, renderFrame);
-

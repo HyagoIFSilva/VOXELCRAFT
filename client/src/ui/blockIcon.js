@@ -38,11 +38,20 @@ export function createBlockIconCanvas(blockType, size = 46) {
   canvas.height = size;
   const ctx = canvas.getContext('2d');
 
-  if (blockType === BlockType.IRON_SWORD) {
-    // Draw 2D Iron Sword icon
+  if (
+    blockType === BlockType.IRON_SWORD ||
+    blockType === BlockType.STONE_SWORD ||
+    blockType === BlockType.WOODEN_SWORD
+  ) {
+    const isIron = blockType === BlockType.IRON_SWORD;
+    const isStone = blockType === BlockType.STONE_SWORD;
+
+    const bladeFill = isIron ? '#f1f5f9' : isStone ? '#94a3b8' : '#b45309';
+    const bladeStroke = isIron ? '#475569' : isStone ? '#334155' : '#78350f';
+
     ctx.lineWidth = 3;
-    ctx.strokeStyle = '#475569';
-    ctx.fillStyle = '#cbd5e1';
+    ctx.strokeStyle = bladeStroke;
+    ctx.fillStyle = bladeFill;
 
     // Blade
     ctx.beginPath();
@@ -55,7 +64,7 @@ export function createBlockIconCanvas(blockType, size = 46) {
     ctx.stroke();
 
     // Guard
-    ctx.strokeStyle = '#334155';
+    ctx.strokeStyle = isIron ? '#334155' : '#451a03';
     ctx.lineWidth = 4;
     ctx.beginPath();
     ctx.moveTo(size * 0.25, size * 0.60);
@@ -73,8 +82,17 @@ export function createBlockIconCanvas(blockType, size = 46) {
     return canvas;
   }
 
-  if (blockType === BlockType.IRON_PICKAXE) {
-    // Draw 2D Pickaxe icon
+  if (
+    blockType === BlockType.IRON_PICKAXE ||
+    blockType === BlockType.STONE_PICKAXE ||
+    blockType === BlockType.WOODEN_PICKAXE
+  ) {
+    const isIron = blockType === BlockType.IRON_PICKAXE;
+    const isStone = blockType === BlockType.STONE_PICKAXE;
+
+    const headColor = isIron ? '#cbd5e1' : isStone ? '#64748b' : '#b45309';
+
+    // Handle
     ctx.lineWidth = 4;
     ctx.strokeStyle = '#78350f';
     ctx.beginPath();
@@ -82,8 +100,9 @@ export function createBlockIconCanvas(blockType, size = 46) {
     ctx.lineTo(size * 0.70, size * 0.30);
     ctx.stroke();
 
+    // Pick head arc
     ctx.lineWidth = 5;
-    ctx.strokeStyle = '#94a3b8';
+    ctx.strokeStyle = headColor;
     ctx.beginPath();
     ctx.arc(size * 0.70, size * 0.30, size * 0.25, -Math.PI * 0.75, -Math.PI * 0.15);
     ctx.stroke();
@@ -91,12 +110,187 @@ export function createBlockIconCanvas(blockType, size = 46) {
     return canvas;
   }
 
-  if (blockType === BlockType.PORKCHOP) {
-    ctx.fillStyle = '#f472b6';
-    ctx.strokeStyle = '#be185d';
+  if (blockType === BlockType.STICK) {
+    ctx.lineWidth = 5;
+    ctx.strokeStyle = '#92400e';
+    ctx.beginPath();
+    ctx.moveTo(size * 0.25, size * 0.75);
+    ctx.lineTo(size * 0.75, size * 0.25);
+    ctx.stroke();
+    return canvas;
+  }
+
+  if (blockType === BlockType.TORCH) {
+    // Stick
+    ctx.lineWidth = 6;
+    ctx.strokeStyle = '#78350f';
+    ctx.beginPath();
+    ctx.moveTo(size * 0.30, size * 0.75);
+    ctx.lineTo(size * 0.65, size * 0.40);
+    ctx.stroke();
+
+    // Flame head
+    ctx.fillStyle = '#f97316';
+    ctx.beginPath();
+    ctx.arc(size * 0.68, size * 0.35, size * 0.15, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = '#fef08a';
+    ctx.beginPath();
+    ctx.arc(size * 0.68, size * 0.35, size * 0.08, 0, Math.PI * 2);
+    ctx.fill();
+
+    return canvas;
+  }
+
+  if (blockType === BlockType.IRON_INGOT) {
+    ctx.fillStyle = '#cbd5e1';
+    ctx.strokeStyle = '#475569';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(size * 0.25, size * 0.40);
+    ctx.lineTo(size * 0.65, size * 0.30);
+    ctx.lineTo(size * 0.80, size * 0.55);
+    ctx.lineTo(size * 0.40, size * 0.65);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = '#f8fafc'; // Specular highlight
+    ctx.fillRect(size * 0.35, size * 0.42, size * 0.25, size * 0.08);
+    return canvas;
+  }
+
+  if (blockType === BlockType.COOKED_PORKCHOP) {
+    ctx.fillStyle = '#b45309';
+    ctx.strokeStyle = '#78350f';
     ctx.lineWidth = 2;
     ctx.beginPath();
     ctx.ellipse(size * 0.5, size * 0.5, size * 0.35, size * 0.22, Math.PI / 4, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    // Grill marks
+    ctx.fillStyle = '#451a03';
+    ctx.fillRect(size * 0.4, size * 0.4, size * 0.2, 2);
+    ctx.fillRect(size * 0.45, size * 0.5, size * 0.2, 2);
+    return canvas;
+  }
+
+  if (blockType === BlockType.IRON_HELMET) {
+    ctx.fillStyle = '#cbd5e1';
+    ctx.strokeStyle = '#334155';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(size * 0.5, size * 0.5, size * 0.32, Math.PI, 0);
+    ctx.lineTo(size * 0.82, size * 0.65);
+    ctx.lineTo(size * 0.65, size * 0.65);
+    ctx.lineTo(size * 0.65, size * 0.55);
+    ctx.lineTo(size * 0.35, size * 0.55);
+    ctx.lineTo(size * 0.35, size * 0.65);
+    ctx.lineTo(size * 0.18, size * 0.65);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    return canvas;
+  }
+
+  if (blockType === BlockType.IRON_CHESTPLATE) {
+    ctx.fillStyle = '#cbd5e1';
+    ctx.strokeStyle = '#334155';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(size * 0.25, size * 0.25);
+    ctx.lineTo(size * 0.40, size * 0.35);
+    ctx.lineTo(size * 0.60, size * 0.35);
+    ctx.lineTo(size * 0.75, size * 0.25);
+    ctx.lineTo(size * 0.85, size * 0.45);
+    ctx.lineTo(size * 0.75, size * 0.50);
+    ctx.lineTo(size * 0.75, size * 0.75);
+    ctx.lineTo(size * 0.25, size * 0.75);
+    ctx.lineTo(size * 0.25, size * 0.50);
+    ctx.lineTo(size * 0.15, size * 0.45);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    return canvas;
+  }
+
+  if (blockType === BlockType.IRON_LEGGINGS) {
+    ctx.fillStyle = '#cbd5e1';
+    ctx.strokeStyle = '#334155';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(size * 0.25, size * 0.25);
+    ctx.lineTo(size * 0.75, size * 0.25);
+    ctx.lineTo(size * 0.75, size * 0.75);
+    ctx.lineTo(size * 0.55, size * 0.75);
+    ctx.lineTo(size * 0.50, size * 0.45);
+    ctx.lineTo(size * 0.45, size * 0.75);
+    ctx.lineTo(size * 0.25, size * 0.75);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    return canvas;
+  }
+
+  if (blockType === BlockType.IRON_BOOTS) {
+    ctx.fillStyle = '#cbd5e1';
+    ctx.strokeStyle = '#334155';
+    ctx.lineWidth = 2;
+    // Left boot
+    ctx.fillRect(size * 0.22, size * 0.45, size * 0.18, size * 0.30);
+    ctx.fillRect(size * 0.15, size * 0.60, size * 0.25, size * 0.15);
+    // Right boot
+    ctx.fillRect(size * 0.60, size * 0.45, size * 0.18, size * 0.30);
+    ctx.fillRect(size * 0.60, size * 0.60, size * 0.25, size * 0.15);
+    return canvas;
+  }
+
+  if (blockType === BlockType.ARROW) {
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = '#94a3b8';
+    ctx.beginPath();
+    ctx.moveTo(size * 0.2, size * 0.8);
+    ctx.lineTo(size * 0.75, size * 0.25);
+    ctx.stroke();
+    // Arrow head
+    ctx.fillStyle = '#475569';
+    ctx.beginPath();
+    ctx.moveTo(size * 0.82, size * 0.18);
+    ctx.lineTo(size * 0.65, size * 0.25);
+    ctx.lineTo(size * 0.75, size * 0.35);
+    ctx.closePath();
+    ctx.fill();
+    return canvas;
+  }
+
+  if (blockType === BlockType.BONE) {
+    ctx.fillStyle = '#f8fafc';
+    ctx.strokeStyle = '#cbd5e1';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.roundRect(size * 0.25, size * 0.42, size * 0.5, size * 0.16, 4);
+    ctx.fill();
+    ctx.stroke();
+    return canvas;
+  }
+
+  if (blockType === BlockType.STRING) {
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = '#f8fafc';
+    ctx.beginPath();
+    ctx.arc(size * 0.5, size * 0.5, size * 0.25, 0, Math.PI * 1.7);
+    ctx.stroke();
+    return canvas;
+  }
+
+  if (blockType === BlockType.SPIDER_EYE) {
+    ctx.fillStyle = '#991b1b';
+    ctx.strokeStyle = '#ef4444';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(size * 0.5, size * 0.5, size * 0.22, 0, Math.PI * 2);
     ctx.fill();
     ctx.stroke();
     return canvas;
