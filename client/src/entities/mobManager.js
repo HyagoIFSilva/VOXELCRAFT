@@ -814,15 +814,50 @@ function updateSingleMob(mob, dt, playerPos, distToPlayer) {
     updateZombieAI(mob, dt, playerPos, distToPlayer);
   }
 
-  // Apply Movement & Voxel Physics
-  mob.vel.y -= 22 * dt; // Gravity
+  // ── True 3D Voxel Collision & Gravity ─────────────────────
+  mob.vel.y -= 24 * dt; // Gravity
   mob.pos.addScaledVector(mob.vel, dt);
 
-  const floorY = getHeight(Math.floor(mob.pos.x), Math.floor(mob.pos.z));
-  if (mob.pos.y <= floorY + 1) {
-    mob.pos.y = floorY + 1;
+  const blockX = Math.floor(mob.pos.x);
+  const blockZ = Math.floor(mob.pos.z);
+  const mobY = Math.floor(mob.pos.y);
+
+  // Scan downwards for the solid voxel directly beneath the mob's feet
+  let solidFloorY = -999;
+  const maxScanY = Math.min(63, mobY + 1);
+  for (let cy = maxScanY; cy >= 0; cy--) {
+    if (isWorldBlockSolid(blockX, cy, blockZ)) {
+      solidFloorY = cy + 1;
+      break;
+    }
+  }
+
+  if (solidFloorY >= 0 && mob.pos.y <= solidFloorY) {
+    mob.pos.y = solidFloorY;
     mob.vel.y = 0;
     mob.onGround = true;
+  } else if (mob.pos.y < -10) {
+    // Mob fell into void
+    killMob(mob);
+    return;
+  } else {
+    mob.onGround = false;
+  }
+
+  // Step up 1 block when hitting solid obstacle
+  const nextX = mob.pos.x + mob.vel.x * dt;
+  const nextZ = mob.pos.z + mob.vel.z * dt;
+  const checkFootY = Math.floor(mob.pos.y);
+  if (isWorldBlockSolid(Math.floor(nextX), checkFootY, Math.floor(nextZ))) {
+    if (!isWorldBlockSolid(Math.floor(nextX), checkFootY + 1, Math.floor(nextZ))) {
+      if (mob.onGround) {
+        mob.vel.y = 5.8;
+        mob.onGround = false;
+      }
+    } else {
+      mob.vel.x = 0;
+      mob.vel.z = 0;
+    }
   }
 
   mob.vel.x *= Math.exp(-8 * dt);

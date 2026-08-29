@@ -313,11 +313,14 @@ export function updatePlayerModel(
       const preview = getBlockPreviewMesh(activeItemType, 0.28);
       if (preview) {
         if (isWeapon(activeItemType)) {
-          preview.position.set(0, 0.16, 0.08);
-          preview.rotation.set(0.3, 0, -0.2);
+          preview.position.set(0, -0.30, -0.14);
+          preview.rotation.set(-0.85, 0, 0);
+        } else if (activeItemType === BlockType.TORCH || activeItemType === BlockType.FLINT_AND_STEEL) {
+          preview.position.set(0, -0.30, -0.12);
+          preview.rotation.set(-0.50, 0, 0);
         } else {
-          preview.position.set(0, 0.08, 0.05);
-          preview.rotation.set(0.3, 0.4, 0);
+          preview.position.set(0, -0.26, -0.10);
+          preview.rotation.set(0.15, 0.40, 0);
         }
         heldItemGroup.add(preview);
       }
