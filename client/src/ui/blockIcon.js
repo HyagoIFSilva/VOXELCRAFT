@@ -600,6 +600,25 @@ export function createBlockIconCanvas(blockType, size = 46) {
     return canvas;
   }
 
+  if (
+    blockType === BlockType.FLOWER_RED ||
+    blockType === BlockType.FLOWER_YELLOW ||
+    blockType === BlockType.TORCH ||
+    blockType === BlockType.WHEAT_STAGE_1 ||
+    blockType === BlockType.WHEAT_STAGE_2 ||
+    blockType === BlockType.WHEAT_STAGE_3
+  ) {
+    const atlas = getAtlas();
+    const bt = BlockTextures[blockType];
+    if (bt) {
+      const img = atlas[bt.top];
+      ctx.imageSmoothingEnabled = false;
+      const pad = size * 0.08;
+      ctx.drawImage(img, pad, pad, size - pad * 2, size - pad * 2);
+      return canvas;
+    }
+  }
+
   // Standard voxel isometric block icon
   const atlas = getAtlas();
   const bt = BlockTextures[blockType];

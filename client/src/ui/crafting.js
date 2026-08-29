@@ -1,21 +1,24 @@
-/**
- * Crafting System — Minecraft-style 2×2 and 3×3 shape-based and shapeless recipe evaluator,
- * 3×3 Crafting Table GUI, and interactive visual Recipe Book (?).
- */
-
 import { BlockType, ITEM_NAMES } from '../world/blockTypes.js';
 import { createBlockIconCanvas } from './blockIcon.js';
 import { playCraftSound, playInventorySound } from '../engine/soundFx.js';
-import { addItemToInventory, getHotbarSlots } from './inventory.js';
+import { addItemToInventory, getHotbarSlots, slots as inventorySlots } from './inventory.js';
 import { openWindow, closeWindow, UIWindow, isWindowOpen } from './uiManager.js';
+import {
+  cursorItem,
+  getMaxStack,
+  setCursorItem,
+  clearCursorItem,
+  handleSlotClick,
+  updateCursorVisual,
+} from './cursorManager.js';
 
 let craftingTableModal = null;
 let recipeBookModal = null;
 
 // 3×3 Table slots state (9 slots)
-export const tableSlots = new Array(9).fill(0);
+export const tableSlots = new Array(9).fill(null).map(() => ({ type: 0, count: 0 }));
 // 2×2 Inventory crafting slots state (4 slots)
-export const inv2x2Slots = new Array(4).fill(0);
+export const inv2x2Slots = new Array(4).fill(null).map(() => ({ type: 0, count: 0 }));
 
 let currentTableOutput = null;
 
@@ -765,8 +768,9 @@ export const RECIPE_CATALOG = [
 ];
 
 export function evaluateCrafting(grid, width, height) {
+  const gridTypes = grid.map(v => (v && typeof v === 'object') ? (v.type || 0) : (v || 0));
   for (const recipe of RECIPE_CATALOG) {
-    if (recipe.check(grid, width, height)) {
+    if (recipe.check(gridTypes, width, height)) {
       return { result: recipe.result, count: recipe.count, name: recipe.name };
     }
   }
@@ -820,7 +824,7 @@ export function initCraftingTable() {
 
       <!-- Player Quick Hotbar Transfer -->
       <div class="pt-4 border-t border-outline-variant/60">
-        <span class="font-label-caps text-xs text-secondary uppercase font-semibold block mb-2">Seu Inventário (Clique para colocar na bancada)</span>
+        <span class="font-label-caps text-xs text-secondary uppercase font-semibold block mb-2">Seu Inventário (Botão Esq: Pegar/Colocar • Botão Dir: Colocar 1)</span>
         <div id="table-hotbar-grid" class="grid grid-cols-9 gap-2"></div>
       </div>
     </div>
@@ -840,6 +844,7 @@ export function openCraftingTable() {
   craftingTableModal.style.display = 'flex';
   openWindow(UIWindow.CRAFTING_TABLE);
   playInventorySound(true);
+  updateTableCraftingOutput();
   renderCraftingTableGrid();
 }
 
@@ -849,13 +854,22 @@ export function closeCraftingTable() {
   closeWindow(UIWindow.CRAFTING_TABLE);
   playInventorySound(false);
 
+  // Return floating cursor item to player inventory
+  if (cursorItem.type > 0 && cursorItem.count > 0) {
+    addItemToInventory(cursorItem.type, cursorItem.count);
+    clearCursorItem();
+  }
+
   // Return any remaining items in the table to player inventory
   for (let i = 0; i < 9; i++) {
-    if (tableSlots[i] > 0) {
-      addItemToInventory(tableSlots[i]);
-      tableSlots[i] = 0;
+    const item = tableSlots[i];
+    if (item && item.type > 0 && item.count > 0) {
+      addItemToInventory(item.type, item.count);
+      tableSlots[i] = { type: 0, count: 0 };
     }
   }
+
+  updateTableCraftingOutput();
 }
 
 export function isCraftingTableOpen() {
@@ -870,23 +884,33 @@ export function renderCraftingTableGrid() {
 
   // 1. Render 3×3 Grid
   gridEl.innerHTML = '';
-  tableSlots.forEach((type, idx) => {
+  tableSlots.forEach((slotData, idx) => {
     const slot = document.createElement('div');
     slot.className = 'slot w-14 h-14 rounded-xl bg-surface-container-lowest border border-outline-variant hover:border-primary flex items-center justify-center cursor-pointer relative transition-all';
 
-    if (type > 0) {
-      const icon = createBlockIconCanvas(type, 38);
-      slot.appendChild(icon);
+    const item = slotData || { type: 0, count: 0 };
+    if (item.type > 0 && item.count > 0) {
+      const icon = createBlockIconCanvas(item.type, 38);
+      if (icon) slot.appendChild(icon);
+
+      if (item.count > 1) {
+        const badge = document.createElement('span');
+        badge.className = 'absolute bottom-0.5 right-1 font-label-caps text-[11px] font-bold text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]';
+        badge.textContent = item.count;
+        slot.appendChild(badge);
+      }
     }
 
-    slot.addEventListener('click', () => {
-      if (tableSlots[idx] > 0) {
-        addItemToInventory(tableSlots[idx]);
-        tableSlots[idx] = 0;
+    const slotRef = {
+      get: () => tableSlots[idx] || { type: 0, count: 0 },
+      set: (type, count) => {
+        tableSlots[idx] = { type, count: type === 0 ? 0 : count };
         updateTableCraftingOutput();
-        renderCraftingTableGrid();
-      }
-    });
+      },
+    };
+
+    slot.addEventListener('mousedown', (e) => handleSlotClick(slotRef, e, renderCraftingTableGrid));
+    slot.addEventListener('contextmenu', (e) => e.preventDefault());
 
     gridEl.appendChild(slot);
   });
@@ -895,7 +919,7 @@ export function renderCraftingTableGrid() {
   outputEl.innerHTML = '';
   if (currentTableOutput && currentTableOutput.result > 0) {
     const icon = createBlockIconCanvas(currentTableOutput.result, 48);
-    outputEl.appendChild(icon);
+    if (icon) outputEl.appendChild(icon);
 
     if (currentTableOutput.count > 1) {
       const badge = document.createElement('span');
@@ -905,42 +929,102 @@ export function renderCraftingTableGrid() {
     }
   }
 
-  outputEl.onclick = () => {
+  outputEl.onmousedown = (e) => {
+    e.preventDefault();
     if (currentTableOutput && currentTableOutput.result > 0) {
-      for (let c = 0; c < currentTableOutput.count; c++) {
-        addItemToInventory(currentTableOutput.result);
-      }
-      playCraftSound();
-      for (let i = 0; i < 9; i++) {
-        tableSlots[i] = 0;
-      }
-      updateTableCraftingOutput();
-      renderCraftingTableGrid();
-    }
-  };
+      const resultType = currentTableOutput.result;
+      const resultCount = currentTableOutput.count;
 
-  // 3. Render Quick Hotbar
-  hotbarEl.innerHTML = '';
-  const hotbar = getHotbarSlots();
-  hotbar.forEach((type, idx) => {
-    const slot = document.createElement('div');
-    slot.className = 'slot w-full h-11 rounded-lg bg-surface-container-lowest border border-outline-variant hover:border-primary flex items-center justify-center cursor-pointer transition-all';
-    if (type > 0) {
-      const icon = createBlockIconCanvas(type, 30);
-      slot.appendChild(icon);
-      slot.title = `${ITEM_NAMES[type] || 'Item'} (Clique para colocar na bancada)`;
-      slot.addEventListener('click', () => {
-        const firstEmpty = tableSlots.findIndex(v => v === 0);
-        if (firstEmpty !== -1) {
-          tableSlots[firstEmpty] = type;
-          hotbar[idx] = 0;
+      if (e.shiftKey) {
+        // Shift click: craft into inventory directly
+        if (addItemToInventory(resultType, resultCount)) {
+          playCraftSound();
+          for (let i = 0; i < 9; i++) {
+            if (tableSlots[i].count > 1) {
+              tableSlots[i].count -= 1;
+            } else {
+              tableSlots[i] = { type: 0, count: 0 };
+            }
+          }
           updateTableCraftingOutput();
           renderCraftingTableGrid();
         }
-      });
+      } else {
+        // Normal click: pick up into cursor
+        const maxStack = getMaxStack(resultType);
+        if (cursorItem.type === 0) {
+          setCursorItem(resultType, resultCount);
+          playCraftSound();
+          for (let i = 0; i < 9; i++) {
+            if (tableSlots[i].count > 1) {
+              tableSlots[i].count -= 1;
+            } else {
+              tableSlots[i] = { type: 0, count: 0 };
+            }
+          }
+          updateTableCraftingOutput();
+          renderCraftingTableGrid();
+        } else if (cursorItem.type === resultType && cursorItem.count + resultCount <= maxStack) {
+          cursorItem.count += resultCount;
+          updateCursorVisual();
+          playCraftSound();
+          for (let i = 0; i < 9; i++) {
+            if (tableSlots[i].count > 1) {
+              tableSlots[i].count -= 1;
+            } else {
+              tableSlots[i] = { type: 0, count: 0 };
+            }
+          }
+          updateTableCraftingOutput();
+          renderCraftingTableGrid();
+        }
+      }
     }
+  };
+  outputEl.oncontextmenu = (e) => e.preventDefault();
+
+  // 3. Render Quick Hotbar (Player inventory slots 0..8)
+  hotbarEl.innerHTML = '';
+  for (let idx = 0; idx < 9; idx++) {
+    const slot = document.createElement('div');
+    slot.className = 'slot w-full h-11 rounded-lg bg-surface-container-lowest border border-outline-variant hover:border-primary flex items-center justify-center cursor-pointer transition-all relative';
+
+    const item = inventorySlots[idx] || { type: 0, count: 0 };
+    if (item.type > 0 && item.count > 0) {
+      const icon = createBlockIconCanvas(item.type, 30);
+      if (icon) slot.appendChild(icon);
+      slot.title = `${ITEM_NAMES[item.type] || 'Item'}`;
+
+      if (item.count > 1) {
+        const badge = document.createElement('span');
+        badge.className = 'absolute bottom-0.5 right-1 font-label-caps text-[10px] font-bold text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]';
+        badge.textContent = item.count;
+        slot.appendChild(badge);
+      }
+    }
+
+    const slotRef = {
+      get: () => inventorySlots[idx] || { type: 0, count: 0 },
+      set: (type, count) => {
+        inventorySlots[idx] = { type, count: type === 0 ? 0 : count };
+      },
+      onShiftClick: (type, count) => {
+        // Shift click from player inventory into first available 3x3 slot
+        const emptyIdx = tableSlots.findIndex(s => s.type === 0 || s.count === 0);
+        if (emptyIdx !== -1) {
+          tableSlots[emptyIdx] = { type, count };
+          inventorySlots[idx] = { type: 0, count: 0 };
+          updateTableCraftingOutput();
+          renderCraftingTableGrid();
+        }
+      },
+    };
+
+    slot.addEventListener('mousedown', (e) => handleSlotClick(slotRef, e, renderCraftingTableGrid));
+    slot.addEventListener('contextmenu', (e) => e.preventDefault());
+
     hotbarEl.appendChild(slot);
-  });
+  }
 }
 
 export function updateTableCraftingOutput() {

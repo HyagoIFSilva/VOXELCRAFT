@@ -52,6 +52,8 @@ function getSharedMaterial() {
   if (!sharedMaterial) {
     sharedMaterial = new THREE.MeshLambertMaterial({
       map: getAtlasTexture(),
+      alphaTest: 0.2,
+      side: THREE.DoubleSide,
     });
   }
   return sharedMaterial;

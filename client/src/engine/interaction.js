@@ -355,6 +355,7 @@ function onMouseDown(e) {
           if (existing === BlockType.AIR) {
             playBlockPlaceSound();
             setBlockAtWorld(scene, prev.x, prev.y, prev.z, selectedBlockType);
+            consumeItemFromInventory(selectedBlockType, 1);
           }
         }
       }

@@ -31,6 +31,9 @@ import { updateAmbientMusic } from './engine/soundFx.js';
 
 // ── Bootstrap ──────────────────────────────────────────────
 
+// Desativar menu de contexto nativo do botão direito do navegador
+window.addEventListener('contextmenu', (e) => e.preventDefault());
+
 // 1. Input
 initInput(document);
 
@@ -89,7 +92,7 @@ initHand();
 // Load saved data if available
 loadWorld();
 
-console.log(`[VoxelCraft v0.4.2] Ready! Spawn at (${spawn.x}, ${spawn.y}, ${spawn.z})`);
+console.log(`[VoxelCraft v0.4.3V] Ready! Spawn at (${spawn.x}, ${spawn.y}, ${spawn.z})`);
 
 // ── Game Loop ──────────────────────────────────────────────
 
