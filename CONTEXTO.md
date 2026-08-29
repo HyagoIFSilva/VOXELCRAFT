@@ -192,7 +192,30 @@ O atlas de texturas procedurais agora conta com 36 texturas renderizadas em 64×
 
 ---
 
-## 9. Backlog & Sugestões para os Próximos Passos (v0.5.0)
+## 9. Organização Global, Spawn Condicional & Otimização de CPU (v0.4.1)
+
+A versão **v0.4.1** implementou uma revisão profunda de organização do ecossistema, física visual e balanceamento de CPU:
+
+- **Orientação Frontal dos Mobs (`yaw + Math.PI`)**:
+  - Corrigido o bug visual do porco e outros mobs andando de costas. A rotação do modelo 3D agora é perfeitamente alinhada ao vetor de velocidade, garantindo que cabeça, olhos e focinho liderem a caminhada naturalmente.
+- **Spawn Condicional Autêntico**:
+  - **Fim dos monstros no início do jogo**: Ao nascer no mundo (dia ensolarado), apenas 2 a 3 porcos pacíficos surgirão na área de grama ao redor.
+  - **Monstros Noturnos/Subterrâneos**: Zumbis, Esqueletos, Creepers e Aranhas **só surgem à noite ou em cavernas profundas**, sempre a uma distância segura (**entre 24 e 38 blocos do jogador**), nunca caindo em cima do jogador.
+- **Balanceamento Realista de IA & Velocidades**:
+  - **Zumbi**: Velocidade de `1.8` blocos/s (caminhada lenta cadenciada de morto-vivo). Queima sob o sol a céu aberto.
+  - **Esqueleto**: Velocidade de `1.8` blocos/s, mantém distância tática (8 a 14 blocos) e tempo de recarga de tiro de `2.8s`, permitindo esquiva.
+  - **Creeper**: Velocidade de `1.8` blocos/s. Tempo de pavio (*fuse*) de `1.8s` com animação de inflação e som de aviso, dando janela de tempo para o jogador recuar.
+  - **Aranha**: Velocidade de `2.8` blocos/s. **Neutralidade diurna**: à luz do dia, a aranha permanece pacífica a menos que seja atacada pelo jogador.
+  - **Porco**: Caminhada tranquila (`0.9` blocos/s) e fuga rápida (`2.8` blocos/s) ao receber dano.
+- **Otimização Extrema de CPU & Despawn Inteligente**:
+  - **Cap de Mobs Ativos (`MAX_MOBS = 10`)**: Limite global rígido de 10 entidades no mundo, impedindo acúmulo de processamento.
+  - **Despawn Automático por Distância**: Mobs a mais de **52 blocos** de distância do jogador são automaticamente removidos da cena.
+  - **Teto Global de Drops (`MAX_DROPS = 30`)**: Limite de 30 itens flutuantes no mundo com descarte automático dos mais antigos e suporte polimórfico de spawn.
+  - **Validação de Saves no LocalStorage**: Proteção defensiva com limites numéricos contra posições `NaN` ou saves corrompidos.
+
+---
+
+## 10. Backlog & Sugestões para os Próximos Passos (v0.5.0)
 
 Caso deseje continuar expandindo o ecossistema nas próximas iterações:
 
@@ -210,4 +233,4 @@ Caso deseje continuar expandindo o ecossistema nas próximas iterações:
 
 ---
 
-*Documento gerado e mantido rigorosamente atualizado pelo assistente Antigravity para a versão v0.4.0.*
+*Documento gerado e mantido rigorosamente atualizado pelo assistente Antigravity para a versão v0.4.1.*

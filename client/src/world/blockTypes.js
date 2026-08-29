@@ -29,6 +29,18 @@ export const BlockType = {
   WHEAT_STAGE_2:   23,
   WHEAT_STAGE_3:   24,
   TNT:             25,
+  LAVA:            26,
+  DIAMOND_ORE:     27,
+  OBSIDIAN:        28,
+  BED:             29,
+  WOOL:            30,
+  GRAVEL:          31,
+  NETHERRACK:      32,
+  SOUL_SAND:       33,
+  GLOWSTONE:       34,
+  NETHER_QUARTZ_ORE: 35,
+  QUARTZ_BLOCK:    36,
+  NETHER_PORTAL:   37,
   // Items / Weapons / Tools
   IRON_SWORD:      101,
   IRON_PICKAXE:    102,
@@ -41,17 +53,17 @@ export const BlockType = {
   STONE_PICKAXE:   109,
   IRON_INGOT:      110,
   COOKED_PORKCHOP: 111,
-  // Armor Pieces
+  // Iron Armor
   IRON_HELMET:     112,
   IRON_CHESTPLATE: 113,
   IRON_LEGGINGS:   114,
   IRON_BOOTS:      115,
-  // Mob Drops & Projectiles
+  // Drops & Projectiles
   ARROW:           116,
   BONE:            117,
   STRING:          118,
   SPIDER_EYE:      119,
-  // Expansion: Combat, Farming & Explosives
+  // Farming, Bow & Explosives
   BOW:             120,
   WOODEN_HOE:      121,
   STONE_HOE:       122,
@@ -60,6 +72,42 @@ export const BlockType = {
   WHEAT:           125,
   BREAD:           126,
   GUNPOWDER:       127,
+  // The Diamond Era & Metallurgy
+  DIAMOND:         128,
+  DIAMOND_SWORD:   129,
+  DIAMOND_PICKAXE: 130,
+  DIAMOND_HELMET:  131,
+  DIAMOND_CHESTPLATE: 132,
+  DIAMOND_LEGGINGS:   133,
+  DIAMOND_BOOTS:      134,
+  MUTTON:          135,
+  COOKED_MUTTON:   136,
+  // Nether & Tools
+  FLINT:           137,
+  FLINT_AND_STEEL: 138,
+  QUARTZ:          139,
+  // v0.6.0 — Redstone, Combat & Enchanting
+  REDSTONE_ORE:    38,
+  REDSTONE_WIRE:   39,
+  REDSTONE_TORCH:  40,
+  LEVER:           41,
+  PRESSURE_PLATE:  42,
+  WOODEN_DOOR_BOTTOM: 43,
+  WOODEN_DOOR_TOP: 44,
+  IRON_DOOR_BOTTOM: 45,
+  IRON_DOOR_TOP:   46,
+  ENCHANTING_TABLE: 47,
+  MOSSY_COBBLESTONE: 48,
+  MONSTER_SPAWNER: 49,
+  BOOKSHELF:       50,
+  // Items
+  REDSTONE_DUST:   140,
+  WOODEN_SHIELD:   141,
+  IRON_SHIELD:     142,
+  BOOK:            143,
+  GOLDEN_APPLE:    144,
+  BOAT:            145,
+  EXPERIENCE_BOTTLE: 146,
 };
 
 export const ITEM_NAMES = {
@@ -88,6 +136,11 @@ export const ITEM_NAMES = {
   [BlockType.WHEAT_STAGE_2]:   'Trigo em Crescimento',
   [BlockType.WHEAT_STAGE_3]:   'Trigo Maduro',
   [BlockType.TNT]:             'Bloco de TNT',
+  [BlockType.LAVA]:            'Balde de Lava',
+  [BlockType.DIAMOND_ORE]:     'Minério de Diamante',
+  [BlockType.OBSIDIAN]:        'Bloco de Obsidiana',
+  [BlockType.BED]:             'Cama Confortável',
+  [BlockType.WOOL]:            'Bloco de Lã Branca',
   [BlockType.IRON_SWORD]:      'Espada de Ferro',
   [BlockType.IRON_PICKAXE]:    'Picareta de Ferro',
   [BlockType.PORKCHOP]:        'Costela de Porco Crua',
@@ -113,8 +166,48 @@ export const ITEM_NAMES = {
   [BlockType.IRON_HOE]:        'Enxada de Ferro',
   [BlockType.WHEAT_SEEDS]:     'Sementes de Trigo',
   [BlockType.WHEAT]:           'Trigo',
-  [BlockType.BREAD]:           'Pão',
+  [BlockType.BREAD]:           'Pão Dourado',
   [BlockType.GUNPOWDER]:       'Pólvora',
+  [BlockType.DIAMOND]:         'Gema de Diamante',
+  [BlockType.DIAMOND_SWORD]:   'Espada de Diamante',
+  [BlockType.DIAMOND_PICKAXE]: 'Picareta de Diamante',
+  [BlockType.DIAMOND_HELMET]:  'Capacete de Diamante',
+  [BlockType.DIAMOND_CHESTPLATE]: 'Peitoral de Diamante',
+  [BlockType.DIAMOND_LEGGINGS]:   'Calças de Diamante',
+  [BlockType.DIAMOND_BOOTS]:      'Botas de Diamante',
+  [BlockType.MUTTON]:          'Carneiro Cru',
+  [BlockType.COOKED_MUTTON]:   'Carneiro Assado',
+  [BlockType.GRAVEL]:          'Cascalho',
+  [BlockType.NETHERRACK]:      'Rocha do Nether',
+  [BlockType.SOUL_SAND]:       'Areia das Almas',
+  [BlockType.GLOWSTONE]:       'Pedra Luminosa (Glowstone)',
+  [BlockType.NETHER_QUARTZ_ORE]: 'Minério de Quartzo do Nether',
+  [BlockType.QUARTZ_BLOCK]:    'Bloco de Quartzo Polido',
+  [BlockType.NETHER_PORTAL]:   'Portal do Nether',
+  [BlockType.FLINT]:           'Pederneira',
+  [BlockType.FLINT_AND_STEEL]: 'Isqueiro de Pederneira',
+  [BlockType.QUARTZ]:          'Cristal de Quartzo',
+  // v0.6.0
+  [BlockType.REDSTONE_ORE]:    'Minério de Redstone',
+  [BlockType.REDSTONE_WIRE]:   'Fio de Redstone',
+  [BlockType.REDSTONE_TORCH]:  'Tocha de Redstone',
+  [BlockType.LEVER]:           'Alavanca de Redstone',
+  [BlockType.PRESSURE_PLATE]:  'Placa de Pressão de Pedra',
+  [BlockType.WOODEN_DOOR_BOTTOM]: 'Porta de Madeira',
+  [BlockType.WOODEN_DOOR_TOP]: 'Porta de Madeira (Topo)',
+  [BlockType.IRON_DOOR_BOTTOM]: 'Porta de Ferro',
+  [BlockType.IRON_DOOR_TOP]:   'Porta de Ferro (Topo)',
+  [BlockType.ENCHANTING_TABLE]: 'Mesa de Encantamentos',
+  [BlockType.MOSSY_COBBLESTONE]: 'Pedregulho com Musgo',
+  [BlockType.MONSTER_SPAWNER]: 'Gerador de Monstros (Spawner)',
+  [BlockType.BOOKSHELF]:       'Estante de Livros',
+  [BlockType.REDSTONE_DUST]:   'Pó de Redstone',
+  [BlockType.WOODEN_SHIELD]:   'Escudo de Carvalho',
+  [BlockType.IRON_SHIELD]:     'Escudo Reforçado de Ferro',
+  [BlockType.BOOK]:            'Livro Arcano',
+  [BlockType.GOLDEN_APPLE]:    'Maçã Dourada Encantada',
+  [BlockType.BOAT]:            'Barco de Carvalho',
+  [BlockType.EXPERIENCE_BOTTLE]: 'Frasco de Experiência',
 };
 
 /**
@@ -146,6 +239,32 @@ export const BlockTextures = {
   [BlockType.WHEAT_STAGE_2]:  { top: 31, side: 31, bottom: 31 },
   [BlockType.WHEAT_STAGE_3]:  { top: 32, side: 32, bottom: 32 },
   [BlockType.TNT]:            { top: 33, side: 34, bottom: 35 },
+  [BlockType.LAVA]:           { top: 36, side: 36, bottom: 36 },
+  [BlockType.DIAMOND_ORE]:    { top: 37, side: 37, bottom: 37 },
+  [BlockType.OBSIDIAN]:       { top: 38, side: 38, bottom: 38 },
+  [BlockType.BED]:            { top: 39, side: 40, bottom: 16 },
+  [BlockType.WOOL]:           { top: 41, side: 41, bottom: 41 },
+  [BlockType.GRAVEL]:         { top: 42, side: 42, bottom: 42 },
+  [BlockType.NETHERRACK]:     { top: 43, side: 43, bottom: 43 },
+  [BlockType.SOUL_SAND]:      { top: 44, side: 44, bottom: 44 },
+  [BlockType.GLOWSTONE]:      { top: 45, side: 45, bottom: 45 },
+  [BlockType.NETHER_QUARTZ_ORE]: { top: 46, side: 46, bottom: 46 },
+  [BlockType.QUARTZ_BLOCK]:   { top: 47, side: 47, bottom: 47 },
+  [BlockType.NETHER_PORTAL]:  { top: 48, side: 48, bottom: 48 },
+  // v0.6.0 Textures
+  [BlockType.REDSTONE_ORE]:    { top: 49, side: 49, bottom: 49 },
+  [BlockType.REDSTONE_WIRE]:   { top: 50, side: 50, bottom: 50 },
+  [BlockType.REDSTONE_TORCH]:  { top: 51, side: 51, bottom: 51 },
+  [BlockType.LEVER]:           { top: 52, side: 52, bottom: 52 },
+  [BlockType.PRESSURE_PLATE]:  { top: 53, side: 53, bottom: 53 },
+  [BlockType.WOODEN_DOOR_BOTTOM]: { top: 54, side: 54, bottom: 54 },
+  [BlockType.WOODEN_DOOR_TOP]:    { top: 55, side: 55, bottom: 55 },
+  [BlockType.IRON_DOOR_BOTTOM]:   { top: 56, side: 56, bottom: 56 },
+  [BlockType.IRON_DOOR_TOP]:      { top: 57, side: 57, bottom: 57 },
+  [BlockType.ENCHANTING_TABLE]:   { top: 58, side: 59, bottom: 38 },
+  [BlockType.MOSSY_COBBLESTONE]:  { top: 60, side: 60, bottom: 60 },
+  [BlockType.MONSTER_SPAWNER]:    { top: 61, side: 61, bottom: 61 },
+  [BlockType.BOOKSHELF]:          { top: 16, side: 62, bottom: 16 },
 };
 
 export function isSolid(type) {
@@ -153,9 +272,15 @@ export function isSolid(type) {
     type > BlockType.AIR &&
     type < 100 &&
     type !== BlockType.WATER &&
+    type !== BlockType.LAVA &&
+    type !== BlockType.NETHER_PORTAL &&
     type !== BlockType.FLOWER_RED &&
     type !== BlockType.FLOWER_YELLOW &&
     type !== BlockType.TORCH &&
+    type !== BlockType.REDSTONE_WIRE &&
+    type !== BlockType.REDSTONE_TORCH &&
+    type !== BlockType.LEVER &&
+    type !== BlockType.PRESSURE_PLATE &&
     type !== BlockType.WHEAT_STAGE_1 &&
     type !== BlockType.WHEAT_STAGE_2 &&
     type !== BlockType.WHEAT_STAGE_3
@@ -168,6 +293,7 @@ export function isPlaceableBlock(type) {
 
 export function isWeapon(type) {
   return (
+    type === BlockType.DIAMOND_SWORD ||
     type === BlockType.IRON_SWORD ||
     type === BlockType.STONE_SWORD ||
     type === BlockType.WOODEN_SWORD ||
@@ -175,8 +301,29 @@ export function isWeapon(type) {
   );
 }
 
+export function isShield(type) {
+  return (
+    type === BlockType.WOODEN_SHIELD ||
+    type === BlockType.IRON_SHIELD
+  );
+}
+
+export function isBoat(type) {
+  return type === BlockType.BOAT;
+}
+
+export function isDoor(type) {
+  return (
+    type === BlockType.WOODEN_DOOR_BOTTOM ||
+    type === BlockType.WOODEN_DOOR_TOP ||
+    type === BlockType.IRON_DOOR_BOTTOM ||
+    type === BlockType.IRON_DOOR_TOP
+  );
+}
+
 export function isPickaxe(type) {
   return (
+    type === BlockType.DIAMOND_PICKAXE ||
     type === BlockType.IRON_PICKAXE ||
     type === BlockType.STONE_PICKAXE ||
     type === BlockType.WOODEN_PICKAXE
@@ -195,8 +342,11 @@ export function isFood(type) {
   return (
     type === BlockType.PORKCHOP ||
     type === BlockType.COOKED_PORKCHOP ||
+    type === BlockType.MUTTON ||
+    type === BlockType.COOKED_MUTTON ||
     type === BlockType.ROTTEN_FLESH ||
-    type === BlockType.BREAD
+    type === BlockType.BREAD ||
+    type === BlockType.GOLDEN_APPLE
   );
 }
 
@@ -205,26 +355,37 @@ export function isArmor(type) {
     type === BlockType.IRON_HELMET ||
     type === BlockType.IRON_CHESTPLATE ||
     type === BlockType.IRON_LEGGINGS ||
-    type === BlockType.IRON_BOOTS
+    type === BlockType.IRON_BOOTS ||
+    type === BlockType.DIAMOND_HELMET ||
+    type === BlockType.DIAMOND_CHESTPLATE ||
+    type === BlockType.DIAMOND_LEGGINGS ||
+    type === BlockType.DIAMOND_BOOTS
   );
 }
 
 export function getArmorDefense(type) {
   switch (type) {
-    case BlockType.IRON_HELMET: return 2;
-    case BlockType.IRON_CHESTPLATE: return 6;
-    case BlockType.IRON_LEGGINGS: return 5;
-    case BlockType.IRON_BOOTS: return 2;
+    case BlockType.DIAMOND_HELMET:     return 3;
+    case BlockType.DIAMOND_CHESTPLATE: return 8;
+    case BlockType.DIAMOND_LEGGINGS:   return 6;
+    case BlockType.DIAMOND_BOOTS:      return 3;
+    case BlockType.IRON_HELMET:        return 2;
+    case BlockType.IRON_CHESTPLATE:    return 6;
+    case BlockType.IRON_LEGGINGS:      return 5;
+    case BlockType.IRON_BOOTS:         return 2;
     default: return 0;
   }
 }
 
 export function getFoodNutrition(type) {
   switch (type) {
-    case BlockType.COOKED_PORKCHOP: return 8; // 4 full hearts
-    case BlockType.BREAD:           return 5; // 2.5 hearts
-    case BlockType.PORKCHOP:        return 3; // 1.5 hearts
-    case BlockType.ROTTEN_FLESH:    return 1; // 0.5 heart
+    case BlockType.GOLDEN_APPLE:    return 10; // 5 hearts + golden regen
+    case BlockType.COOKED_PORKCHOP: return 8;  // 4 hearts
+    case BlockType.COOKED_MUTTON:   return 6;  // 3 hearts
+    case BlockType.BREAD:           return 5;  // 2.5 hearts
+    case BlockType.PORKCHOP:        return 3;  // 1.5 hearts
+    case BlockType.MUTTON:          return 2;  // 1 heart
+    case BlockType.ROTTEN_FLESH:    return 1;  // 0.5 heart
     default: return 0;
   }
 }
@@ -233,9 +394,18 @@ export function isTransparent(type) {
   return (
     type === BlockType.AIR ||
     type === BlockType.WATER ||
+    type === BlockType.LAVA ||
     type === BlockType.FLOWER_RED ||
     type === BlockType.FLOWER_YELLOW ||
     type === BlockType.TORCH ||
+    type === BlockType.REDSTONE_WIRE ||
+    type === BlockType.REDSTONE_TORCH ||
+    type === BlockType.LEVER ||
+    type === BlockType.PRESSURE_PLATE ||
+    type === BlockType.WOODEN_DOOR_BOTTOM ||
+    type === BlockType.WOODEN_DOOR_TOP ||
+    type === BlockType.IRON_DOOR_BOTTOM ||
+    type === BlockType.IRON_DOOR_TOP ||
     type === BlockType.WHEAT_STAGE_1 ||
     type === BlockType.WHEAT_STAGE_2 ||
     type === BlockType.WHEAT_STAGE_3 ||
@@ -259,7 +429,9 @@ export function getBlockHardness(type) {
     case BlockType.FARMLAND:
       return 0.55;
     case BlockType.TNT:
-      return 0.1;
+    case BlockType.BED:
+    case BlockType.WOOL:
+      return 0.4;
     case BlockType.WOOD_LOG:
     case BlockType.WOOD_PLANKS:
     case BlockType.CRAFTING_TABLE:
@@ -274,7 +446,24 @@ export function getBlockHardness(type) {
     case BlockType.COAL_ORE:
     case BlockType.IRON_ORE:
       return 3.5;
+    case BlockType.DIAMOND_ORE:
+      return 4.5;
+    case BlockType.OBSIDIAN:
+      return 9.0;
+    case BlockType.GRAVEL:
+      return 0.6;
+    case BlockType.NETHERRACK:
+      return 0.8;
+    case BlockType.SOUL_SAND:
+      return 0.7;
+    case BlockType.GLOWSTONE:
+      return 0.5;
+    case BlockType.NETHER_QUARTZ_ORE:
+      return 3.0;
+    case BlockType.QUARTZ_BLOCK:
+      return 2.0;
     case BlockType.TORCH:
+    case BlockType.NETHER_PORTAL:
       return 0.05;
     default:
       return 1.0;
@@ -282,13 +471,36 @@ export function getBlockHardness(type) {
 }
 
 export function getMiningSpeed(blockType, toolType) {
+  const isDiamondPick = toolType === BlockType.DIAMOND_PICKAXE;
   const isIronPick = toolType === BlockType.IRON_PICKAXE;
   const isStonePick = toolType === BlockType.STONE_PICKAXE;
   const isWoodPick = toolType === BlockType.WOODEN_PICKAXE;
 
+  const isDiamondSword = toolType === BlockType.DIAMOND_SWORD;
   const isIronSword = toolType === BlockType.IRON_SWORD;
   const isStoneSword = toolType === BlockType.STONE_SWORD;
   const isWoodSword = toolType === BlockType.WOODEN_SWORD;
+
+  // Obsidian
+  if (blockType === BlockType.OBSIDIAN) {
+    if (isDiamondPick) return 4.0;
+    return 0.2; // Virtually unbreakable without diamond pick
+  }
+
+  // Diamond Ore & Quartz Ore
+  if (blockType === BlockType.DIAMOND_ORE || blockType === BlockType.NETHER_QUARTZ_ORE) {
+    if (isDiamondPick) return 8.0;
+    if (isIronPick) return 6.0;
+    return 0.4;
+  }
+
+  // Netherrack & Glowstone (super fast with pickaxes)
+  if (blockType === BlockType.NETHERRACK || blockType === BlockType.GLOWSTONE || blockType === BlockType.QUARTZ_BLOCK) {
+    if (isDiamondPick) return 12.0;
+    if (isIronPick) return 9.0;
+    if (isStonePick) return 6.0;
+    return 2.5;
+  }
 
   // Pickaxe on stone/ores/furnaces
   if (
@@ -299,27 +511,31 @@ export function getMiningSpeed(blockType, toolType) {
     blockType === BlockType.FURNACE ||
     blockType === BlockType.FURNACE_LIT
   ) {
+    if (isDiamondPick) return 9.5;
     if (isIronPick) return 6.5;
     if (isStonePick) return 4.2;
     if (isWoodPick) return 2.6;
-    return 0.65; // By hand
+    return 0.65;
   }
 
-  // Sword on leaves/plants/crops
+  // Sword on leaves/plants/crops/wool
   if (
     blockType === BlockType.LEAVES ||
+    blockType === BlockType.WOOL ||
     blockType === BlockType.FLOWER_RED ||
     blockType === BlockType.FLOWER_YELLOW ||
     blockType === BlockType.WHEAT_STAGE_1 ||
     blockType === BlockType.WHEAT_STAGE_2 ||
     blockType === BlockType.WHEAT_STAGE_3
   ) {
+    if (isDiamondSword) return 8.5;
     if (isIronSword || isStoneSword || isWoodSword) return 6.0;
     return 2.0;
   }
 
   // Wood blocks
-  if (blockType === BlockType.WOOD_LOG || blockType === BlockType.WOOD_PLANKS || blockType === BlockType.CRAFTING_TABLE || blockType === BlockType.CHEST) {
+  if (blockType === BlockType.WOOD_LOG || blockType === BlockType.WOOD_PLANKS || blockType === BlockType.CRAFTING_TABLE || blockType === BlockType.CHEST || blockType === BlockType.BED) {
+    if (isDiamondPick) return 2.2;
     if (isIronPick || isStonePick || isWoodPick) return 1.6;
     return 1.0;
   }
@@ -337,6 +553,24 @@ export function getBlockDrop(type) {
       return BlockType.COAL_ORE;
     case BlockType.IRON_ORE:
       return BlockType.IRON_ORE;
+    case BlockType.DIAMOND_ORE:
+      return BlockType.DIAMOND;
+    case BlockType.OBSIDIAN:
+      return BlockType.OBSIDIAN;
+    case BlockType.GRAVEL:
+      return Math.random() < 0.25 ? BlockType.FLINT : BlockType.GRAVEL;
+    case BlockType.NETHERRACK:
+      return BlockType.NETHERRACK;
+    case BlockType.SOUL_SAND:
+      return BlockType.SOUL_SAND;
+    case BlockType.GLOWSTONE:
+      return BlockType.GLOWSTONE;
+    case BlockType.NETHER_QUARTZ_ORE:
+      return BlockType.QUARTZ;
+    case BlockType.QUARTZ_BLOCK:
+      return BlockType.QUARTZ_BLOCK;
+    case BlockType.NETHER_PORTAL:
+      return BlockType.AIR;
     case BlockType.FURNACE:
     case BlockType.FURNACE_LIT:
       return BlockType.FURNACE;
@@ -351,6 +585,34 @@ export function getBlockDrop(type) {
       return Math.random() < 0.35 ? BlockType.LEAVES : 0;
     case BlockType.TNT:
       return BlockType.TNT;
+    case BlockType.BED:
+      return BlockType.BED;
+    case BlockType.WOOL:
+      return BlockType.WOOL;
+    case BlockType.REDSTONE_ORE:
+      return BlockType.REDSTONE_DUST;
+    case BlockType.REDSTONE_WIRE:
+      return BlockType.REDSTONE_DUST;
+    case BlockType.REDSTONE_TORCH:
+      return BlockType.REDSTONE_TORCH;
+    case BlockType.LEVER:
+      return BlockType.LEVER;
+    case BlockType.PRESSURE_PLATE:
+      return BlockType.PRESSURE_PLATE;
+    case BlockType.WOODEN_DOOR_BOTTOM:
+    case BlockType.WOODEN_DOOR_TOP:
+      return BlockType.WOODEN_DOOR_BOTTOM;
+    case BlockType.IRON_DOOR_BOTTOM:
+    case BlockType.IRON_DOOR_TOP:
+      return BlockType.IRON_DOOR_BOTTOM;
+    case BlockType.ENCHANTING_TABLE:
+      return BlockType.ENCHANTING_TABLE;
+    case BlockType.MOSSY_COBBLESTONE:
+      return BlockType.MOSSY_COBBLESTONE;
+    case BlockType.BOOKSHELF:
+      return BlockType.BOOK;
+    case BlockType.MONSTER_SPAWNER:
+      return BlockType.AIR;
     default:
       return type;
   }

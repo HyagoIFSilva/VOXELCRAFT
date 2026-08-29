@@ -13,8 +13,12 @@ import { generateWorld, updateWorld, getSpawnPosition } from './world/worldManag
 import { update as updateHud } from './ui/hud.js';
 import { initHotbar, updateHotbar } from './ui/hotbar.js';
 import { initInventory } from './ui/inventory.js';
-import { initInteraction, updateInteraction } from './engine/interaction.js';
+import { initInteraction, updateInteraction, getSelectedBlockType } from './engine/interaction.js';
 import { initPlayer, updatePlayer, getPlayerPosition } from './entities/player.js';
+import { initPlayerModel } from './entities/playerModel.js';
+import { initDynamicLighting, updateDynamicLighting } from './rendering/dynamicLighting.js';
+import { initRedstone, updateRedstoneEngine } from './engine/redstoneEngine.js';
+import { initEnchantingTableModal } from './ui/enchantingModal.js';
 import { initMobManager, updateMobs, spawnMob, MobType } from './entities/mobManager.js';
 import { initHealthHud, updateHealthHud } from './ui/health.js';
 import { initHand, updateHand } from './entities/hand.js';
@@ -27,8 +31,12 @@ import { initCraftingTable } from './ui/crafting.js';
 import { updateFurnaces } from './ui/furnace.js';
 import { initWeather, updateWeather } from './world/weather.js';
 import { saveWorld, loadWorld } from './engine/saveManager.js';
+import { updateAmbientMusic } from './engine/soundFx.js';
 
 // ── Bootstrap ──────────────────────────────────────────────
+
+// Desativar menu de contexto nativo do botão direito do navegador
+window.addEventListener('contextmenu', (e) => e.preventDefault());
 
 // 1. Input
 initInput(document);
@@ -65,13 +73,10 @@ initPointerLock(getCanvas());
 // 9. Title Screen & Central UI Manager
 initTitleScreen(getCanvas());
 
-// 10. Mobs (Pacíficos e Hostis: Porco, Zumbi, Esqueleto, Aranha e Creeper)
+// 10. Mobs (Animais pacíficos no spawn inicial da manhã: Porco e Ovelha)
 initMobManager(scene);
 spawnMob(MobType.PIG, spawn.x + 4, spawn.y, spawn.z + 4);
-spawnMob(MobType.ZOMBIE, spawn.x + 14, spawn.y, spawn.z + 12);
-spawnMob(MobType.SKELETON, spawn.x - 12, spawn.y, spawn.z + 10);
-spawnMob(MobType.SPIDER, spawn.x + 8, spawn.y, spawn.z - 14);
-spawnMob(MobType.CREEPER, spawn.x - 8, spawn.y, spawn.z - 12);
+spawnMob(MobType.SHEEP, spawn.x - 3, spawn.y, spawn.z + 5);
 
 // 11. Block interaction & Combat
 initInteraction(scene);
@@ -81,7 +86,11 @@ initInventory();
 initCraftingTable();
 initHotbar();
 
-// 13. Player physics + health
+// 13. Player 3D Character Model, Dynamic Lighting, Redstone, physics + health
+initDynamicLighting(scene);
+initRedstone(scene);
+initEnchantingTableModal();
+initPlayerModel(scene);
 initPlayer();
 initHealthHud();
 
@@ -91,7 +100,7 @@ initHand();
 // Load saved data if available
 loadWorld();
 
-console.log(`[VoxelCraft v0.4.0] Ready! Spawn at (${spawn.x}, ${spawn.y}, ${spawn.z})`);
+console.log(`[VoxelCraft v0.6.0] Ready! Spawn at (${spawn.x}, ${spawn.y}, ${spawn.z})`);
 
 // ── Game Loop ──────────────────────────────────────────────
 
@@ -113,6 +122,8 @@ function update(dt, time) {
   updateWorld(camera.position, scene);
   updateDayNightCycle(dt, scene, camera, renderer);
   updateWeather(dt, getPlayerPosition());
+  updateDynamicLighting(dt, time, getPlayerPosition(), getSelectedBlockType(), camera.position);
+  updateRedstoneEngine(dt);
   updateFurnaces(dt);
   updateMobs(dt);
   updateDrops(dt, time);
@@ -121,6 +132,7 @@ function update(dt, time) {
   updateHotbar();
   updateHealthHud();
   updateHand(dt, time);
+  updateAmbientMusic(dt);
   updateHud(dt, { position: camera.position });
 
   // Auto-save every 30s

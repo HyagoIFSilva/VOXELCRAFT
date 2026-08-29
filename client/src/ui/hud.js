@@ -90,3 +90,47 @@ export function update(dt, data) {
     flyBadge.style.display = isPlayerFlying() ? 'block' : 'none';
   }
 }
+
+let cameraToastEl = null;
+let toastTimeout = null;
+
+export function showCameraModeToast(text) {
+  if (!cameraToastEl) {
+    cameraToastEl = document.createElement('div');
+    cameraToastEl.id = 'camera-mode-toast';
+    Object.assign(cameraToastEl.style, {
+      position: 'absolute',
+      top: '24px',
+      left: '50%',
+      transform: 'translateX(-50%)',
+      padding: '6px 18px',
+      borderRadius: '24px',
+      background: 'rgba(15, 23, 42, 0.85)',
+      border: '1px solid rgba(74, 222, 128, 0.5)',
+      boxShadow: '0 0 20px rgba(74, 222, 128, 0.3)',
+      color: '#4ade80',
+      fontSize: '13px',
+      fontWeight: 'bold',
+      letterSpacing: '0.8px',
+      pointerEvents: 'none',
+      zIndex: '100',
+      transition: 'opacity 0.3s ease, transform 0.3s ease',
+      opacity: '0',
+      backdropFilter: 'blur(6px)',
+    });
+    const hud = document.getElementById('hud');
+    if (hud) hud.appendChild(cameraToastEl);
+  }
+
+  cameraToastEl.textContent = text;
+  cameraToastEl.style.opacity = '1';
+  cameraToastEl.style.transform = 'translateX(-50%) translateY(4px)';
+
+  if (toastTimeout) clearTimeout(toastTimeout);
+  toastTimeout = setTimeout(() => {
+    if (cameraToastEl) {
+      cameraToastEl.style.opacity = '0';
+      cameraToastEl.style.transform = 'translateX(-50%) translateY(0px)';
+    }
+  }, 2200);
+}

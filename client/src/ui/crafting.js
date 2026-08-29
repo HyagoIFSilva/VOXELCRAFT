@@ -1,21 +1,24 @@
-/**
- * Crafting System — Minecraft-style 2×2 and 3×3 shape-based and shapeless recipe evaluator,
- * 3×3 Crafting Table GUI, and interactive visual Recipe Book (?).
- */
-
 import { BlockType, ITEM_NAMES } from '../world/blockTypes.js';
 import { createBlockIconCanvas } from './blockIcon.js';
 import { playCraftSound, playInventorySound } from '../engine/soundFx.js';
-import { addItemToInventory, getHotbarSlots } from './inventory.js';
+import { addItemToInventory, getHotbarSlots, slots as inventorySlots } from './inventory.js';
 import { openWindow, closeWindow, UIWindow, isWindowOpen } from './uiManager.js';
+import {
+  cursorItem,
+  getMaxStack,
+  setCursorItem,
+  clearCursorItem,
+  handleSlotClick,
+  updateCursorVisual,
+} from './cursorManager.js';
 
 let craftingTableModal = null;
 let recipeBookModal = null;
 
 // 3×3 Table slots state (9 slots)
-export const tableSlots = new Array(9).fill(0);
+export const tableSlots = new Array(9).fill(null).map(() => ({ type: 0, count: 0 }));
 // 2×2 Inventory crafting slots state (4 slots)
-export const inv2x2Slots = new Array(4).fill(0);
+export const inv2x2Slots = new Array(4).fill(null).map(() => ({ type: 0, count: 0 }));
 
 let currentTableOutput = null;
 
@@ -581,11 +584,452 @@ export const RECIPE_CATALOG = [
       return gp === 5 && sand === 4 && others === 0;
     },
   },
+
+  // ── 23. Diamond Sword (2 Diamonds + 1 Stick) ──
+  {
+    id: 'diamond_sword',
+    name: 'Espada de Diamante',
+    category: 'Armas',
+    result: BlockType.DIAMOND_SWORD,
+    count: 1,
+    gridSize: 3,
+    layout: [
+      0, BlockType.DIAMOND, 0,
+      0, BlockType.DIAMOND, 0,
+      0, BlockType.STICK,   0,
+    ],
+    desc: '2 Diamantes verticais e 1 Graveto na base (+9 Dano).',
+    check: (grid, w, h) => {
+      if (w === 3 && h === 3) {
+        for (let col = 0; col < 3; col++) {
+          if (
+            grid[col] === BlockType.DIAMOND &&
+            grid[col + 3] === BlockType.DIAMOND &&
+            grid[col + 6] === BlockType.STICK
+          ) {
+            const others = grid.filter((v, i) => (i === col || i === col + 3 || i === col + 6) ? false : v !== 0);
+            if (others.length === 0) return true;
+          }
+        }
+      }
+      return false;
+    },
+  },
+
+  // ── 24. Diamond Pickaxe (3 Diamonds + 2 Sticks) ──
+  {
+    id: 'diamond_pickaxe',
+    name: 'Picareta de Diamante',
+    category: 'Ferramentas',
+    result: BlockType.DIAMOND_PICKAXE,
+    count: 1,
+    gridSize: 3,
+    layout: [
+      BlockType.DIAMOND, BlockType.DIAMOND, BlockType.DIAMOND,
+      0,                 BlockType.STICK,   0,
+      0,                 BlockType.STICK,   0,
+    ],
+    desc: '3 Diamantes na linha superior e 2 Gravetos no centro vertical (Capaz de minerar Obsidiana).',
+    check: (grid, w, h) => {
+      if (w !== 3 || h !== 3) return false;
+      return (
+        grid[0] === BlockType.DIAMOND && grid[1] === BlockType.DIAMOND && grid[2] === BlockType.DIAMOND &&
+        grid[3] === 0 && grid[4] === BlockType.STICK && grid[5] === 0 &&
+        grid[6] === 0 && grid[7] === BlockType.STICK && grid[8] === 0
+      );
+    },
+  },
+
+  // ── 25. Diamond Helmet (5 Diamonds) ──
+  {
+    id: 'diamond_helmet',
+    name: 'Capacete de Diamante',
+    category: 'Armaduras',
+    result: BlockType.DIAMOND_HELMET,
+    count: 1,
+    gridSize: 3,
+    layout: [
+      BlockType.DIAMOND, BlockType.DIAMOND, BlockType.DIAMOND,
+      BlockType.DIAMOND, 0,                 BlockType.DIAMOND,
+      0,                 0,                 0,
+    ],
+    desc: '5 Diamantes em formato de arco/U invertido (+3 Defesa).',
+    check: (grid, w, h) => {
+      if (w !== 3 || h !== 3) return false;
+      return (
+        grid[0] === BlockType.DIAMOND && grid[1] === BlockType.DIAMOND && grid[2] === BlockType.DIAMOND &&
+        grid[3] === BlockType.DIAMOND && grid[4] === 0 && grid[5] === BlockType.DIAMOND &&
+        grid[6] === 0 && grid[7] === 0 && grid[8] === 0
+      );
+    },
+  },
+
+  // ── 26. Diamond Chestplate (8 Diamonds) ──
+  {
+    id: 'diamond_chestplate',
+    name: 'Peitoral de Diamante',
+    category: 'Armaduras',
+    result: BlockType.DIAMOND_CHESTPLATE,
+    count: 1,
+    gridSize: 3,
+    layout: [
+      BlockType.DIAMOND, 0,                  BlockType.DIAMOND,
+      BlockType.DIAMOND, BlockType.DIAMOND,  BlockType.DIAMOND,
+      BlockType.DIAMOND, BlockType.DIAMOND,  BlockType.DIAMOND,
+    ],
+    desc: '8 Diamantes em formato de colete com espaço superior central (+8 Defesa máxima).',
+    check: (grid, w, h) => {
+      if (w !== 3 || h !== 3) return false;
+      return (
+        grid[0] === BlockType.DIAMOND && grid[1] === 0 && grid[2] === BlockType.DIAMOND &&
+        grid[3] === BlockType.DIAMOND && grid[4] === BlockType.DIAMOND && grid[5] === BlockType.DIAMOND &&
+        grid[6] === BlockType.DIAMOND && grid[7] === BlockType.DIAMOND && grid[8] === BlockType.DIAMOND
+      );
+    },
+  },
+
+  // ── 27. Diamond Leggings (7 Diamonds) ──
+  {
+    id: 'diamond_leggings',
+    name: 'Calças de Diamante',
+    category: 'Armaduras',
+    result: BlockType.DIAMOND_LEGGINGS,
+    count: 1,
+    gridSize: 3,
+    layout: [
+      BlockType.DIAMOND, BlockType.DIAMOND, BlockType.DIAMOND,
+      BlockType.DIAMOND, 0,                 BlockType.DIAMOND,
+      BlockType.DIAMOND, 0,                 BlockType.DIAMOND,
+    ],
+    desc: '7 Diamantes em formato de calças (+6 Defesa).',
+    check: (grid, w, h) => {
+      if (w !== 3 || h !== 3) return false;
+      return (
+        grid[0] === BlockType.DIAMOND && grid[1] === BlockType.DIAMOND && grid[2] === BlockType.DIAMOND &&
+        grid[3] === BlockType.DIAMOND && grid[4] === 0 && grid[5] === BlockType.DIAMOND &&
+        grid[6] === BlockType.DIAMOND && grid[7] === 0 && grid[8] === BlockType.DIAMOND
+      );
+    },
+  },
+
+  // ── 28. Diamond Boots (4 Diamonds) ──
+  {
+    id: 'diamond_boots',
+    name: 'Botas de Diamante',
+    category: 'Armaduras',
+    result: BlockType.DIAMOND_BOOTS,
+    count: 1,
+    gridSize: 3,
+    layout: [
+      BlockType.DIAMOND, 0, BlockType.DIAMOND,
+      BlockType.DIAMOND, 0, BlockType.DIAMOND,
+      0,                 0, 0,
+    ],
+    desc: '4 Diamantes em formato de botas (+3 Defesa).',
+    check: (grid, w, h) => {
+      if (w !== 3 || h !== 3) return false;
+      return (
+        grid[0] === BlockType.DIAMOND && grid[1] === 0 && grid[2] === BlockType.DIAMOND &&
+        grid[3] === BlockType.DIAMOND && grid[4] === 0 && grid[5] === BlockType.DIAMOND &&
+        grid[6] === 0 && grid[7] === 0 && grid[8] === 0
+      );
+    },
+  },
+
+  // ── 29. Bed (3 Wool + 3 Wood Planks) ──
+  {
+    id: 'bed',
+    name: 'Cama Confortável',
+    category: 'Mobiliário',
+    result: BlockType.BED,
+    count: 1,
+    gridSize: 3,
+    layout: [
+      0,                      0,                      0,
+      BlockType.WOOL,         BlockType.WOOL,         BlockType.WOOL,
+      BlockType.WOOD_PLANKS,  BlockType.WOOD_PLANKS,  BlockType.WOOD_PLANKS,
+    ],
+    desc: '3 Blocos de Lã de Ovelha sobre 3 Tábuas de Madeira (Permite dormir e pular a noite).',
+    check: (grid, w, h) => {
+      if (w !== 3 || h !== 3) return false;
+      const matchRow1 = (
+        grid[0] === BlockType.WOOL && grid[1] === BlockType.WOOL && grid[2] === BlockType.WOOL &&
+        grid[3] === BlockType.WOOD_PLANKS && grid[4] === BlockType.WOOD_PLANKS && grid[5] === BlockType.WOOD_PLANKS &&
+        grid[6] === 0 && grid[7] === 0 && grid[8] === 0
+      );
+      const matchRow2 = (
+        grid[0] === 0 && grid[1] === 0 && grid[2] === 0 &&
+        grid[3] === BlockType.WOOL && grid[4] === BlockType.WOOL && grid[5] === BlockType.WOOL &&
+        grid[6] === BlockType.WOOD_PLANKS && grid[7] === BlockType.WOOD_PLANKS && grid[8] === BlockType.WOOD_PLANKS
+      );
+      return matchRow1 || matchRow2;
+    },
+  },
+
+  // ── 30. Flint and Steel (1 Iron Ingot + 1 Flint) ──
+  {
+    id: 'flint_and_steel',
+    name: 'Isqueiro de Pederneira',
+    category: 'Ferramentas',
+    result: BlockType.FLINT_AND_STEEL,
+    count: 1,
+    gridSize: 2,
+    layout: [
+      BlockType.IRON_INGOT, 0,
+      0,                    BlockType.FLINT,
+    ],
+    desc: '1 Barra de Ferro e 1 Pederneira diagonalmente (Acende o Portal do Nether e Fogueiras).',
+    check: (grid) => {
+      const iron = grid.filter(v => v === BlockType.IRON_INGOT).length;
+      const flint = grid.filter(v => v === BlockType.FLINT).length;
+      const others = grid.filter(v => v !== 0 && v !== BlockType.IRON_INGOT && v !== BlockType.FLINT).length;
+      return iron === 1 && flint === 1 && others === 0;
+    },
+  },
+
+  // ── 31. Quartz Block (4 Quartz in 2x2) ──
+  {
+    id: 'quartz_block',
+    name: 'Bloco de Quartzo Polido',
+    category: 'Blocos',
+    result: BlockType.QUARTZ_BLOCK,
+    count: 1,
+    gridSize: 2,
+    layout: [
+      BlockType.QUARTZ, BlockType.QUARTZ,
+      BlockType.QUARTZ, BlockType.QUARTZ,
+    ],
+    desc: '4 Cristais de Quartzo do Nether dispostos em quadrado 2×2.',
+    check: (grid, w, h) => {
+      if (w === 2 && h === 2) {
+        return grid.every(v => v === BlockType.QUARTZ);
+      }
+      if (w === 3 && h === 3) {
+        const offsets = [0, 1, 3, 4];
+        for (const off of offsets) {
+          const r0c0 = off;
+          const r0c1 = off + 1;
+          const r1c0 = off + 3;
+          const r1c1 = off + 4;
+          if (
+            grid[r0c0] === BlockType.QUARTZ &&
+            grid[r0c1] === BlockType.QUARTZ &&
+            grid[r1c0] === BlockType.QUARTZ &&
+            grid[r1c1] === BlockType.QUARTZ
+          ) {
+            const othersEmpty = grid.every((v, i) => (i === r0c0 || i === r0c1 || i === r1c0 || i === r1c1) ? true : v === 0);
+            if (othersEmpty) return true;
+          }
+        }
+      }
+      return false;
+    },
+  },
+
+  // ── 32. Wooden Shield (6 Wood Planks + 1 Iron Ingot) ──
+  {
+    id: 'wooden_shield',
+    name: 'Escudo de Carvalho',
+    category: 'Armaduras',
+    result: BlockType.WOODEN_SHIELD,
+    count: 1,
+    gridSize: 3,
+    layout: [
+      BlockType.WOOD_PLANKS, BlockType.IRON_INGOT,  BlockType.WOOD_PLANKS,
+      BlockType.WOOD_PLANKS, BlockType.WOOD_PLANKS, BlockType.WOOD_PLANKS,
+      0,                     BlockType.WOOD_PLANKS, 0,
+    ],
+    desc: '6 Tábuas de Madeira e 1 Barra de Ferro no topo central.',
+    check: (grid, w, h) => {
+      if (w !== 3 || h !== 3) return false;
+      return (
+        grid[0] === BlockType.WOOD_PLANKS && grid[1] === BlockType.IRON_INGOT && grid[2] === BlockType.WOOD_PLANKS &&
+        grid[3] === BlockType.WOOD_PLANKS && grid[4] === BlockType.WOOD_PLANKS && grid[5] === BlockType.WOOD_PLANKS &&
+        grid[6] === 0 && grid[7] === BlockType.WOOD_PLANKS && grid[8] === 0
+      );
+    },
+  },
+
+  // ── 33. Redstone Torch (1 Redstone Dust + 1 Stick) ──
+  {
+    id: 'redstone_torch',
+    name: 'Tocha de Redstone',
+    category: 'Redstone',
+    result: BlockType.REDSTONE_TORCH,
+    count: 1,
+    gridSize: 2,
+    layout: [BlockType.REDSTONE_DUST, 0, BlockType.STICK, 0],
+    desc: '1 Pó de Redstone sobre 1 Graveto (Emite sinal constante de energia).',
+    check: (grid) => {
+      const red = grid.filter(v => v === BlockType.REDSTONE_DUST).length;
+      const stick = grid.filter(v => v === BlockType.STICK).length;
+      const others = grid.filter(v => v !== 0 && v !== BlockType.REDSTONE_DUST && v !== BlockType.STICK).length;
+      return red === 1 && stick === 1 && others === 0;
+    },
+  },
+
+  // ── 34. Lever (1 Stick + 1 Cobblestone) ──
+  {
+    id: 'lever',
+    name: 'Alavanca de Redstone',
+    category: 'Redstone',
+    result: BlockType.LEVER,
+    count: 1,
+    gridSize: 2,
+    layout: [BlockType.STICK, 0, BlockType.COBBLESTONE, 0],
+    desc: '1 Graveto sobre 1 Pedregulho (Liga e desliga circuitos).',
+    check: (grid) => {
+      const stick = grid.filter(v => v === BlockType.STICK).length;
+      const cobble = grid.filter(v => v === BlockType.COBBLESTONE).length;
+      const others = grid.filter(v => v !== 0 && v !== BlockType.STICK && v !== BlockType.COBBLESTONE).length;
+      return stick === 1 && cobble === 1 && others === 0;
+    },
+  },
+
+  // ── 35. Pressure Plate (2 Stones) ──
+  {
+    id: 'pressure_plate',
+    name: 'Placa de Pressão de Pedra',
+    category: 'Redstone',
+    result: BlockType.PRESSURE_PLATE,
+    count: 1,
+    gridSize: 2,
+    layout: [BlockType.STONE, BlockType.STONE, 0, 0],
+    desc: '2 Pedras lado a lado (Ativa ao pisar).',
+    check: (grid) => {
+      const stones = grid.filter(v => v === BlockType.STONE).length;
+      const others = grid.filter(v => v !== 0 && v !== BlockType.STONE).length;
+      return stones === 2 && others === 0;
+    },
+  },
+
+  // ── 36. Wooden Door (6 Wood Planks in 2x3) ──
+  {
+    id: 'wooden_door',
+    name: 'Porta de Madeira',
+    category: 'Blocos',
+    result: BlockType.WOODEN_DOOR_BOTTOM,
+    count: 1,
+    gridSize: 3,
+    layout: [
+      BlockType.WOOD_PLANKS, BlockType.WOOD_PLANKS, 0,
+      BlockType.WOOD_PLANKS, BlockType.WOOD_PLANKS, 0,
+      BlockType.WOOD_PLANKS, BlockType.WOOD_PLANKS, 0,
+    ],
+    desc: '6 Tábuas de Madeira em duas colunas verticais.',
+    check: (grid, w, h) => {
+      if (w !== 3 || h !== 3) return false;
+      const col12 = (
+        grid[0] === BlockType.WOOD_PLANKS && grid[1] === BlockType.WOOD_PLANKS && grid[2] === 0 &&
+        grid[3] === BlockType.WOOD_PLANKS && grid[4] === BlockType.WOOD_PLANKS && grid[5] === 0 &&
+        grid[6] === BlockType.WOOD_PLANKS && grid[7] === BlockType.WOOD_PLANKS && grid[8] === 0
+      );
+      const col23 = (
+        grid[0] === 0 && grid[1] === BlockType.WOOD_PLANKS && grid[2] === BlockType.WOOD_PLANKS &&
+        grid[3] === 0 && grid[4] === BlockType.WOOD_PLANKS && grid[5] === BlockType.WOOD_PLANKS &&
+        grid[6] === 0 && grid[7] === BlockType.WOOD_PLANKS && grid[8] === BlockType.WOOD_PLANKS
+      );
+      return col12 || col23;
+    },
+  },
+
+  // ── 37. Enchanting Table (1 Book + 2 Diamonds + 4 Obsidian) ──
+  {
+    id: 'enchanting_table',
+    name: 'Mesa de Encantamentos',
+    category: 'Magia',
+    result: BlockType.ENCHANTING_TABLE,
+    count: 1,
+    gridSize: 3,
+    layout: [
+      0,                  BlockType.BOOK,     0,
+      BlockType.DIAMOND,  BlockType.OBSIDIAN, BlockType.DIAMOND,
+      BlockType.OBSIDIAN, BlockType.OBSIDIAN, BlockType.OBSIDIAN,
+    ],
+    desc: '1 Livro no topo central, 2 Diamantes nas laterais e 4 Obsidianas.',
+    check: (grid, w, h) => {
+      if (w !== 3 || h !== 3) return false;
+      return (
+        grid[0] === 0 && grid[1] === BlockType.BOOK && grid[2] === 0 &&
+        grid[3] === BlockType.DIAMOND && grid[4] === BlockType.OBSIDIAN && grid[5] === BlockType.DIAMOND &&
+        grid[6] === BlockType.OBSIDIAN && grid[7] === BlockType.OBSIDIAN && grid[8] === BlockType.OBSIDIAN
+      );
+    },
+  },
+
+  // ── 38. Boat (5 Wood Planks in U-shape) ──
+  {
+    id: 'boat',
+    name: 'Barco de Carvalho',
+    category: 'Veículos',
+    result: BlockType.BOAT,
+    count: 1,
+    gridSize: 3,
+    layout: [
+      0,                     0,                     0,
+      BlockType.WOOD_PLANKS, 0,                     BlockType.WOOD_PLANKS,
+      BlockType.WOOD_PLANKS, BlockType.WOOD_PLANKS, BlockType.WOOD_PLANKS,
+    ],
+    desc: '5 Tábuas de Madeira dispostas em formato de barco (Permite navegar na água).',
+    check: (grid, w, h) => {
+      if (w !== 3 || h !== 3) return false;
+      return (
+        grid[0] === 0 && grid[1] === 0 && grid[2] === 0 &&
+        grid[3] === BlockType.WOOD_PLANKS && grid[4] === 0 && grid[5] === BlockType.WOOD_PLANKS &&
+        grid[6] === BlockType.WOOD_PLANKS && grid[7] === BlockType.WOOD_PLANKS && grid[8] === BlockType.WOOD_PLANKS
+      );
+    },
+  },
+
+  // ── 39. Book (3 Papers / Wheat) ──
+  {
+    id: 'book',
+    name: 'Livro Arcano',
+    category: 'Magia',
+    result: BlockType.BOOK,
+    count: 1,
+    gridSize: 2,
+    layout: [
+      BlockType.WHEAT, BlockType.WHEAT,
+      BlockType.WHEAT, 0,
+    ],
+    desc: '3 Trigos processados em livro de couro.',
+    check: (grid) => {
+      const wheat = grid.filter(v => v === BlockType.WHEAT).length;
+      const others = grid.filter(v => v !== 0 && v !== BlockType.WHEAT).length;
+      return wheat === 3 && others === 0;
+    },
+  },
+
+  // ── 40. Bookshelf (6 Wood Planks + 3 Books) ──
+  {
+    id: 'bookshelf',
+    name: 'Estante de Livros',
+    category: 'Blocos',
+    result: BlockType.BOOKSHELF,
+    count: 1,
+    gridSize: 3,
+    layout: [
+      BlockType.WOOD_PLANKS, BlockType.WOOD_PLANKS, BlockType.WOOD_PLANKS,
+      BlockType.BOOK,        BlockType.BOOK,        BlockType.BOOK,
+      BlockType.WOOD_PLANKS, BlockType.WOOD_PLANKS, BlockType.WOOD_PLANKS,
+    ],
+    desc: '3 Livros no centro entre 6 Tábuas de Madeira (Aumenta o poder da Mesa de Encantamentos).',
+    check: (grid, w, h) => {
+      if (w !== 3 || h !== 3) return false;
+      return (
+        grid[0] === BlockType.WOOD_PLANKS && grid[1] === BlockType.WOOD_PLANKS && grid[2] === BlockType.WOOD_PLANKS &&
+        grid[3] === BlockType.BOOK && grid[4] === BlockType.BOOK && grid[5] === BlockType.BOOK &&
+        grid[6] === BlockType.WOOD_PLANKS && grid[7] === BlockType.WOOD_PLANKS && grid[8] === BlockType.WOOD_PLANKS
+      );
+    },
+  },
 ];
 
 export function evaluateCrafting(grid, width, height) {
+  const gridTypes = grid.map(v => (v && typeof v === 'object') ? (v.type || 0) : (v || 0));
   for (const recipe of RECIPE_CATALOG) {
-    if (recipe.check(grid, width, height)) {
+    if (recipe.check(gridTypes, width, height)) {
       return { result: recipe.result, count: recipe.count, name: recipe.name };
     }
   }
@@ -639,7 +1083,7 @@ export function initCraftingTable() {
 
       <!-- Player Quick Hotbar Transfer -->
       <div class="pt-4 border-t border-outline-variant/60">
-        <span class="font-label-caps text-xs text-secondary uppercase font-semibold block mb-2">Seu Inventário (Clique para colocar na bancada)</span>
+        <span class="font-label-caps text-xs text-secondary uppercase font-semibold block mb-2">Seu Inventário (Botão Esq: Pegar/Colocar • Botão Dir: Colocar 1)</span>
         <div id="table-hotbar-grid" class="grid grid-cols-9 gap-2"></div>
       </div>
     </div>
@@ -659,6 +1103,7 @@ export function openCraftingTable() {
   craftingTableModal.style.display = 'flex';
   openWindow(UIWindow.CRAFTING_TABLE);
   playInventorySound(true);
+  updateTableCraftingOutput();
   renderCraftingTableGrid();
 }
 
@@ -668,13 +1113,22 @@ export function closeCraftingTable() {
   closeWindow(UIWindow.CRAFTING_TABLE);
   playInventorySound(false);
 
+  // Return floating cursor item to player inventory
+  if (cursorItem.type > 0 && cursorItem.count > 0) {
+    addItemToInventory(cursorItem.type, cursorItem.count);
+    clearCursorItem();
+  }
+
   // Return any remaining items in the table to player inventory
   for (let i = 0; i < 9; i++) {
-    if (tableSlots[i] > 0) {
-      addItemToInventory(tableSlots[i]);
-      tableSlots[i] = 0;
+    const item = tableSlots[i];
+    if (item && item.type > 0 && item.count > 0) {
+      addItemToInventory(item.type, item.count);
+      tableSlots[i] = { type: 0, count: 0 };
     }
   }
+
+  updateTableCraftingOutput();
 }
 
 export function isCraftingTableOpen() {
@@ -689,23 +1143,33 @@ export function renderCraftingTableGrid() {
 
   // 1. Render 3×3 Grid
   gridEl.innerHTML = '';
-  tableSlots.forEach((type, idx) => {
+  tableSlots.forEach((slotData, idx) => {
     const slot = document.createElement('div');
     slot.className = 'slot w-14 h-14 rounded-xl bg-surface-container-lowest border border-outline-variant hover:border-primary flex items-center justify-center cursor-pointer relative transition-all';
 
-    if (type > 0) {
-      const icon = createBlockIconCanvas(type, 38);
-      slot.appendChild(icon);
+    const item = slotData || { type: 0, count: 0 };
+    if (item.type > 0 && item.count > 0) {
+      const icon = createBlockIconCanvas(item.type, 38);
+      if (icon) slot.appendChild(icon);
+
+      if (item.count > 1) {
+        const badge = document.createElement('span');
+        badge.className = 'absolute bottom-0.5 right-1 font-label-caps text-[11px] font-bold text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]';
+        badge.textContent = item.count;
+        slot.appendChild(badge);
+      }
     }
 
-    slot.addEventListener('click', () => {
-      if (tableSlots[idx] > 0) {
-        addItemToInventory(tableSlots[idx]);
-        tableSlots[idx] = 0;
+    const slotRef = {
+      get: () => tableSlots[idx] || { type: 0, count: 0 },
+      set: (type, count) => {
+        tableSlots[idx] = { type, count: type === 0 ? 0 : count };
         updateTableCraftingOutput();
-        renderCraftingTableGrid();
-      }
-    });
+      },
+    };
+
+    slot.addEventListener('mousedown', (e) => handleSlotClick(slotRef, e, renderCraftingTableGrid));
+    slot.addEventListener('contextmenu', (e) => e.preventDefault());
 
     gridEl.appendChild(slot);
   });
@@ -714,7 +1178,7 @@ export function renderCraftingTableGrid() {
   outputEl.innerHTML = '';
   if (currentTableOutput && currentTableOutput.result > 0) {
     const icon = createBlockIconCanvas(currentTableOutput.result, 48);
-    outputEl.appendChild(icon);
+    if (icon) outputEl.appendChild(icon);
 
     if (currentTableOutput.count > 1) {
       const badge = document.createElement('span');
@@ -724,42 +1188,102 @@ export function renderCraftingTableGrid() {
     }
   }
 
-  outputEl.onclick = () => {
+  outputEl.onmousedown = (e) => {
+    e.preventDefault();
     if (currentTableOutput && currentTableOutput.result > 0) {
-      for (let c = 0; c < currentTableOutput.count; c++) {
-        addItemToInventory(currentTableOutput.result);
-      }
-      playCraftSound();
-      for (let i = 0; i < 9; i++) {
-        tableSlots[i] = 0;
-      }
-      updateTableCraftingOutput();
-      renderCraftingTableGrid();
-    }
-  };
+      const resultType = currentTableOutput.result;
+      const resultCount = currentTableOutput.count;
 
-  // 3. Render Quick Hotbar
-  hotbarEl.innerHTML = '';
-  const hotbar = getHotbarSlots();
-  hotbar.forEach((type, idx) => {
-    const slot = document.createElement('div');
-    slot.className = 'slot w-full h-11 rounded-lg bg-surface-container-lowest border border-outline-variant hover:border-primary flex items-center justify-center cursor-pointer transition-all';
-    if (type > 0) {
-      const icon = createBlockIconCanvas(type, 30);
-      slot.appendChild(icon);
-      slot.title = `${ITEM_NAMES[type] || 'Item'} (Clique para colocar na bancada)`;
-      slot.addEventListener('click', () => {
-        const firstEmpty = tableSlots.findIndex(v => v === 0);
-        if (firstEmpty !== -1) {
-          tableSlots[firstEmpty] = type;
-          hotbar[idx] = 0;
+      if (e.shiftKey) {
+        // Shift click: craft into inventory directly
+        if (addItemToInventory(resultType, resultCount)) {
+          playCraftSound();
+          for (let i = 0; i < 9; i++) {
+            if (tableSlots[i].count > 1) {
+              tableSlots[i].count -= 1;
+            } else {
+              tableSlots[i] = { type: 0, count: 0 };
+            }
+          }
           updateTableCraftingOutput();
           renderCraftingTableGrid();
         }
-      });
+      } else {
+        // Normal click: pick up into cursor
+        const maxStack = getMaxStack(resultType);
+        if (cursorItem.type === 0) {
+          setCursorItem(resultType, resultCount);
+          playCraftSound();
+          for (let i = 0; i < 9; i++) {
+            if (tableSlots[i].count > 1) {
+              tableSlots[i].count -= 1;
+            } else {
+              tableSlots[i] = { type: 0, count: 0 };
+            }
+          }
+          updateTableCraftingOutput();
+          renderCraftingTableGrid();
+        } else if (cursorItem.type === resultType && cursorItem.count + resultCount <= maxStack) {
+          cursorItem.count += resultCount;
+          updateCursorVisual();
+          playCraftSound();
+          for (let i = 0; i < 9; i++) {
+            if (tableSlots[i].count > 1) {
+              tableSlots[i].count -= 1;
+            } else {
+              tableSlots[i] = { type: 0, count: 0 };
+            }
+          }
+          updateTableCraftingOutput();
+          renderCraftingTableGrid();
+        }
+      }
     }
+  };
+  outputEl.oncontextmenu = (e) => e.preventDefault();
+
+  // 3. Render Quick Hotbar (Player inventory slots 0..8)
+  hotbarEl.innerHTML = '';
+  for (let idx = 0; idx < 9; idx++) {
+    const slot = document.createElement('div');
+    slot.className = 'slot w-full h-11 rounded-lg bg-surface-container-lowest border border-outline-variant hover:border-primary flex items-center justify-center cursor-pointer transition-all relative';
+
+    const item = inventorySlots[idx] || { type: 0, count: 0 };
+    if (item.type > 0 && item.count > 0) {
+      const icon = createBlockIconCanvas(item.type, 30);
+      if (icon) slot.appendChild(icon);
+      slot.title = `${ITEM_NAMES[item.type] || 'Item'}`;
+
+      if (item.count > 1) {
+        const badge = document.createElement('span');
+        badge.className = 'absolute bottom-0.5 right-1 font-label-caps text-[10px] font-bold text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]';
+        badge.textContent = item.count;
+        slot.appendChild(badge);
+      }
+    }
+
+    const slotRef = {
+      get: () => inventorySlots[idx] || { type: 0, count: 0 },
+      set: (type, count) => {
+        inventorySlots[idx] = { type, count: type === 0 ? 0 : count };
+      },
+      onShiftClick: (type, count) => {
+        // Shift click from player inventory into first available 3x3 slot
+        const emptyIdx = tableSlots.findIndex(s => s.type === 0 || s.count === 0);
+        if (emptyIdx !== -1) {
+          tableSlots[emptyIdx] = { type, count };
+          inventorySlots[idx] = { type: 0, count: 0 };
+          updateTableCraftingOutput();
+          renderCraftingTableGrid();
+        }
+      },
+    };
+
+    slot.addEventListener('mousedown', (e) => handleSlotClick(slotRef, e, renderCraftingTableGrid));
+    slot.addEventListener('contextmenu', (e) => e.preventDefault());
+
     hotbarEl.appendChild(slot);
-  });
+  }
 }
 
 export function updateTableCraftingOutput() {

@@ -417,6 +417,178 @@ export function createBlockIconCanvas(blockType, size = 46) {
     return canvas;
   }
 
+  if (blockType === BlockType.DIAMOND) {
+    // Sparkling Cyan Gem
+    ctx.fillStyle = '#06b6d4';
+    ctx.strokeStyle = '#083344';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(size * 0.30, size * 0.30);
+    ctx.lineTo(size * 0.70, size * 0.30);
+    ctx.lineTo(size * 0.85, size * 0.45);
+    ctx.lineTo(size * 0.50, size * 0.85);
+    ctx.lineTo(size * 0.15, size * 0.45);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // Gem internal facets
+    ctx.fillStyle = '#67e8f9';
+    ctx.beginPath();
+    ctx.moveTo(size * 0.30, size * 0.30);
+    ctx.lineTo(size * 0.50, size * 0.45);
+    ctx.lineTo(size * 0.50, size * 0.85);
+    ctx.lineTo(size * 0.15, size * 0.45);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.fillStyle = '#e0f2fe';
+    ctx.beginPath();
+    ctx.moveTo(size * 0.40, size * 0.32);
+    ctx.lineTo(size * 0.60, size * 0.32);
+    ctx.lineTo(size * 0.50, size * 0.45);
+    ctx.closePath();
+    ctx.fill();
+    return canvas;
+  }
+
+  if (blockType === BlockType.DIAMOND_SWORD) {
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = '#083344';
+    ctx.fillStyle = '#06b6d4';
+
+    // Blade
+    ctx.beginPath();
+    ctx.moveTo(size * 0.75, size * 0.15);
+    ctx.lineTo(size * 0.85, size * 0.25);
+    ctx.lineTo(size * 0.45, size * 0.65);
+    ctx.lineTo(size * 0.35, size * 0.55);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // Guard
+    ctx.strokeStyle = '#0284c7';
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.moveTo(size * 0.25, size * 0.60);
+    ctx.lineTo(size * 0.50, size * 0.85);
+    ctx.stroke();
+
+    // Handle
+    ctx.strokeStyle = '#78350f';
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.moveTo(size * 0.35, size * 0.70);
+    ctx.lineTo(size * 0.20, size * 0.85);
+    ctx.stroke();
+    return canvas;
+  }
+
+  if (blockType === BlockType.DIAMOND_PICKAXE) {
+    // Handle
+    ctx.lineWidth = 4;
+    ctx.strokeStyle = '#78350f';
+    ctx.beginPath();
+    ctx.moveTo(size * 0.25, size * 0.75);
+    ctx.lineTo(size * 0.70, size * 0.30);
+    ctx.stroke();
+
+    // Diamond Curved Head
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = '#083344';
+    ctx.fillStyle = '#06b6d4';
+    ctx.beginPath();
+    ctx.moveTo(size * 0.45, size * 0.20);
+    ctx.quadraticCurveTo(size * 0.75, size * 0.15, size * 0.85, size * 0.45);
+    ctx.lineTo(size * 0.75, size * 0.50);
+    ctx.quadraticCurveTo(size * 0.65, size * 0.30, size * 0.40, size * 0.30);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    return canvas;
+  }
+
+  if (blockType === BlockType.DIAMOND_HELMET) {
+    ctx.fillStyle = '#06b6d4';
+    ctx.strokeStyle = '#083344';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.roundRect(size * 0.25, size * 0.25, size * 0.50, size * 0.45, [8, 8, 2, 2]);
+    ctx.fill();
+    ctx.stroke();
+    ctx.clearRect(size * 0.38, size * 0.45, size * 0.24, size * 0.16);
+    return canvas;
+  }
+
+  if (blockType === BlockType.DIAMOND_CHESTPLATE) {
+    ctx.fillStyle = '#06b6d4';
+    ctx.strokeStyle = '#083344';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(size * 0.25, size * 0.25);
+    ctx.lineTo(size * 0.40, size * 0.25);
+    ctx.lineTo(size * 0.50, size * 0.38);
+    ctx.lineTo(size * 0.60, size * 0.25);
+    ctx.lineTo(size * 0.75, size * 0.25);
+    ctx.lineTo(size * 0.85, size * 0.45);
+    ctx.lineTo(size * 0.72, size * 0.50);
+    ctx.lineTo(size * 0.70, size * 0.80);
+    ctx.lineTo(size * 0.30, size * 0.80);
+    ctx.lineTo(size * 0.28, size * 0.50);
+    ctx.lineTo(size * 0.15, size * 0.45);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    return canvas;
+  }
+
+  if (blockType === BlockType.DIAMOND_LEGGINGS) {
+    ctx.fillStyle = '#06b6d4';
+    ctx.strokeStyle = '#083344';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(size * 0.25, size * 0.25);
+    ctx.lineTo(size * 0.75, size * 0.25);
+    ctx.lineTo(size * 0.75, size * 0.80);
+    ctx.lineTo(size * 0.55, size * 0.80);
+    ctx.lineTo(size * 0.50, size * 0.50);
+    ctx.lineTo(size * 0.45, size * 0.80);
+    ctx.lineTo(size * 0.25, size * 0.80);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    return canvas;
+  }
+
+  if (blockType === BlockType.DIAMOND_BOOTS) {
+    ctx.fillStyle = '#06b6d4';
+    ctx.strokeStyle = '#083344';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.roundRect(size * 0.22, size * 0.40, size * 0.24, size * 0.40, [4, 4, 6, 2]);
+    ctx.roundRect(size * 0.54, size * 0.40, size * 0.24, size * 0.40, [4, 4, 6, 2]);
+    ctx.fill();
+    ctx.stroke();
+    return canvas;
+  }
+
+  if (blockType === BlockType.MUTTON || blockType === BlockType.COOKED_MUTTON) {
+    const isCooked = blockType === BlockType.COOKED_MUTTON;
+    ctx.fillStyle = isCooked ? '#78350f' : '#f43f5e';
+    ctx.strokeStyle = isCooked ? '#451a03' : '#9f1239';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.ellipse(size * 0.45, size * 0.48, size * 0.26, size * 0.18, -Math.PI / 4, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    // Bone handle
+    ctx.fillStyle = '#f8fafc';
+    ctx.fillRect(size * 0.62, size * 0.62, size * 0.16, size * 0.08);
+    return canvas;
+  }
+
   if (blockType === BlockType.ROTTEN_FLESH) {
     ctx.fillStyle = '#65a30d';
     ctx.strokeStyle = '#365314';
@@ -426,6 +598,238 @@ export function createBlockIconCanvas(blockType, size = 46) {
     ctx.fill();
     ctx.stroke();
     return canvas;
+  }
+
+  // ── FLINT (Pederneira pontiaguda de cascalho) ──
+  if (blockType === BlockType.FLINT) {
+    ctx.fillStyle = '#1e293b';
+    ctx.strokeStyle = '#0f172a';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(size * 0.5, size * 0.2);
+    ctx.lineTo(size * 0.8, size * 0.6);
+    ctx.lineTo(size * 0.6, size * 0.8);
+    ctx.lineTo(size * 0.3, size * 0.7);
+    ctx.lineTo(size * 0.2, size * 0.4);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // Sharp flint edge highlight
+    ctx.fillStyle = '#64748b';
+    ctx.fillRect(size * 0.45, size * 0.3, size * 0.1, size * 0.25);
+    return canvas;
+  }
+
+  // ── FLINT AND STEEL (Isqueiro de Ferro com faísca) ──
+  if (blockType === BlockType.FLINT_AND_STEEL) {
+    // Steel C-shaped handle
+    ctx.strokeStyle = '#e2e8f0';
+    ctx.lineWidth = size * 0.14;
+    ctx.beginPath();
+    ctx.arc(size * 0.42, size * 0.48, size * 0.24, -Math.PI * 0.6, Math.PI * 0.6);
+    ctx.stroke();
+
+    // Flint piece
+    ctx.fillStyle = '#1e293b';
+    ctx.fillRect(size * 0.52, size * 0.56, size * 0.24, size * 0.20);
+
+    // Orange spark
+    ctx.fillStyle = '#f97316';
+    ctx.beginPath();
+    ctx.arc(size * 0.58, size * 0.35, size * 0.08, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#fef08a';
+    ctx.beginPath();
+    ctx.arc(size * 0.58, size * 0.35, size * 0.04, 0, Math.PI * 2);
+    ctx.fill();
+    return canvas;
+  }
+
+  // ── QUARTZ (Cristal de Quartzo facetado) ──
+  if (blockType === BlockType.QUARTZ) {
+    ctx.fillStyle = '#f8fafc';
+    ctx.strokeStyle = '#cbd5e1';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(size * 0.5, size * 0.15);
+    ctx.lineTo(size * 0.75, size * 0.45);
+    ctx.lineTo(size * 0.5, size * 0.85);
+    ctx.lineTo(size * 0.25, size * 0.45);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // Facet glint
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.moveTo(size * 0.5, size * 0.18);
+    ctx.lineTo(size * 0.65, size * 0.45);
+    ctx.lineTo(size * 0.5, size * 0.80);
+    ctx.closePath();
+    ctx.fill();
+    return canvas;
+  }
+
+  // ── v0.6.0 Items Pixel Art ───────────────────────────────
+
+  if (blockType === BlockType.REDSTONE_DUST) {
+    ctx.fillStyle = '#991b1b';
+    ctx.beginPath();
+    ctx.arc(size * 0.5, size * 0.55, size * 0.28, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = '#ef4444';
+    ctx.beginPath();
+    ctx.arc(size * 0.46, size * 0.50, size * 0.18, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = '#fca5a5';
+    ctx.fillRect(size * 0.42, size * 0.42, size * 0.08, size * 0.08);
+    ctx.fillRect(size * 0.60, size * 0.55, size * 0.06, size * 0.06);
+    return canvas;
+  }
+
+  if (blockType === BlockType.WOODEN_SHIELD || blockType === BlockType.IRON_SHIELD) {
+    const isIron = blockType === BlockType.IRON_SHIELD;
+    // Shield silhouette
+    ctx.fillStyle = isIron ? '#475569' : '#451a03';
+    ctx.beginPath();
+    ctx.moveTo(size * 0.22, size * 0.18);
+    ctx.lineTo(size * 0.78, size * 0.18);
+    ctx.lineTo(size * 0.78, size * 0.55);
+    ctx.lineTo(size * 0.50, size * 0.86);
+    ctx.lineTo(size * 0.22, size * 0.55);
+    ctx.closePath();
+    ctx.fill();
+
+    // Body
+    ctx.fillStyle = isIron ? '#e2e8f0' : '#b45309';
+    ctx.beginPath();
+    ctx.moveTo(size * 0.28, size * 0.24);
+    ctx.lineTo(size * 0.72, size * 0.24);
+    ctx.lineTo(size * 0.72, size * 0.52);
+    ctx.lineTo(size * 0.50, size * 0.78);
+    ctx.lineTo(size * 0.28, size * 0.52);
+    ctx.closePath();
+    ctx.fill();
+
+    // Center Iron Boss
+    ctx.fillStyle = '#334155';
+    ctx.beginPath();
+    ctx.arc(size * 0.5, size * 0.45, size * 0.09, 0, Math.PI * 2);
+    ctx.fill();
+    return canvas;
+  }
+
+  if (blockType === BlockType.BOOK) {
+    // Book cover
+    ctx.fillStyle = '#831843';
+    ctx.beginPath();
+    ctx.roundRect(size * 0.22, size * 0.20, size * 0.56, size * 0.60, 4);
+    ctx.fill();
+
+    // Pages edge
+    ctx.fillStyle = '#fef08a';
+    ctx.fillRect(size * 0.30, size * 0.25, size * 0.44, size * 0.50);
+
+    // Cover spine
+    ctx.fillStyle = '#4c0519';
+    ctx.fillRect(size * 0.22, size * 0.20, size * 0.08, size * 0.60);
+
+    // Gold ribbon
+    ctx.fillStyle = '#facc15';
+    ctx.fillRect(size * 0.46, size * 0.20, size * 0.08, size * 0.68);
+    return canvas;
+  }
+
+  if (blockType === BlockType.GOLDEN_APPLE) {
+    // Apple Body
+    ctx.fillStyle = '#facc15';
+    ctx.beginPath();
+    ctx.arc(size * 0.42, size * 0.52, size * 0.26, 0, Math.PI * 2);
+    ctx.arc(size * 0.58, size * 0.52, size * 0.26, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Golden shine
+    ctx.fillStyle = '#fef08a';
+    ctx.beginPath();
+    ctx.arc(size * 0.38, size * 0.42, size * 0.10, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Leaf & Stem
+    ctx.fillStyle = '#78350f';
+    ctx.fillRect(size * 0.48, size * 0.18, size * 0.06, size * 0.14);
+    ctx.fillStyle = '#16a34a';
+    ctx.fillRect(size * 0.54, size * 0.20, size * 0.14, size * 0.08);
+    return canvas;
+  }
+
+  if (blockType === BlockType.BOAT) {
+    ctx.fillStyle = '#78350f';
+    ctx.beginPath();
+    ctx.moveTo(size * 0.15, size * 0.42);
+    ctx.lineTo(size * 0.85, size * 0.42);
+    ctx.lineTo(size * 0.72, size * 0.72);
+    ctx.lineTo(size * 0.28, size * 0.72);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.fillStyle = '#b45309';
+    ctx.fillRect(size * 0.25, size * 0.46, size * 0.50, size * 0.14);
+
+    // Oars
+    ctx.lineWidth = 2.5;
+    ctx.strokeStyle = '#451a03';
+    ctx.beginPath();
+    ctx.moveTo(size * 0.35, size * 0.30);
+    ctx.lineTo(size * 0.12, size * 0.75);
+    ctx.moveTo(size * 0.65, size * 0.30);
+    ctx.lineTo(size * 0.88, size * 0.75);
+    ctx.stroke();
+    return canvas;
+  }
+
+  if (blockType === BlockType.EXPERIENCE_BOTTLE) {
+    // Glass vial
+    ctx.fillStyle = '#bae6fd';
+    ctx.beginPath();
+    ctx.moveTo(size * 0.42, size * 0.20);
+    ctx.lineTo(size * 0.58, size * 0.20);
+    ctx.lineTo(size * 0.58, size * 0.36);
+    ctx.lineTo(size * 0.75, size * 0.60);
+    ctx.lineTo(size * 0.70, size * 0.82);
+    ctx.lineTo(size * 0.30, size * 0.82);
+    ctx.lineTo(size * 0.25, size * 0.60);
+    ctx.lineTo(size * 0.42, size * 0.36);
+    ctx.closePath();
+    ctx.fill();
+
+    // Glowing emerald XP liquid
+    ctx.fillStyle = '#22c55e';
+    ctx.fillRect(size * 0.34, size * 0.55, size * 0.32, size * 0.24);
+    ctx.fillStyle = '#86efac';
+    ctx.fillRect(size * 0.42, size * 0.60, size * 0.08, size * 0.08);
+    return canvas;
+  }
+
+  if (
+    blockType === BlockType.FLOWER_RED ||
+    blockType === BlockType.FLOWER_YELLOW ||
+    blockType === BlockType.TORCH ||
+    blockType === BlockType.WHEAT_STAGE_1 ||
+    blockType === BlockType.WHEAT_STAGE_2 ||
+    blockType === BlockType.WHEAT_STAGE_3
+  ) {
+    const atlas = getAtlas();
+    const bt = BlockTextures[blockType];
+    if (bt) {
+      const img = atlas[bt.top];
+      ctx.imageSmoothingEnabled = false;
+      const pad = size * 0.08;
+      ctx.drawImage(img, pad, pad, size - pad * 2, size - pad * 2);
+      return canvas;
+    }
   }
 
   // Standard voxel isometric block icon

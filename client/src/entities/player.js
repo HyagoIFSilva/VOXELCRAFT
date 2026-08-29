@@ -3,11 +3,25 @@
  */
 
 import * as THREE from 'three';
-import { getCamera, isPointerLocked } from '../engine/camera.js';
+import {
+  getCamera,
+  isPointerLocked,
+  getYaw,
+  getPitch,
+  toggleCameraMode,
+  getCameraMode,
+  CameraMode,
+  updateCameraPosition,
+} from '../engine/camera.js';
 import { getBlockAtWorld, getSpawnPosition } from '../world/worldManager.js';
 import { BlockType, isSolid } from '../world/blockTypes.js';
 import { isKeyDown } from '../engine/input.js';
-import { playJumpSound, playFlyToggleSound, playHurtSound, playStepSound } from '../engine/soundFx.js';
+import { playJumpSound, playFlyToggleSound, playHurtSound, playStepSound, playCraftSound } from '../engine/soundFx.js';
+import { showCameraModeToast } from '../ui/hud.js';
+import { updatePlayerModel } from './playerModel.js';
+import { getSelectedBlockType } from '../engine/interaction.js';
+import { getSwingProgress } from './hand.js';
+import { getEquippedArmorDefense } from '../ui/inventory.js';
 
 // ── Tuning constants ──────────────────────────────────────
 const HALF_W = 0.3;
@@ -59,6 +73,8 @@ let prevSpaceDown = false;
 
 // ── Public API ─────────────────────────────────────────────
 
+let f4ListenerAdded = false;
+
 export function initPlayer() {
   camera = getCamera();
   health = MAX_HEALTH;
@@ -71,6 +87,23 @@ export function initPlayer() {
   if (camera) {
     camera.position.set(pos.x, pos.y + EYE, pos.z);
   }
+
+  if (!f4ListenerAdded) {
+    f4ListenerAdded = true;
+    window.addEventListener('keydown', (e) => {
+      if (e.code === 'F4' || e.code === 'F5') {
+        e.preventDefault();
+        const mode = toggleCameraMode();
+        const labels = [
+          '👁 Perspectiva: 1ª Pessoa',
+          '🎥 Perspectiva: 3ª Pessoa (Costas)',
+          '📸 Perspectiva: 3ª Pessoa (Frontal)',
+        ];
+        showCameraModeToast(labels[mode]);
+        try { playCraftSound(); } catch (err) {}
+      }
+    });
+  }
 }
 
 export function getHealth() { return health; }
@@ -79,8 +112,6 @@ export function getDamageFlash() { return damageFlash; }
 export function isPlayerFlying() { return isFlying; }
 export function getPlayerPosition() { return pos; }
 export function getPlayerState() { return { onGround, moving, inWater, submerged, isFlying }; }
-
-import { getEquippedArmorDefense } from '../ui/inventory.js';
 
 export function damage(amount, knockbackDir = null) {
   if (health <= 0) return;
@@ -207,7 +238,7 @@ export function updatePlayer(dt) {
     if (isKeyDown('KeyA')) moveSide -= 1;
   }
 
-  const yaw = camera.rotation.y;
+  const yaw = getYaw();
   // Forward vector: (-sin(yaw), -cos(yaw))
   const fwdX = -Math.sin(yaw);
   const fwdZ = -Math.cos(yaw);
@@ -379,7 +410,21 @@ export function updatePlayer(dt) {
 
   if (pos.y < -10) respawn();
 
-  camera.position.set(pos.x, pos.y + EYE, pos.z);
+  updateCameraPosition(pos, EYE, solidAt);
+
+  const is3rdPerson = getCameraMode() !== CameraMode.FIRST_PERSON;
+  updatePlayerModel(
+    dt,
+    pos,
+    getYaw(),
+    getPitch(),
+    moving,
+    onGround,
+    isFlying,
+    getSwingProgress(),
+    getSelectedBlockType(),
+    is3rdPerson
+  );
 
   if (submerged && !isFlying) {
     underwaterTime += dt;

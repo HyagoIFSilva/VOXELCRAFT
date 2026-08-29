@@ -7,7 +7,7 @@ import { setSelectedBlockType } from '../engine/interaction.js';
 import { isPointerLocked } from '../engine/camera.js';
 import { isKeyDown } from '../engine/input.js';
 import { createBlockIconCanvas } from './blockIcon.js';
-import { getHotbarSlots, setHotbarSelectedIndex, isInventoryOpen } from './inventory.js';
+import { getHotbarSlots, getHotbarSlotObjects, setHotbarSelectedIndex, isInventoryOpen } from './inventory.js';
 import { ITEM_NAMES } from '../world/blockTypes.js';
 
 let selectedIndex = 0;
@@ -58,7 +58,22 @@ export function initHotbar() {
     });
 
     const num = document.createElement('span');
+    num.className = 'hotbar-slot-num';
     Object.assign(num.style, {
+      position: 'absolute',
+      top: '1px',
+      left: '3px',
+      fontSize: '10px',
+      color: '#94a3b8',
+      fontWeight: 'bold',
+      opacity: '0.6',
+    });
+    num.textContent = i + 1;
+    slot.appendChild(num);
+
+    const countBadge = document.createElement('span');
+    countBadge.className = 'hotbar-slot-count';
+    Object.assign(countBadge.style, {
       position: 'absolute',
       bottom: '1px',
       right: '3px',
@@ -66,10 +81,10 @@ export function initHotbar() {
       color: '#fff',
       textShadow: '0 1px 2px #000',
       fontWeight: 'bold',
-      opacity: '0.85',
+      display: 'none',
     });
-    num.textContent = i + 1;
-    slot.appendChild(num);
+    slot.appendChild(countBadge);
+
     frame.appendChild(slot);
   }
 
@@ -140,12 +155,14 @@ function selectSlot(index) {
 export function updateHotbarVisual() {
   if (!hotbarEl) return;
 
-  const hotbarItems = getHotbarSlots();
+  const hotbarSlotObjects = getHotbarSlotObjects();
   const slots = hotbarEl.children;
 
   for (let i = 0; i < slots.length; i++) {
     const selected = i === selectedIndex;
-    const itemType = hotbarItems[i] || 0;
+    const slotObj = hotbarSlotObjects[i] || { type: 0, count: 0 };
+    const itemType = slotObj.type || 0;
+    const itemCount = slotObj.count || 0;
 
     slots[i].style.borderColor = selected ? 'rgba(74, 222, 128, 0.95)' : 'rgba(0,0,0,0.55)';
     slots[i].style.transform = selected ? 'scale(1.14) translateY(-3px)' : 'scale(1)';
@@ -162,10 +179,20 @@ export function updateHotbarVisual() {
     } else {
       slots[i].style.backgroundImage = 'none';
     }
+
+    const countBadge = slots[i].querySelector('.hotbar-slot-count');
+    if (countBadge) {
+      if (itemCount > 1) {
+        countBadge.textContent = itemCount;
+        countBadge.style.display = 'block';
+      } else {
+        countBadge.style.display = 'none';
+      }
+    }
   }
 
   if (nameEl) {
-    const activeItem = hotbarItems[selectedIndex] || 0;
+    const activeItem = hotbarSlotObjects[selectedIndex]?.type || 0;
     nameEl.textContent = ITEM_NAMES[activeItem] || '';
   }
 }

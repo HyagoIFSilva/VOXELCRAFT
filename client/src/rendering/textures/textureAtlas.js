@@ -25,9 +25,8 @@ export function buildAtlas() {
   canvas.height = ATLAS_HEIGHT;
   const ctx = canvas.getContext('2d');
 
-  // Clear with solid black background
-  ctx.fillStyle = '#000000';
-  ctx.fillRect(0, 0, ATLAS_WIDTH, ATLAS_HEIGHT);
+  // Clear with transparent background to preserve alpha in vegetation and items
+  ctx.clearRect(0, 0, ATLAS_WIDTH, ATLAS_HEIGHT);
 
   textures.forEach((tex, index) => {
     const col = index % ATLAS_COLS;

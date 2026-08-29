@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { raycastVoxel } from './raycast.js';
-import { setBlockAtWorld, getBlockAtWorld } from '../world/worldManager.js';
+import { setBlockAtWorld, getBlockAtWorld, switchDimension, Dimension, getCurrentDimension } from '../world/worldManager.js';
 import { isPointerLocked, getCamera } from './camera.js';
 import {
   playBlockBreakSound,
@@ -9,8 +9,18 @@ import {
   playBlockHitTickSound,
   playCraftSound,
   playHoeSound,
+  playSleepSound,
+  playFlintAndSteelSound,
+  playCriticalHitSound,
+  playPortalTravelSound,
 } from './soundFx.js';
-import { spawnBlockBreakParticles } from '../rendering/particles.js';
+import { isNighttime, skipToDawn } from '../world/dayNightCycle.js';
+import {
+  spawnBlockBreakParticles,
+  spawnCriticalHitParticles,
+  spawnPortalParticles,
+  spawnTorchFlameParticles,
+} from '../rendering/particles.js';
 import { raycastMob, hitMob, spawnPlayerArrow, igniteTNT } from '../entities/mobManager.js';
 import {
   BlockType,
@@ -20,14 +30,18 @@ import {
   getBlockDrop,
   isFood,
   isHoe,
+  isDoor,
+  isShield,
   getFoodNutrition,
 } from '../world/blockTypes.js';
+import { toggleLever, toggleDoor, recalculateRedstoneGrid } from './redstoneEngine.js';
 import { spawnDrop } from '../entities/dropManager.js';
 import { openCraftingTable } from '../ui/crafting.js';
 import { openFurnace } from '../ui/furnace.js';
 import { openChest, getChestItems, clearChest } from '../ui/chest.js';
+import { openEnchantingTable } from '../ui/enchantingModal.js';
 import { isAnyWindowOpen } from '../ui/uiManager.js';
-import { healPlayer } from '../entities/player.js';
+import { healPlayer, getPlayerPosition, getPlayerState } from '../entities/player.js';
 import { removeItemFromHotbar, hasItemInInventory, consumeItemFromInventory } from '../ui/inventory.js';
 
 let scene = null;
@@ -182,10 +196,13 @@ export function updateInteraction(dt = 0.016) {
           isBreakingBlock = false;
           crackMesh.visible = false;
         }
+      } else {
+        breakProgress = 0.0;
+        crackMesh.visible = false;
       }
     } else {
-      crackMesh.visible = false;
       breakProgress = 0.0;
+      crackMesh.visible = false;
     }
   } else {
     currentTarget = null;
@@ -229,20 +246,32 @@ function onMouseDown(e) {
   if (e.button === 0) {
     isLeftMouseDown = true;
 
-    // ── Attack Mob with Priority ───────────────────────────
+    // ── Attack Mob with Critical Hit System ────────────────
     const targetMob = raycastMob(cam.position, dir, 3.8);
     if (targetMob) {
+      const isDiamondSword = selectedBlockType === BlockType.DIAMOND_SWORD;
       const isIronSword = selectedBlockType === BlockType.IRON_SWORD;
       const isStoneSword = selectedBlockType === BlockType.STONE_SWORD;
       const isWoodSword = selectedBlockType === BlockType.WOODEN_SWORD;
       const isPick =
+        selectedBlockType === BlockType.DIAMOND_PICKAXE ||
         selectedBlockType === BlockType.IRON_PICKAXE ||
         selectedBlockType === BlockType.STONE_PICKAXE ||
         selectedBlockType === BlockType.WOODEN_PICKAXE;
 
-      const damageAmount = isIronSword ? 7 : isStoneSword ? 5 : isWoodSword ? 4 : isPick ? 3 : 2;
+      let damageAmount = isDiamondSword ? 9 : isIronSword ? 7 : isStoneSword ? 5 : isWoodSword ? 4 : isPick ? 3 : 2;
 
-      playSwordSwingSound();
+      const state = getPlayerState();
+      const isCritical = state && !state.onGround && !state.isFlying;
+
+      if (isCritical) {
+        damageAmount = Math.floor(damageAmount * 1.5);
+        playCriticalHitSound();
+        spawnCriticalHitParticles(targetMob.x, targetMob.y + 0.8, targetMob.z);
+      } else {
+        playSwordSwingSound();
+      }
+
       hitMob(targetMob, damageAmount, dir);
       return;
     }
@@ -260,10 +289,24 @@ function onMouseDown(e) {
       breakingBlockPos = { x: currentTarget.hit.x, y: currentTarget.hit.y, z: currentTarget.hit.z };
     }
   } else if (e.button === 2) {
-    // ── Right Click: Bow / Food / Hoe / Seeds / Container / Place Block ───
+    // ── Right Click: Flint & Steel / Bow / Food / Hoe / Seeds / Bed / Containers / Place Block ───
     e.preventDefault();
 
-    // 1. Shoot Bow & Arrow
+    // 1. Flint and Steel Ignition
+    if (selectedBlockType === BlockType.FLINT_AND_STEEL) {
+      playFlintAndSteelSound();
+      if (currentTarget) {
+        const hitBlock = getBlockAtWorld(currentTarget.hit.x, currentTarget.hit.y, currentTarget.hit.z);
+        const { prev } = currentTarget;
+        if (hitBlock === BlockType.OBSIDIAN || hitBlock === BlockType.NETHERRACK) {
+          setBlockAtWorld(scene, prev.x, prev.y, prev.z, BlockType.NETHER_PORTAL);
+          spawnPortalParticles(prev.x + 0.5, prev.y + 0.5, prev.z + 0.5);
+          return;
+        }
+      }
+    }
+
+    // 2. Shoot Bow & Arrow
     if (selectedBlockType === BlockType.BOW) {
       if (hasItemInInventory(BlockType.ARROW)) {
         consumeItemFromInventory(BlockType.ARROW);
@@ -272,7 +315,7 @@ function onMouseDown(e) {
       }
     }
 
-    // 2. Eat food if holding food
+    // 3. Eat food if holding food
     if (isFood(selectedBlockType)) {
       const nutrition = getFoodNutrition(selectedBlockType);
       if (nutrition > 0) {
@@ -286,14 +329,28 @@ function onMouseDown(e) {
     if (currentTarget) {
       const hitBlock = getBlockAtWorld(currentTarget.hit.x, currentTarget.hit.y, currentTarget.hit.z);
 
-      // 3. Hoe Tilling: Transforms Grass/Dirt into Farmland
+      // 4. Bed: Sleep through the night to dawn
+      if (hitBlock === BlockType.BED) {
+        if (isNighttime()) {
+          playSleepSound();
+          skipToDawn();
+          healPlayer(4); // Restores 2 hearts on a good night's rest
+          return;
+        } else {
+          // Daytime sleep attempt
+          playCraftSound();
+          return;
+        }
+      }
+
+      // 5. Hoe Tilling: Transforms Grass/Dirt into Farmland
       if (isHoe(selectedBlockType) && (hitBlock === BlockType.GRASS || hitBlock === BlockType.DIRT)) {
         playHoeSound();
         setBlockAtWorld(scene, currentTarget.hit.x, currentTarget.hit.y, currentTarget.hit.z, BlockType.FARMLAND);
         return;
       }
 
-      // 4. Plant Wheat Seeds on Farmland
+      // 6. Plant Wheat Seeds on Farmland
       if (selectedBlockType === BlockType.WHEAT_SEEDS && hitBlock === BlockType.FARMLAND) {
         const cropY = currentTarget.hit.y + 1;
         if (cropY < 64 && getBlockAtWorld(currentTarget.hit.x, cropY, currentTarget.hit.z) === BlockType.AIR) {
@@ -311,25 +368,56 @@ function onMouseDown(e) {
         }
       }
 
-      // 5. Open Crafting Table 3×3 GUI
+      // 7. Toggle Lever (Redstone Switch)
+      if (hitBlock === BlockType.LEVER) {
+        toggleLever(currentTarget.hit.x, currentTarget.hit.y, currentTarget.hit.z);
+        playBlockHitTickSound(BlockType.STONE);
+        return;
+      }
+
+      // 8. Toggle Door (Open / Close)
+      if (isDoor(hitBlock)) {
+        toggleDoor(currentTarget.hit.x, currentTarget.hit.y, currentTarget.hit.z);
+        return;
+      }
+
+      // 9. Open Enchanting Table GUI
+      if (hitBlock === BlockType.ENCHANTING_TABLE) {
+        openEnchantingTable();
+        return;
+      }
+
+      // 10. Open Crafting Table 3×3 GUI
       if (hitBlock === BlockType.CRAFTING_TABLE) {
         openCraftingTable();
         return;
       }
 
-      // 6. Open Furnace GUI
+      // 11. Open Furnace GUI
       if (hitBlock === BlockType.FURNACE || hitBlock === BlockType.FURNACE_LIT) {
         openFurnace(currentTarget.hit.x, currentTarget.hit.y, currentTarget.hit.z);
         return;
       }
 
-      // 7. Open Chest GUI
+      // 12. Open Chest GUI
       if (hitBlock === BlockType.CHEST) {
         openChest(currentTarget.hit.x, currentTarget.hit.y, currentTarget.hit.z);
         return;
       }
 
-      // 8. Place Block
+      // 13. Place Redstone Dust as Wire
+      if (selectedBlockType === BlockType.REDSTONE_DUST) {
+        const { prev } = currentTarget;
+        if (prev.y >= 0 && prev.y < 64 && getBlockAtWorld(prev.x, prev.y, prev.z) === BlockType.AIR) {
+          playBlockPlaceSound();
+          setBlockAtWorld(scene, prev.x, prev.y, prev.z, BlockType.REDSTONE_WIRE);
+          consumeItemFromInventory(BlockType.REDSTONE_DUST, 1);
+          recalculateRedstoneGrid();
+          return;
+        }
+      }
+
+      // 14. Place Block
       if (isPlaceableBlock(selectedBlockType)) {
         const { prev } = currentTarget;
         if (prev.y >= 0 && prev.y < 64) {
@@ -337,6 +425,11 @@ function onMouseDown(e) {
           if (existing === BlockType.AIR) {
             playBlockPlaceSound();
             setBlockAtWorld(scene, prev.x, prev.y, prev.z, selectedBlockType);
+            consumeItemFromInventory(selectedBlockType, 1);
+
+            if (selectedBlockType === BlockType.REDSTONE_TORCH || selectedBlockType === BlockType.LEVER || selectedBlockType === BlockType.PRESSURE_PLATE) {
+              recalculateRedstoneGrid();
+            }
           }
         }
       }

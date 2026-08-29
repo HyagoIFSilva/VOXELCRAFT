@@ -52,6 +52,8 @@ function getSharedMaterial() {
   if (!sharedMaterial) {
     sharedMaterial = new THREE.MeshLambertMaterial({
       map: getAtlasTexture(),
+      alphaTest: 0.2,
+      side: THREE.DoubleSide,
     });
   }
   return sharedMaterial;
@@ -119,6 +121,91 @@ export class Chunk {
           const isWater = blockType === BlockType.WATER;
           const textures = BlockTextures[blockType];
           if (!textures) continue;
+
+          const isPlant = (
+            blockType === BlockType.FLOWER_RED ||
+            blockType === BlockType.FLOWER_YELLOW ||
+            blockType === BlockType.WHEAT_STAGE_1 ||
+            blockType === BlockType.WHEAT_STAGE_2 ||
+            blockType === BlockType.WHEAT_STAGE_3
+          );
+          const isTorch = blockType === BlockType.TORCH;
+
+          // ── Cross-Billboard Mesh for Flowers & Crops (X-Mesh) ─
+          if (isPlant) {
+            const texIdx = textures.top;
+            const atlasUV = getUVsForTexture(texIdx);
+
+            const diagQuads = [
+              // Diagonal 1: (0.12, 0, 0.12) -> (0.88, 1, 0.88)
+              [
+                [0.12, 0.0, 0.12, 0, 0],
+                [0.88, 0.0, 0.88, 1, 0],
+                [0.88, 1.0, 0.88, 1, 1],
+                [0.12, 1.0, 0.12, 0, 1],
+              ],
+              // Diagonal 2: (0.12, 0, 0.88) -> (0.88, 1, 0.12)
+              [
+                [0.12, 0.0, 0.88, 0, 0],
+                [0.88, 0.0, 0.12, 1, 0],
+                [0.88, 1.0, 0.12, 1, 1],
+                [0.12, 1.0, 0.88, 0, 1],
+              ],
+            ];
+
+            for (const q of diagQuads) {
+              for (let i = 0; i < 4; i++) {
+                const [vx, vy, vz, lu, lv] = q[i];
+                solidPos.push(x + vx, y + vy, z + vz);
+                solidNorm.push(0, 1, 0);
+                solidUV.push(
+                  atlasUV.uMin + lu * (atlasUV.uMax - atlasUV.uMin),
+                  atlasUV.vMin + lv * (atlasUV.vMax - atlasUV.vMin)
+                );
+              }
+              solidIdx.push(solidVC, solidVC + 1, solidVC + 2, solidVC, solidVC + 2, solidVC + 3);
+              solidVC += 4;
+            }
+            continue;
+          }
+
+          // ── Centered 3D Model for Placed Torches ───────────────
+          if (isTorch) {
+            const texIdx = textures.top;
+            const atlasUV = getUVsForTexture(texIdx);
+
+            const x0 = 0.42, x1 = 0.58;
+            const z0 = 0.42, z1 = 0.58;
+            const y0 = 0.0, y1 = 0.65;
+
+            const torchFaces = [
+              // Top
+              [[x0, y1, z1, 0, 0], [x1, y1, z1, 1, 0], [x1, y1, z0, 1, 1], [x0, y1, z0, 0, 1], 0, 1, 0],
+              // Front
+              [[x0, y0, z1, 0, 1], [x1, y0, z1, 1, 1], [x1, y1, z1, 1, 0], [x0, y1, z1, 0, 0], 0, 0, 1],
+              // Back
+              [[x1, y0, z0, 0, 1], [x0, y0, z0, 1, 1], [x0, y1, z0, 1, 0], [x1, y1, z0, 0, 0], 0, 0, -1],
+              // Left
+              [[x0, y0, z0, 0, 1], [x0, y0, z1, 1, 1], [x0, y1, z1, 1, 0], [x0, y1, z0, 0, 0], -1, 0, 0],
+              // Right
+              [[x1, y0, z1, 0, 1], [x1, y0, z0, 1, 1], [x1, y1, z0, 1, 0], [x1, y1, z1, 0, 0], 1, 0, 0],
+            ];
+
+            for (const tf of torchFaces) {
+              for (let i = 0; i < 4; i++) {
+                const [vx, vy, vz, lu, lv] = tf[i];
+                solidPos.push(x + vx, y + vy, z + vz);
+                solidNorm.push(tf[4], tf[5], tf[6]);
+                solidUV.push(
+                  atlasUV.uMin + lu * (atlasUV.uMax - atlasUV.uMin),
+                  atlasUV.vMin + lv * (atlasUV.vMax - atlasUV.vMin)
+                );
+              }
+              solidIdx.push(solidVC, solidVC + 1, solidVC + 2, solidVC, solidVC + 2, solidVC + 3);
+              solidVC += 4;
+            }
+            continue;
+          }
 
           for (const face of FACES) {
             const nx = x + face.dir[0];

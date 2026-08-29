@@ -231,6 +231,10 @@ export function getGameTimeString() {
   return `${hStr}:${mStr}`;
 }
 
+export function skipToDawn() {
+  timeOfDay = 0.05; // 07:12 AM Sunrise
+}
+
 /**
  * Returns daylight intensity from 0.0 (night) to 1.0 (noon).
  */

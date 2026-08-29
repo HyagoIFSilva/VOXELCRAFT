@@ -2,25 +2,25 @@
  * First-Person Minecraft Hand & Held Items / Weapons.
  *
  * Renders the classic 3D Steve arm in the bottom-right viewport.
- * When a block or weapon is selected, it is held in the hand.
+ * When a block, sword, tool or torch is selected, it is held straight and naturally in the fist.
  * Features walking bobbing and attack/mining swing animations.
  */
 
 import * as THREE from 'three';
-import { getCamera, isPointerLocked } from '../engine/camera.js';
+import { getCamera, isPointerLocked, getCameraMode, CameraMode } from '../engine/camera.js';
 import { getSelectedBlockType } from '../engine/interaction.js';
 import { getPlayerState } from './player.js';
 import { getBlockPreviewMesh } from '../rendering/blockPreview.js';
-import { isWeapon } from '../world/blockTypes.js';
+import { BlockType, isWeapon } from '../world/blockTypes.js';
 
-// Base transform relative to camera
-const BASE_X = 0.38;
-const BASE_Y = -0.28;
-const BASE_Z = -0.46;
+// Base transform relative to camera (anchored in bottom-right corner)
+const BASE_X = 0.36;
+const BASE_Y = -0.30;
+const BASE_Z = -0.44;
 
-const BASE_ROT_X = -0.32;
-const BASE_ROT_Y = 0.35;
-const BASE_ROT_Z = -0.12;
+const BASE_ROT_X = -0.30;
+const BASE_ROT_Y = 0.32;
+const BASE_ROT_Z = -0.10;
 
 let handGroup = null;
 let armMesh = null;
@@ -29,7 +29,7 @@ let heldItemMesh = null;
 let currentItemType = -1;
 
 let swingProgress = 1;
-let swingSpeed = 5.6;
+let swingSpeed = 5.8;
 let bobPhase = 0;
 
 export function initHand() {
@@ -48,12 +48,13 @@ export function initHand() {
     depthTest: true,
   });
 
-  armMesh = new THREE.Mesh(new THREE.BoxGeometry(0.10, 0.10, 0.34), skinMat);
+  // Steve arm forearm & fist
+  armMesh = new THREE.Mesh(new THREE.BoxGeometry(0.10, 0.10, 0.36), skinMat);
   armMesh.position.set(0, 0, 0.10);
   handGroup.add(armMesh);
 
   sleeveMesh = new THREE.Mesh(new THREE.BoxGeometry(0.108, 0.108, 0.14), sleeveMat);
-  sleeveMesh.position.set(0, 0, 0.22);
+  sleeveMesh.position.set(0, 0, 0.23);
   handGroup.add(sleeveMesh);
 
   updateHeldItem();
@@ -89,13 +90,17 @@ function updateHeldItem() {
       heldItemMesh = preview;
 
       if (isWeapon(currentItemType)) {
-        // Weapon positioning in hand (sword blade angled forward/upward)
-        heldItemMesh.position.set(-0.02, 0.14, -0.22);
-        heldItemMesh.rotation.set(0.2, 0.3, -0.4);
+        // Weapon positioning in hand: Hilt inside fist, blade pointing forward/upward straight into the screen
+        heldItemMesh.position.set(0.01, 0.04, -0.09);
+        heldItemMesh.rotation.set(-0.62, 0.20, -0.12);
+      } else if (currentItemType === BlockType.TORCH || currentItemType === BlockType.FLINT_AND_STEEL) {
+        // Torch / Flint & steel held upright in fist
+        heldItemMesh.position.set(0.01, 0.04, -0.09);
+        heldItemMesh.rotation.set(-0.40, 0.20, -0.10);
       } else {
-        // Block positioning in hand
-        heldItemMesh.position.set(-0.02, 0.08, -0.16);
-        heldItemMesh.rotation.set(0.35, 0.65, -0.2);
+        // Block positioning in hand palm
+        heldItemMesh.position.set(0.02, 0.06, -0.12);
+        heldItemMesh.rotation.set(0.25, 0.55, -0.08);
       }
       handGroup.add(heldItemMesh);
     }
@@ -105,10 +110,9 @@ function updateHeldItem() {
 export function updateHand(dt, time) {
   if (!handGroup) return;
 
-  const locked = isPointerLocked();
-  handGroup.visible = locked;
-
-  if (!locked) return;
+  const isFirstPerson = getCameraMode() === CameraMode.FIRST_PERSON;
+  handGroup.visible = isFirstPerson;
+  if (!isFirstPerson) return;
 
   updateHeldItem();
 
@@ -159,4 +163,8 @@ export function updateHand(dt, time) {
     BASE_ROT_Y + swingRotY,
     BASE_ROT_Z + swingRotZ
   );
+}
+
+export function getSwingProgress() {
+  return swingProgress;
 }
