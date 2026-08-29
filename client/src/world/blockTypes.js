@@ -34,6 +34,13 @@ export const BlockType = {
   OBSIDIAN:        28,
   BED:             29,
   WOOL:            30,
+  GRAVEL:          31,
+  NETHERRACK:      32,
+  SOUL_SAND:       33,
+  GLOWSTONE:       34,
+  NETHER_QUARTZ_ORE: 35,
+  QUARTZ_BLOCK:    36,
+  NETHER_PORTAL:   37,
   // Items / Weapons / Tools
   IRON_SWORD:      101,
   IRON_PICKAXE:    102,
@@ -75,6 +82,10 @@ export const BlockType = {
   DIAMOND_BOOTS:      134,
   MUTTON:          135,
   COOKED_MUTTON:   136,
+  // Nether & Tools
+  FLINT:           137,
+  FLINT_AND_STEEL: 138,
+  QUARTZ:          139,
 };
 
 export const ITEM_NAMES = {
@@ -144,6 +155,16 @@ export const ITEM_NAMES = {
   [BlockType.DIAMOND_BOOTS]:      'Botas de Diamante',
   [BlockType.MUTTON]:          'Carneiro Cru',
   [BlockType.COOKED_MUTTON]:   'Carneiro Assado',
+  [BlockType.GRAVEL]:          'Cascalho',
+  [BlockType.NETHERRACK]:      'Rocha do Nether',
+  [BlockType.SOUL_SAND]:       'Areia das Almas',
+  [BlockType.GLOWSTONE]:       'Pedra Luminosa (Glowstone)',
+  [BlockType.NETHER_QUARTZ_ORE]: 'Minério de Quartzo do Nether',
+  [BlockType.QUARTZ_BLOCK]:    'Bloco de Quartzo Polido',
+  [BlockType.NETHER_PORTAL]:   'Portal do Nether',
+  [BlockType.FLINT]:           'Pederneira',
+  [BlockType.FLINT_AND_STEEL]: 'Isqueiro de Pederneira',
+  [BlockType.QUARTZ]:          'Cristal de Quartzo',
 };
 
 /**
@@ -180,6 +201,13 @@ export const BlockTextures = {
   [BlockType.OBSIDIAN]:       { top: 38, side: 38, bottom: 38 },
   [BlockType.BED]:            { top: 39, side: 40, bottom: 16 },
   [BlockType.WOOL]:           { top: 41, side: 41, bottom: 41 },
+  [BlockType.GRAVEL]:         { top: 42, side: 42, bottom: 42 },
+  [BlockType.NETHERRACK]:     { top: 43, side: 43, bottom: 43 },
+  [BlockType.SOUL_SAND]:      { top: 44, side: 44, bottom: 44 },
+  [BlockType.GLOWSTONE]:      { top: 45, side: 45, bottom: 45 },
+  [BlockType.NETHER_QUARTZ_ORE]: { top: 46, side: 46, bottom: 46 },
+  [BlockType.QUARTZ_BLOCK]:   { top: 47, side: 47, bottom: 47 },
+  [BlockType.NETHER_PORTAL]:  { top: 48, side: 48, bottom: 48 },
 };
 
 export function isSolid(type) {
@@ -188,6 +216,7 @@ export function isSolid(type) {
     type < 100 &&
     type !== BlockType.WATER &&
     type !== BlockType.LAVA &&
+    type !== BlockType.NETHER_PORTAL &&
     type !== BlockType.FLOWER_RED &&
     type !== BlockType.FLOWER_YELLOW &&
     type !== BlockType.TORCH &&
@@ -330,7 +359,20 @@ export function getBlockHardness(type) {
       return 4.5;
     case BlockType.OBSIDIAN:
       return 9.0;
+    case BlockType.GRAVEL:
+      return 0.6;
+    case BlockType.NETHERRACK:
+      return 0.8;
+    case BlockType.SOUL_SAND:
+      return 0.7;
+    case BlockType.GLOWSTONE:
+      return 0.5;
+    case BlockType.NETHER_QUARTZ_ORE:
+      return 3.0;
+    case BlockType.QUARTZ_BLOCK:
+      return 2.0;
     case BlockType.TORCH:
+    case BlockType.NETHER_PORTAL:
       return 0.05;
     default:
       return 1.0;
@@ -354,11 +396,19 @@ export function getMiningSpeed(blockType, toolType) {
     return 0.2; // Virtually unbreakable without diamond pick
   }
 
-  // Diamond Ore
-  if (blockType === BlockType.DIAMOND_ORE) {
+  // Diamond Ore & Quartz Ore
+  if (blockType === BlockType.DIAMOND_ORE || blockType === BlockType.NETHER_QUARTZ_ORE) {
     if (isDiamondPick) return 8.0;
     if (isIronPick) return 6.0;
     return 0.4;
+  }
+
+  // Netherrack & Glowstone (super fast with pickaxes)
+  if (blockType === BlockType.NETHERRACK || blockType === BlockType.GLOWSTONE || blockType === BlockType.QUARTZ_BLOCK) {
+    if (isDiamondPick) return 12.0;
+    if (isIronPick) return 9.0;
+    if (isStonePick) return 6.0;
+    return 2.5;
   }
 
   // Pickaxe on stone/ores/furnaces
@@ -416,6 +466,20 @@ export function getBlockDrop(type) {
       return BlockType.DIAMOND;
     case BlockType.OBSIDIAN:
       return BlockType.OBSIDIAN;
+    case BlockType.GRAVEL:
+      return Math.random() < 0.25 ? BlockType.FLINT : BlockType.GRAVEL;
+    case BlockType.NETHERRACK:
+      return BlockType.NETHERRACK;
+    case BlockType.SOUL_SAND:
+      return BlockType.SOUL_SAND;
+    case BlockType.GLOWSTONE:
+      return BlockType.GLOWSTONE;
+    case BlockType.NETHER_QUARTZ_ORE:
+      return BlockType.QUARTZ;
+    case BlockType.QUARTZ_BLOCK:
+      return BlockType.QUARTZ_BLOCK;
+    case BlockType.NETHER_PORTAL:
+      return BlockType.AIR;
     case BlockType.FURNACE:
     case BlockType.FURNACE_LIT:
       return BlockType.FURNACE;

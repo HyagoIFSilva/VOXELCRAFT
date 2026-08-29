@@ -7,7 +7,7 @@
  */
 
 import * as THREE from 'three';
-import { getCamera, isPointerLocked } from '../engine/camera.js';
+import { getCamera, isPointerLocked, getCameraMode, CameraMode } from '../engine/camera.js';
 import { getSelectedBlockType } from '../engine/interaction.js';
 import { getPlayerState } from './player.js';
 import { getBlockPreviewMesh } from '../rendering/blockPreview.js';
@@ -105,10 +105,9 @@ function updateHeldItem() {
 export function updateHand(dt, time) {
   if (!handGroup) return;
 
-  const locked = isPointerLocked();
-  handGroup.visible = locked;
-
-  if (!locked) return;
+  const isFirstPerson = getCameraMode() === CameraMode.FIRST_PERSON;
+  handGroup.visible = isFirstPerson;
+  if (!isFirstPerson) return;
 
   updateHeldItem();
 
@@ -159,4 +158,12 @@ export function updateHand(dt, time) {
     BASE_ROT_Y + swingRotY,
     BASE_ROT_Z + swingRotZ
   );
+}
+
+export function getSwingProgress() {
+  return swingProgress;
+}
+
+export function triggerHandSwing() {
+  swingProgress = 0;
 }

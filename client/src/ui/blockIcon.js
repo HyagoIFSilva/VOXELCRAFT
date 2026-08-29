@@ -600,6 +600,77 @@ export function createBlockIconCanvas(blockType, size = 46) {
     return canvas;
   }
 
+  // ── FLINT (Pederneira pontiaguda de cascalho) ──
+  if (blockType === BlockType.FLINT) {
+    ctx.fillStyle = '#1e293b';
+    ctx.strokeStyle = '#0f172a';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(size * 0.5, size * 0.2);
+    ctx.lineTo(size * 0.8, size * 0.6);
+    ctx.lineTo(size * 0.6, size * 0.8);
+    ctx.lineTo(size * 0.3, size * 0.7);
+    ctx.lineTo(size * 0.2, size * 0.4);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // Sharp flint edge highlight
+    ctx.fillStyle = '#64748b';
+    ctx.fillRect(size * 0.45, size * 0.3, size * 0.1, size * 0.25);
+    return canvas;
+  }
+
+  // ── FLINT AND STEEL (Isqueiro de Ferro com faísca) ──
+  if (blockType === BlockType.FLINT_AND_STEEL) {
+    // Steel C-shaped handle
+    ctx.strokeStyle = '#e2e8f0';
+    ctx.lineWidth = size * 0.14;
+    ctx.beginPath();
+    ctx.arc(size * 0.42, size * 0.48, size * 0.24, -Math.PI * 0.6, Math.PI * 0.6);
+    ctx.stroke();
+
+    // Flint piece
+    ctx.fillStyle = '#1e293b';
+    ctx.fillRect(size * 0.52, size * 0.56, size * 0.24, size * 0.20);
+
+    // Orange spark
+    ctx.fillStyle = '#f97316';
+    ctx.beginPath();
+    ctx.arc(size * 0.58, size * 0.35, size * 0.08, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#fef08a';
+    ctx.beginPath();
+    ctx.arc(size * 0.58, size * 0.35, size * 0.04, 0, Math.PI * 2);
+    ctx.fill();
+    return canvas;
+  }
+
+  // ── QUARTZ (Cristal de Quartzo facetado) ──
+  if (blockType === BlockType.QUARTZ) {
+    ctx.fillStyle = '#f8fafc';
+    ctx.strokeStyle = '#cbd5e1';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(size * 0.5, size * 0.15);
+    ctx.lineTo(size * 0.75, size * 0.45);
+    ctx.lineTo(size * 0.5, size * 0.85);
+    ctx.lineTo(size * 0.25, size * 0.45);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // Facet glint
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.moveTo(size * 0.5, size * 0.18);
+    ctx.lineTo(size * 0.65, size * 0.45);
+    ctx.lineTo(size * 0.5, size * 0.80);
+    ctx.closePath();
+    ctx.fill();
+    return canvas;
+  }
+
   if (
     blockType === BlockType.FLOWER_RED ||
     blockType === BlockType.FLOWER_YELLOW ||

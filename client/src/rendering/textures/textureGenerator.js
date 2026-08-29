@@ -626,6 +626,98 @@ function drawWool(ctx, size) {
   }
 }
 
+function drawGravel(ctx, size) {
+  fillWithNoise(ctx, size, '#6b7280', ['#4b5563', '#9ca3af', '#374151', '#d1d5db'], 0.5, 3101);
+  const rng = seededRandom(3102);
+  for (let i = 0; i < 8; i++) {
+    const x = Math.floor(rng() * (size - 1));
+    const y = Math.floor(rng() * (size - 1));
+    ctx.fillStyle = '#1f2937';
+    ctx.fillRect(x, y, 1, 1);
+  }
+}
+
+function drawNetherrack(ctx, size) {
+  fillWithNoise(ctx, size, '#6b1717', ['#450a0a', '#7f1d1d', '#991b1b', '#3b0707'], 0.5, 3201);
+  const rng = seededRandom(3202);
+  for (let i = 0; i < 6; i++) {
+    const x = Math.floor(rng() * (size - 1));
+    const y = Math.floor(rng() * (size - 1));
+    ctx.fillStyle = '#b91c1c';
+    ctx.fillRect(x, y, 1, 1);
+  }
+}
+
+function drawSoulSand(ctx, size) {
+  fillWithNoise(ctx, size, '#451a03', ['#381e11', '#2e180c', '#54260f'], 0.4, 3301);
+  // Ghostly faint souls in sand
+  ctx.fillStyle = '#1c0d06';
+  // Face 1
+  ctx.fillRect(3, 4, 1, 2);
+  ctx.fillRect(5, 4, 1, 2);
+  ctx.fillRect(4, 7, 1, 2);
+  // Face 2
+  ctx.fillRect(10, 8, 1, 2);
+  ctx.fillRect(12, 8, 1, 2);
+  ctx.fillRect(11, 11, 1, 2);
+}
+
+function drawGlowstone(ctx, size) {
+  fillWithNoise(ctx, size, '#eab308', ['#ca8a04', '#facc15', '#fef08a', '#a16207'], 0.55, 3401);
+  const rng = seededRandom(3402);
+  for (let i = 0; i < 10; i++) {
+    const x = Math.floor(rng() * (size - 1));
+    const y = Math.floor(rng() * (size - 1));
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(x, y, 1, 1);
+  }
+}
+
+function drawNetherQuartzOre(ctx, size) {
+  drawNetherrack(ctx, size);
+  // White quartz crystalline veins
+  const quartzShards = [
+    [3, 3], [4, 3], [4, 4], [5, 4], [4, 5],
+    [9, 9], [10, 9], [10, 10], [11, 10], [10, 11],
+    [11, 3], [12, 3], [12, 4],
+    [3, 11], [4, 11], [4, 12],
+  ];
+  quartzShards.forEach(([x, y]) => {
+    ctx.fillStyle = '#f8fafc';
+    ctx.fillRect(x, y, 1, 1);
+  });
+  // Shimmer outline
+  ctx.fillStyle = '#e2e8f0';
+  ctx.fillRect(3, 2, 1, 1);
+  ctx.fillRect(9, 8, 1, 1);
+}
+
+function drawQuartzBlock(ctx, size) {
+  fillWithNoise(ctx, size, '#f8fafc', ['#f1f5f9', '#ffffff', '#e2e8f0'], 0.25, 3601);
+  // Subtle elegant beveled border
+  ctx.fillStyle = '#cbd5e1';
+  ctx.fillRect(0, 0, size, 1);
+  ctx.fillRect(0, 0, 1, size);
+  ctx.fillStyle = '#94a3b8';
+  ctx.fillRect(0, size - 1, size, 1);
+  ctx.fillRect(size - 1, 0, 1, size);
+}
+
+function drawNetherPortal(ctx, size) {
+  fillWithNoise(ctx, size, '#4c1d95', ['#6b21a8', '#7e22ce', '#3b0764', '#9333ea'], 0.5, 3701);
+  // Swirling vortex highlights
+  ctx.fillStyle = '#c084fc';
+  ctx.fillRect(2, 3, 3, 1);
+  ctx.fillRect(4, 4, 2, 1);
+  ctx.fillRect(8, 7, 4, 1);
+  ctx.fillRect(10, 8, 3, 1);
+  ctx.fillRect(4, 11, 5, 1);
+  ctx.fillRect(1, 12, 3, 1);
+  ctx.fillStyle = '#f3e8ff';
+  ctx.fillRect(3, 3, 1, 1);
+  ctx.fillRect(9, 7, 1, 1);
+}
+
 // ── Export: texture definitions ───────────────────────────
 
 export const TEXTURE_DEFS = [
@@ -671,6 +763,13 @@ export const TEXTURE_DEFS = [
   { name: 'bed_top',             draw: drawBedTop },             // 39
   { name: 'bed_side',            draw: drawBedSide },            // 40
   { name: 'wool',                draw: drawWool },               // 41
+  { name: 'gravel',              draw: drawGravel },             // 42
+  { name: 'netherrack',          draw: drawNetherrack },         // 43
+  { name: 'soul_sand',           draw: drawSoulSand },           // 44
+  { name: 'glowstone',           draw: drawGlowstone },          // 45
+  { name: 'nether_quartz_ore',   draw: drawNetherQuartzOre },    // 46
+  { name: 'quartz_block',        draw: drawQuartzBlock },        // 47
+  { name: 'nether_portal',       draw: drawNetherPortal },       // 48
 ];
 
 /**

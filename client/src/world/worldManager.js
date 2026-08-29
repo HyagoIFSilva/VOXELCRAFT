@@ -70,7 +70,12 @@ function fractalNoise(x, z, octaves = 4, persistence = 0.5, lacunarity = 2.0) {
   return total / maxValue;
 }
 
-// ── Biome Definitions & Evaluation ────────────────────────
+export const Dimension = {
+  OVERWORLD: 'overworld',
+  NETHER: 'nether',
+};
+
+let currentDimension = Dimension.OVERWORLD;
 
 export const Biome = {
   OCEAN: 'ocean',
@@ -78,6 +83,7 @@ export const Biome = {
   FOREST: 'forest',
   DESERT: 'desert',
   SNOWY_MOUNTAINS: 'snowy_mountains',
+  NETHER_WASTES: 'nether_wastes',
 };
 
 /**
@@ -276,7 +282,62 @@ export function isCaveAir(wx, wy, wz, surfaceHeight) {
 
 // ── Procedural Chunk Generation ───────────────────────────
 
+function generateNetherChunk(cx, cz) {
+  const chunk = new Chunk(cx, 0, cz);
+  const offX = cx * CHUNK_WIDTH;
+  const offZ = cz * CHUNK_WIDTH;
+
+  for (let z = 0; z < CHUNK_WIDTH; z++) {
+    for (let x = 0; x < CHUNK_WIDTH; x++) {
+      const wx = offX + x;
+      const wz = offZ + z;
+
+      for (let y = 0; y < CHUNK_HEIGHT; y++) {
+        // Floor & Ceiling
+        if (y === 0 || y >= 62) {
+          chunk.setBlock(x, y, z, BlockType.NETHERRACK);
+          continue;
+        }
+
+        // 3D Nether Cavern Noise
+        const n1 = smoothNoise3D(wx * 0.05, y * 0.07, wz * 0.05) - 0.5;
+        const n2 = smoothNoise3D(wx * 0.03 + 200, y * 0.05 + 200, wz * 0.03 + 200) - 0.5;
+        const isSolid = (n1 * n1 + n2 * n2) > 0.035;
+
+        if (isSolid) {
+          const r = hash2D(wx * 47 + y * 89, wz * 61 + y * 23);
+          if (y <= 20 && r < 0.25) {
+            // Soul sand banks near lava
+            chunk.setBlock(x, y, z, BlockType.SOUL_SAND);
+          } else if (y >= 45 && r > 0.97) {
+            // Glowing crystals on roof
+            chunk.setBlock(x, y, z, BlockType.GLOWSTONE);
+          } else if (r > 0.982) {
+            // White Quartz veins
+            chunk.setBlock(x, y, z, BlockType.NETHER_QUARTZ_ORE);
+          } else {
+            chunk.setBlock(x, y, z, BlockType.NETHERRACK);
+          }
+        } else {
+          // Open air or molten lava seas
+          if (y <= 16) {
+            chunk.setBlock(x, y, z, BlockType.LAVA);
+          } else {
+            chunk.setBlock(x, y, z, BlockType.AIR);
+          }
+        }
+      }
+    }
+  }
+
+  return chunk;
+}
+
 function generateChunk(cx, cz) {
+  if (currentDimension === Dimension.NETHER) {
+    return generateNetherChunk(cx, cz);
+  }
+
   const chunk = new Chunk(cx, 0, cz);
   const offX = cx * CHUNK_WIDTH;
   const offZ = cz * CHUNK_WIDTH;
@@ -317,7 +378,6 @@ function generateChunk(cx, cz) {
         }
 
         // 3D Cave Carving Pass: Hollows out tunnels and cave entrances
-        // 3D Cave Carving Pass: Hollows out tunnels, deep lava pools and cave entrances
         if (y >= 2 && isCaveAir(wx, y, wz, height)) {
           if (y <= 8) {
             block = BlockType.LAVA; // Deep molten magma lake
@@ -386,7 +446,7 @@ function generateChunk(cx, cz) {
     }
   }
 
-  // 3. Subterranean Ore pass (Coal, Iron & rare Deep Diamond Veins)
+  // 3. Subterranean Ore pass (Coal, Iron, Gravel & rare Deep Diamond Veins)
   for (let z = 0; z < CHUNK_WIDTH; z++) {
     for (let x = 0; x < CHUNK_WIDTH; x++) {
       const wx = offX + x;
@@ -402,6 +462,8 @@ function generateChunk(cx, cz) {
             chunk.setBlock(x, y, z, BlockType.COAL_ORE);
           } else if (r > 0.982) {
             chunk.setBlock(x, y, z, BlockType.IRON_ORE);
+          } else if (r > 0.965 && r <= 0.982) {
+            chunk.setBlock(x, y, z, BlockType.GRAVEL);
           }
         }
       }
@@ -556,8 +618,53 @@ export function updateWorld(playerPos, scene) {
  * Get initial spawn position in plains.
  */
 export function getSpawnPosition() {
+  if (currentDimension === Dimension.NETHER) {
+    return { x: 0.5, y: 32, z: 0.5 };
+  }
   const height = getHeight(0, 0);
   return { x: 0.5, y: height + 2, z: 0.5 };
+}
+
+export function getCurrentDimension() {
+  return currentDimension;
+}
+
+export function switchDimension(scene, targetDim) {
+  if (currentDimension === targetDim || !scene) return;
+  currentDimension = targetDim;
+
+  // 1. Clear existing chunks and meshes
+  for (const [key, chunk] of chunks.entries()) {
+    const solidMesh = chunkMeshes.get(key);
+    const waterMesh = chunkWaterMeshes.get(key);
+    if (solidMesh) { scene.remove(solidMesh); solidMesh.geometry.dispose(); }
+    if (waterMesh) { scene.remove(waterMesh); waterMesh.geometry.dispose(); }
+    chunk.dispose();
+  }
+  chunks.clear();
+  chunkMeshes.clear();
+  chunkWaterMeshes.clear();
+  pendingBuildQueue.length = 0;
+  lastPlayerChunkX = NaN;
+  lastPlayerChunkZ = NaN;
+
+  // 2. Adjust atmosphere & fog
+  if (currentDimension === Dimension.NETHER) {
+    scene.fog = new THREE.Fog(0x350808, 25, 95);
+    scene.background = new THREE.Color(0x220505);
+  } else {
+    scene.fog = new THREE.Fog(0x78b9e8, 50, 160);
+    scene.background = new THREE.Color(0x78b9e8);
+  }
+
+  // 3. Re-generate initial chunks
+  for (let cz = -2; cz <= 2; cz++) {
+    for (let cx = -2; cx <= 2; cx++) {
+      const chunk = generateChunk(cx, cz);
+      chunks.set(`${cx},0,${cz}`, chunk);
+      buildChunkMesh(chunk, scene);
+    }
+  }
 }
 
 export function setBlockAtWorld(scene, wx, wy, wz, type) {

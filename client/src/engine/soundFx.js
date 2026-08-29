@@ -269,60 +269,6 @@ export function playInventorySound(open = true) {
   osc.stop(now + 0.08);
 }
 
-export function playStepSound(blockType = 1) {
-  const ctx = getAudioContext();
-  if (!ctx) return;
-
-  const now = ctx.currentTime;
-  const bufferSize = Math.floor(ctx.sampleRate * 0.04);
-  const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
-  const data = buffer.getChannelData(0);
-
-  for (let i = 0; i < bufferSize; i++) {
-    data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (bufferSize * 0.25));
-  }
-
-  const noise = ctx.createBufferSource();
-  noise.buffer = buffer;
-
-  const filter = ctx.createBiquadFilter();
-  filter.type = 'lowpass';
-
-  // Soft muted acoustic footsteps
-  let freq = 380;
-  let gainVol = 0.06;
-
-  if (blockType === 3 || blockType === 8 || blockType === 9 || blockType === 13) {
-    // Stone: crisp tap
-    freq = 650;
-    gainVol = 0.07;
-  } else if (blockType === 4) {
-    // Sand: soft rustle
-    freq = 300;
-    gainVol = 0.05;
-  } else if (blockType === 5) {
-    // Snow: soft crunch
-    freq = 400;
-    gainVol = 0.06;
-  } else if (blockType === 6 || blockType === 12 || blockType === 16) {
-    // Wood: warm thud
-    freq = 480;
-    gainVol = 0.06;
-  }
-
-  filter.frequency.setValueAtTime(freq, now);
-
-  const gain = ctx.createGain();
-  gain.gain.setValueAtTime(gainVol, now);
-  gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.04);
-
-  noise.connect(filter);
-  filter.connect(gain);
-  gain.connect(ctx.destination);
-
-  noise.start(now);
-}
-
 export function playBlockHitTickSound(blockType = 1) {
   const ctx = getAudioContext();
   if (!ctx) return;
@@ -605,9 +551,168 @@ export function playSleepSound() {
   osc.stop(now + 0.6);
 }
 
+// ── Step sounds by material ────────────────────────────────
+
+export function playStepSound(blockType) {
+  const ctx = getAudioContext();
+  if (!ctx) return;
+
+  const now = ctx.currentTime;
+  const bufferSize = ctx.sampleRate * 0.05;
+  const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+  const data = buffer.getChannelData(0);
+  for (let i = 0; i < bufferSize; i++) {
+    data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (bufferSize * 0.35));
+  }
+
+  const noise = ctx.createBufferSource();
+  noise.buffer = buffer;
+
+  const filter = ctx.createBiquadFilter();
+  const gain = ctx.createGain();
+
+  // Distinct resonant filtering based on surface
+  if (blockType === 3 || blockType === 13 || blockType === 28 || blockType === 36 || blockType === 37) {
+    // Stone / Cobble / Obsidian / Quartz: Hard crisp tap
+    filter.type = 'bandpass';
+    filter.frequency.setValueAtTime(1100, now);
+    filter.Q.value = 3.0;
+    gain.gain.setValueAtTime(0.16, now);
+  } else if (blockType === 6 || blockType === 12 || blockType === 16 || blockType === 20) {
+    // Wood: Hollow thud
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(320, now);
+    gain.gain.setValueAtTime(0.18, now);
+  } else if (blockType === 4 || blockType === 2 || blockType === 33) {
+    // Sand / Dirt / Soul Sand: Soft granular shuffle
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(550, now);
+    gain.gain.setValueAtTime(0.12, now);
+  } else if (blockType === 31 || blockType === 32) {
+    // Gravel / Netherrack: Crunchy pebble scrape
+    filter.type = 'bandpass';
+    filter.frequency.setValueAtTime(800, now);
+    filter.Q.value = 1.8;
+    gain.gain.setValueAtTime(0.15, now);
+  } else {
+    // Grass / default: Soft rustle
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(450, now);
+    gain.gain.setValueAtTime(0.13, now);
+  }
+
+  gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+
+  noise.connect(filter);
+  filter.connect(gain);
+  gain.connect(ctx.destination);
+
+  noise.start(now);
+}
+
+export function playFlintAndSteelSound() {
+  const ctx = getAudioContext();
+  if (!ctx) return;
+
+  const now = ctx.currentTime;
+  // 1. High metallic strike
+  const osc = ctx.createOscillator();
+  const oscGain = ctx.createGain();
+  osc.type = 'sine';
+  osc.frequency.setValueAtTime(2400, now);
+  osc.frequency.exponentialRampToValueAtTime(800, now + 0.06);
+
+  oscGain.gain.setValueAtTime(0.3, now);
+  oscGain.gain.exponentialRampToValueAtTime(0.01, now + 0.06);
+
+  osc.connect(oscGain);
+  oscGain.connect(ctx.destination);
+  osc.start(now);
+  osc.stop(now + 0.06);
+
+  // 2. Fire whoosh / ignition spark
+  const bufferSize = ctx.sampleRate * 0.15;
+  const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+  const data = buffer.getChannelData(0);
+  for (let i = 0; i < bufferSize; i++) {
+    data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (bufferSize * 0.4));
+  }
+
+  const noise = ctx.createBufferSource();
+  noise.buffer = buffer;
+
+  const filter = ctx.createBiquadFilter();
+  filter.type = 'bandpass';
+  filter.frequency.setValueAtTime(1400, now);
+  filter.frequency.exponentialRampToValueAtTime(300, now + 0.15);
+
+  const gain = ctx.createGain();
+  gain.gain.setValueAtTime(0.2, now);
+  gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+
+  noise.connect(filter);
+  filter.connect(gain);
+  gain.connect(ctx.destination);
+
+  noise.start(now + 0.02);
+}
+
+export function playPortalTravelSound() {
+  const ctx = getAudioContext();
+  if (!ctx) return;
+
+  const now = ctx.currentTime;
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+
+  osc.type = 'sawtooth';
+  osc.frequency.setValueAtTime(90, now);
+  osc.frequency.exponentialRampToValueAtTime(440, now + 0.4);
+  osc.frequency.exponentialRampToValueAtTime(110, now + 0.9);
+
+  const filter = ctx.createBiquadFilter();
+  filter.type = 'lowpass';
+  filter.frequency.setValueAtTime(600, now);
+  filter.frequency.linearRampToValueAtTime(1800, now + 0.45);
+  filter.frequency.exponentialRampToValueAtTime(200, now + 0.9);
+
+  gain.gain.setValueAtTime(0.01, now);
+  gain.gain.linearRampToValueAtTime(0.35, now + 0.4);
+  gain.gain.exponentialRampToValueAtTime(0.001, now + 0.95);
+
+  osc.connect(filter);
+  filter.connect(gain);
+  gain.connect(ctx.destination);
+
+  osc.start(now);
+  osc.stop(now + 0.95);
+}
+
+export function playCriticalHitSound() {
+  const ctx = getAudioContext();
+  if (!ctx) return;
+
+  const now = ctx.currentTime;
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+
+  osc.type = 'triangle';
+  osc.frequency.setValueAtTime(880, now);
+  osc.frequency.exponentialRampToValueAtTime(1400, now + 0.08);
+
+  gain.gain.setValueAtTime(0.3, now);
+  gain.gain.exponentialRampToValueAtTime(0.01, now + 0.12);
+
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+
+  osc.start(now);
+  osc.stop(now + 0.12);
+}
+
 // ── Procedural Ambient Music Synthesizer (C418 Style) ──────
 
-let musicTimer = 20.0; // First song plays after 20s
+let musicTimer = 20.0;
 const PENTATONIC_FREQS = [
   261.63, // C4
   293.66, // D4
@@ -645,7 +750,7 @@ function playAmbientPhrase() {
     osc.frequency.setValueAtTime(freq, timeOffset);
 
     gain.gain.setValueAtTime(0.0, timeOffset);
-    gain.gain.linearRampToValueAtTime(0.04, timeOffset + 0.3); // Very soft ambient volume
+    gain.gain.linearRampToValueAtTime(0.04, timeOffset + 0.3);
     gain.gain.exponentialRampToValueAtTime(0.001, timeOffset + duration);
 
     osc.connect(gain);

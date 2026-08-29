@@ -13,8 +13,10 @@ import { generateWorld, updateWorld, getSpawnPosition } from './world/worldManag
 import { update as updateHud } from './ui/hud.js';
 import { initHotbar, updateHotbar } from './ui/hotbar.js';
 import { initInventory } from './ui/inventory.js';
-import { initInteraction, updateInteraction } from './engine/interaction.js';
+import { initInteraction, updateInteraction, getSelectedBlockType } from './engine/interaction.js';
 import { initPlayer, updatePlayer, getPlayerPosition } from './entities/player.js';
+import { initPlayerModel } from './entities/playerModel.js';
+import { initDynamicLighting, updateDynamicLighting } from './rendering/dynamicLighting.js';
 import { initMobManager, updateMobs, spawnMob, MobType } from './entities/mobManager.js';
 import { initHealthHud, updateHealthHud } from './ui/health.js';
 import { initHand, updateHand } from './entities/hand.js';
@@ -82,7 +84,9 @@ initInventory();
 initCraftingTable();
 initHotbar();
 
-// 13. Player physics + health
+// 13. Player 3D Character Model, Dynamic Lighting, physics + health
+initDynamicLighting(scene);
+initPlayerModel(scene);
 initPlayer();
 initHealthHud();
 
@@ -92,7 +96,7 @@ initHand();
 // Load saved data if available
 loadWorld();
 
-console.log(`[VoxelCraft v0.4.3V] Ready! Spawn at (${spawn.x}, ${spawn.y}, ${spawn.z})`);
+console.log(`[VoxelCraft v0.5.0] Ready! Spawn at (${spawn.x}, ${spawn.y}, ${spawn.z})`);
 
 // ── Game Loop ──────────────────────────────────────────────
 
@@ -114,6 +118,7 @@ function update(dt, time) {
   updateWorld(camera.position, scene);
   updateDayNightCycle(dt, scene, camera, renderer);
   updateWeather(dt, getPlayerPosition());
+  updateDynamicLighting(dt, time, getPlayerPosition(), getSelectedBlockType(), camera.position);
   updateFurnaces(dt);
   updateMobs(dt);
   updateDrops(dt, time);

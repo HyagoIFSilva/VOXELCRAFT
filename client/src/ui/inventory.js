@@ -1,9 +1,10 @@
 /**
  * Inventory System — Minecraft-style inventory GUI with 36 slots (27 storage + 9 hotbar),
- * 4 Equipment/Armor slots, Player Silhouette, and integrated 2×2 Survival Crafting.
+ * 4 Equipment/Armor slots, Interactive 3D Player Character Preview, and integrated 2×2 Survival Crafting.
  * Full 64-item stack management and cursor drag-and-drop / split placement.
  */
 
+import * as THREE from 'three';
 import { BlockType, ITEM_NAMES, isArmor, getArmorDefense } from '../world/blockTypes.js';
 import { setSelectedBlockType } from '../engine/interaction.js';
 import { createBlockIconCanvas } from './blockIcon.js';
@@ -44,6 +45,24 @@ export const armorSlots = [0, 0, 0, 0];
 let selectedHotbarIndex = 0;
 let current2x2Output = null;
 let inventoryModal = null;
+
+// ── 3D Inventory Character Preview State ─────────────────────
+let previewRenderer = null;
+let previewScene = null;
+let previewCamera = null;
+let previewCharGroup = null;
+let previewHelmet = null;
+let previewChestplate = null;
+let previewLeggingsL = null;
+let previewLeggingsR = null;
+let previewBootL = null;
+let previewBootR = null;
+let previewArmL = null;
+let previewArmR = null;
+let previewAnimId = null;
+let previewRotationY = -0.3;
+let isPreviewDragging = false;
+let prevMouseX = 0;
 
 export function initInventory() {
   if (inventoryModal) return;
@@ -97,11 +116,12 @@ export function initInventory() {
               <span class="font-label-caps text-[11px] text-secondary font-semibold uppercase">Armadura</span>
               <div id="inv-armor-grid" class="flex flex-col gap-2"></div>
             </div>
-            <!-- Player Preview (Silhouette) -->
-            <div class="w-32 h-48 bg-surface-container-lowest border border-outline-variant rounded-xl flex items-center justify-center relative overflow-hidden shadow-inner">
-              <span class="material-symbols-outlined text-6xl text-primary/40">person</span>
-              <div class="absolute bottom-2 right-2 slot w-8 h-8 rounded-lg border-dashed border-outline-variant bg-surface-container-low flex items-center justify-center">
-                <span class="material-symbols-outlined text-on-surface-variant text-sm">shield</span>
+            <!-- Player Preview (3D Viewport) -->
+            <div class="w-36 h-52 bg-surface-container-lowest border border-outline-variant rounded-xl flex flex-col items-center justify-center relative overflow-hidden shadow-inner p-1">
+              <canvas id="inv-char-preview-canvas" width="140" height="200" class="w-full h-full cursor-grab active:cursor-grabbing" title="Arraste com o mouse para girar"></canvas>
+              <div class="absolute bottom-1 right-2 flex items-center gap-1 font-label-caps text-[10px] font-bold text-primary bg-surface-container/90 border border-outline-variant px-2 py-0.5 rounded shadow">
+                <span class="material-symbols-outlined text-xs" style="font-variation-settings: 'FILL' 1;">shield</span>
+                <span id="inv-defense-badge">DEF: 0</span>
               </div>
             </div>
           </div>
@@ -139,7 +159,196 @@ export function initInventory() {
     }
   });
 
+  init3DPreviewCanvas();
   renderInventorySlots();
+}
+
+function init3DPreviewCanvas() {
+  const canvas = document.getElementById('inv-char-preview-canvas');
+  if (!canvas) return;
+
+  previewRenderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+  previewRenderer.setSize(140, 200);
+  previewRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+  previewScene = new THREE.Scene();
+  previewCamera = new THREE.PerspectiveCamera(40, 140 / 200, 0.1, 20);
+  previewCamera.position.set(0, 1.0, 3.2);
+  previewCamera.lookAt(0, 0.9, 0);
+
+  const amb = new THREE.AmbientLight(0xffffff, 1.4);
+  previewScene.add(amb);
+  const dir = new THREE.DirectionalLight(0xffffff, 1.8);
+  dir.position.set(2, 4, 3);
+  previewScene.add(dir);
+
+  // Build mini character
+  previewCharGroup = new THREE.Group();
+  previewScene.add(previewCharGroup);
+
+  const skinMat = new THREE.MeshLambertMaterial({ color: 0xc68b59 });
+  const hairMat = new THREE.MeshLambertMaterial({ color: 0x451a03 });
+  const shirtMat = new THREE.MeshLambertMaterial({ color: 0x00a8a8 });
+  const pantsMat = new THREE.MeshLambertMaterial({ color: 0x1e3a8a });
+  const ironMat = new THREE.MeshStandardMaterial({ color: 0xe2e8f0, roughness: 0.35, metalness: 0.85 });
+
+  // Head
+  const head = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.38, 0.38), skinMat);
+  head.position.set(0, 1.38, 0);
+  previewCharGroup.add(head);
+
+  const hair = new THREE.Mesh(new THREE.BoxGeometry(0.40, 0.15, 0.40), hairMat);
+  hair.position.set(0, 1.48, -0.01);
+  previewCharGroup.add(hair);
+
+  // Helmet Layer
+  previewHelmet = new THREE.Mesh(new THREE.BoxGeometry(0.44, 0.44, 0.44), ironMat);
+  previewHelmet.position.set(0, 1.38, 0);
+  previewHelmet.visible = false;
+  previewCharGroup.add(previewHelmet);
+
+  // Torso
+  const torso = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.50, 0.20), shirtMat);
+  torso.position.set(0, 0.94, 0);
+  previewCharGroup.add(torso);
+
+  // Chestplate Layer
+  previewChestplate = new THREE.Mesh(new THREE.BoxGeometry(0.48, 0.54, 0.26), ironMat);
+  previewChestplate.position.set(0, 0.94, 0);
+  previewChestplate.visible = false;
+  previewCharGroup.add(previewChestplate);
+
+  // Arms
+  const armL = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.48, 0.16), skinMat);
+  armL.position.set(-0.29, 0.93, 0);
+  previewCharGroup.add(armL);
+
+  const armR = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.48, 0.16), skinMat);
+  armR.position.set(0.29, 0.93, 0);
+  previewCharGroup.add(armR);
+
+  // Legs
+  const legL = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.58, 0.18), pantsMat);
+  legL.position.set(-0.10, 0.40, 0);
+  previewCharGroup.add(legL);
+
+  const legR = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.58, 0.18), pantsMat);
+  legR.position.set(0.10, 0.40, 0);
+  previewCharGroup.add(legR);
+
+  // Leggings Layer
+  previewLeggingsL = new THREE.Mesh(new THREE.BoxGeometry(0.20, 0.38, 0.20), ironMat);
+  previewLeggingsL.position.set(-0.10, 0.48, 0);
+  previewLeggingsL.visible = false;
+  previewCharGroup.add(previewLeggingsL);
+
+  previewLeggingsR = new THREE.Mesh(new THREE.BoxGeometry(0.20, 0.38, 0.20), ironMat);
+  previewLeggingsR.position.set(0.10, 0.48, 0);
+  previewLeggingsR.visible = false;
+  previewCharGroup.add(previewLeggingsR);
+
+  // Boots Layer
+  previewBootL = new THREE.Mesh(new THREE.BoxGeometry(0.21, 0.18, 0.23), ironMat);
+  previewBootL.position.set(-0.10, 0.20, 0.015);
+  previewBootL.visible = false;
+  previewCharGroup.add(previewBootL);
+
+  previewBootR = new THREE.Mesh(new THREE.BoxGeometry(0.21, 0.18, 0.23), ironMat);
+  previewBootR.position.set(0.10, 0.20, 0.015);
+  previewBootR.visible = false;
+  previewCharGroup.add(previewBootR);
+
+  // Drag interaction to rotate character
+  canvas.addEventListener('mousedown', (e) => {
+    isPreviewDragging = true;
+    prevMouseX = e.clientX;
+  });
+
+  window.addEventListener('mousemove', (e) => {
+    if (!isPreviewDragging) return;
+    const delta = e.clientX - prevMouseX;
+    prevMouseX = e.clientX;
+    previewRotationY += delta * 0.02;
+  });
+
+  window.addEventListener('mouseup', () => {
+    isPreviewDragging = false;
+  });
+}
+
+function startPreviewAnimation() {
+  if (previewAnimId) return;
+
+  function renderLoop() {
+    if (!isInventoryOpen()) {
+      previewAnimId = null;
+      return;
+    }
+
+    if (!isPreviewDragging) {
+      previewRotationY += 0.012;
+    }
+
+    if (previewCharGroup) {
+      previewCharGroup.rotation.y = previewRotationY;
+    }
+
+    if (previewRenderer && previewScene && previewCamera) {
+      previewRenderer.render(previewScene, previewCamera);
+    }
+
+    previewAnimId = requestAnimationFrame(renderLoop);
+  }
+
+  previewAnimId = requestAnimationFrame(renderLoop);
+}
+
+function update3DArmorPreview() {
+  const ironMat = new THREE.MeshStandardMaterial({ color: 0xe2e8f0, roughness: 0.35, metalness: 0.85 });
+  const diamondMat = new THREE.MeshStandardMaterial({ color: 0x22d3ee, roughness: 0.2, metalness: 0.65, emissive: 0x083344, emissiveIntensity: 0.35 });
+
+  // Helmet
+  if (previewHelmet) {
+    const h = armorSlots[0] || 0;
+    previewHelmet.visible = h > 0;
+    if (h > 0) previewHelmet.material = h === BlockType.DIAMOND_HELMET ? diamondMat : ironMat;
+  }
+
+  // Chestplate
+  if (previewChestplate) {
+    const c = armorSlots[1] || 0;
+    previewChestplate.visible = c > 0;
+    if (c > 0) previewChestplate.material = c === BlockType.DIAMOND_CHESTPLATE ? diamondMat : ironMat;
+  }
+
+  // Leggings
+  if (previewLeggingsL && previewLeggingsR) {
+    const l = armorSlots[2] || 0;
+    previewLeggingsL.visible = l > 0;
+    previewLeggingsR.visible = l > 0;
+    if (l > 0) {
+      const mat = l === BlockType.DIAMOND_LEGGINGS ? diamondMat : ironMat;
+      previewLeggingsL.material = mat;
+      previewLeggingsR.material = mat;
+    }
+  }
+
+  // Boots
+  if (previewBootL && previewBootR) {
+    const b = armorSlots[3] || 0;
+    previewBootL.visible = b > 0;
+    previewBootR.visible = b > 0;
+    if (b > 0) {
+      const mat = b === BlockType.DIAMOND_BOOTS ? diamondMat : ironMat;
+      previewBootL.material = mat;
+      previewBootR.material = mat;
+    }
+  }
+
+  const defBadge = document.getElementById('inv-defense-badge');
+  if (defBadge) {
+    defBadge.textContent = `DEF: ${getEquippedArmorDefense()}`;
+  }
 }
 
 export function toggleInventory() {
@@ -157,6 +366,7 @@ export function openInventory() {
   playInventorySound(true);
   update2x2CraftingOutput();
   renderInventorySlots();
+  startPreviewAnimation();
 }
 
 export function closeInventory() {
@@ -164,6 +374,11 @@ export function closeInventory() {
   inventoryModal.style.display = 'none';
   closeWindow(UIWindow.INVENTORY);
   playInventorySound(false);
+
+  if (previewAnimId) {
+    cancelAnimationFrame(previewAnimId);
+    previewAnimId = null;
+  }
 
   // Return floating cursor item to inventory
   if (cursorItem.type > 0 && cursorItem.count > 0) {
@@ -329,6 +544,8 @@ export function renderInventorySlots() {
 
   if (!armorGrid || !craft2x2Grid || !craft2x2Output || !storageGrid || !hotbarGrid) return;
 
+  update3DArmorPreview();
+
   // 1. Render Armor Slots
   armorGrid.innerHTML = '';
   const armorIcons = ['security', 'checkroom', 'accessibility', 'directions_run'];
@@ -357,7 +574,10 @@ export function renderInventorySlots() {
 
     const slotRef = {
       get: () => ({ type: armorSlots[i], count: armorSlots[i] > 0 ? 1 : 0 }),
-      set: (type, count) => { armorSlots[i] = type; },
+      set: (type, count) => {
+        armorSlots[i] = type;
+        update3DArmorPreview();
+      },
       allowEquip: (type) => armorTypes[i].includes(type),
       maxStack: 1,
     };

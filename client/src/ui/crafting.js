@@ -765,6 +765,66 @@ export const RECIPE_CATALOG = [
       return matchRow1 || matchRow2;
     },
   },
+
+  // ── 30. Flint and Steel (1 Iron Ingot + 1 Flint) ──
+  {
+    id: 'flint_and_steel',
+    name: 'Isqueiro de Pederneira',
+    category: 'Ferramentas',
+    result: BlockType.FLINT_AND_STEEL,
+    count: 1,
+    gridSize: 2,
+    layout: [
+      BlockType.IRON_INGOT, 0,
+      0,                    BlockType.FLINT,
+    ],
+    desc: '1 Barra de Ferro e 1 Pederneira diagonalmente (Acende o Portal do Nether e Fogueiras).',
+    check: (grid) => {
+      const iron = grid.filter(v => v === BlockType.IRON_INGOT).length;
+      const flint = grid.filter(v => v === BlockType.FLINT).length;
+      const others = grid.filter(v => v !== 0 && v !== BlockType.IRON_INGOT && v !== BlockType.FLINT).length;
+      return iron === 1 && flint === 1 && others === 0;
+    },
+  },
+
+  // ── 31. Quartz Block (4 Quartz in 2x2) ──
+  {
+    id: 'quartz_block',
+    name: 'Bloco de Quartzo Polido',
+    category: 'Blocos',
+    result: BlockType.QUARTZ_BLOCK,
+    count: 1,
+    gridSize: 2,
+    layout: [
+      BlockType.QUARTZ, BlockType.QUARTZ,
+      BlockType.QUARTZ, BlockType.QUARTZ,
+    ],
+    desc: '4 Cristais de Quartzo do Nether dispostos em quadrado 2×2.',
+    check: (grid, w, h) => {
+      if (w === 2 && h === 2) {
+        return grid.every(v => v === BlockType.QUARTZ);
+      }
+      if (w === 3 && h === 3) {
+        const offsets = [0, 1, 3, 4];
+        for (const off of offsets) {
+          const r0c0 = off;
+          const r0c1 = off + 1;
+          const r1c0 = off + 3;
+          const r1c1 = off + 4;
+          if (
+            grid[r0c0] === BlockType.QUARTZ &&
+            grid[r0c1] === BlockType.QUARTZ &&
+            grid[r1c0] === BlockType.QUARTZ &&
+            grid[r1c1] === BlockType.QUARTZ
+          ) {
+            const othersEmpty = grid.every((v, i) => (i === r0c0 || i === r0c1 || i === r1c0 || i === r1c1) ? true : v === 0);
+            if (othersEmpty) return true;
+          }
+        }
+      }
+      return false;
+    },
+  },
 ];
 
 export function evaluateCrafting(grid, width, height) {
