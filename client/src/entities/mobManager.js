@@ -1,16 +1,16 @@
 /**
- * Mob Manager — Entity & AI system for peaceful (Pig) and hostile (Zombie, Skeleton, Spider) mobs.
+ * Mob Manager — Entity & AI system for peaceful (Pig) and hostile (Zombie, Skeleton, Spider, Creeper) mobs.
  *
  * Features:
  *  - Realistic Vision Cone (FOV 120°) and Voxel Line-of-Sight (LOS) raycasting.
- *  - Auditory/proximity senses (hearing footsteps from behind within close range).
  *  - Tactical AI:
- *      - Zombie: Melee assault with arm swings.
- *      - Skeleton: Tactical ranged kiting + shooting arrow projectiles.
- *      - Spider: Fast crawling, wall leap attack, glowing red eyes.
- *      - Pig: Peaceful wandering and panic fleeing upon taking damage.
- *  - Day/Night spawning & sunlight burning.
- *  - Hard population cap (MAX_MOBS = 12) for solid 60 FPS.
+ *      - Zombie: Slow shambling melee assault (1.8 blocks/s).
+ *      - Skeleton: Tactical ranged kiting (8-14 blocks) + shooting arrow projectiles (2.8s reload).
+ *      - Spider: Agile crawling, daytime neutral until attacked, pounce leaps at night.
+ *      - Creeper: Slow approach (1.8 blocks/s), 1.8s pulsing fuse with audible warning.
+ *      - Pig: Peaceful forward-facing wandering and panic fleeing upon taking damage.
+ *  - Authentic Day/Night conditional spawning at safe distances (24-38 blocks away).
+ *  - Population cap (MAX_MOBS = 10) & auto-despawn (> 50 blocks) for solid 60 FPS on all CPUs.
  */
 
 import * as THREE from 'three';
@@ -19,6 +19,7 @@ import { BlockType, getBlockDrop } from '../world/blockTypes.js';
 import { getPlayerPosition, damage as damagePlayer } from './player.js';
 import {
   playPigSound,
+  playSheepSound,
   playZombieSound,
   playMobHitSound,
   playSwordSwingSound,
@@ -32,6 +33,7 @@ import { spawnDrop } from './dropManager.js';
 
 export const MobType = {
   PIG:      'pig',
+  SHEEP:    'sheep',
   ZOMBIE:   'zombie',
   SKELETON: 'skeleton',
   SPIDER:   'spider',
@@ -43,7 +45,7 @@ const mobs = [];
 const arrows = [];
 const tntEntities = [];
 let spawnTimer = 0;
-const MAX_MOBS = 12;
+const MAX_MOBS = 10;
 
 // ── Voxel Line-of-Sight (LOS) Raycast ─────────────────────
 
@@ -123,6 +125,67 @@ function createPigModel() {
   };
 }
 
+function createSheepModel() {
+  const group = new THREE.Group();
+  const woolMat = new THREE.MeshLambertMaterial({ color: 0xf8fafc });
+  const skinMat = new THREE.MeshLambertMaterial({ color: 0x334155 });
+  const snoutMat = new THREE.MeshLambertMaterial({ color: 0xfb7185 });
+  const eyeMat = new THREE.MeshLambertMaterial({ color: 0x0f172a });
+
+  // Fluffy Wool Body
+  const body = new THREE.Mesh(new THREE.BoxGeometry(0.75, 0.60, 0.95), woolMat);
+  body.position.set(0, 0.50, 0);
+  group.add(body);
+
+  // Head
+  const head = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.42, 0.42), skinMat);
+  head.position.set(0, 0.68, -0.55);
+  group.add(head);
+
+  // Wool cap on head
+  const woolCap = new THREE.Mesh(new THREE.BoxGeometry(0.44, 0.20, 0.44), woolMat);
+  woolCap.position.set(0, 0.86, -0.55);
+  group.add(woolCap);
+
+  // Snout
+  const snout = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.14, 0.12), snoutMat);
+  snout.position.set(0, 0.60, -0.78);
+  group.add(snout);
+
+  // Eyes
+  const eyeL = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.08, 0.02), eyeMat);
+  eyeL.position.set(-0.16, 0.74, -0.76);
+  const eyeR = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.08, 0.02), eyeMat);
+  eyeR.position.set(0.16, 0.74, -0.76);
+  group.add(eyeL);
+  group.add(eyeR);
+
+  // 4 Legs
+  const legGeo = new THREE.BoxGeometry(0.16, 0.36, 0.16);
+  const legs = [];
+  const legPositions = [
+    [-0.24, 0.18, -0.30],
+    [0.24, 0.18, -0.30],
+    [-0.24, 0.18, 0.30],
+    [0.24, 0.18, 0.30],
+  ];
+
+  for (const pos of legPositions) {
+    const leg = new THREE.Mesh(legGeo, skinMat);
+    leg.position.set(...pos);
+    group.add(leg);
+    legs.push(leg);
+  }
+
+  return {
+    group,
+    legs,
+    head,
+    body,
+    originalMats: [woolMat, skinMat],
+  };
+}
+
 function createZombieModel() {
   const group = new THREE.Group();
   const skinMat = new THREE.MeshLambertMaterial({ color: 0x3b823e });
@@ -181,42 +244,36 @@ function createSkeletonModel() {
   head.position.set(0, 1.45, 0);
   group.add(head);
 
-  // Deep dark eye sockets
-  const leftEye = new THREE.Mesh(new THREE.BoxGeometry(0.10, 0.08, 0.02), eyeMat);
-  leftEye.position.set(-0.11, 1.47, -0.22);
-  const rightEye = new THREE.Mesh(new THREE.BoxGeometry(0.10, 0.08, 0.02), eyeMat);
-  rightEye.position.set(0.11, 1.47, -0.22);
+  const leftEye = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.07, 0.02), eyeMat);
+  leftEye.position.set(-0.11, 1.46, -0.22);
+  const rightEye = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.07, 0.02), eyeMat);
+  rightEye.position.set(0.11, 1.46, -0.22);
   group.add(leftEye);
   group.add(rightEye);
 
-  // Ribcage
-  const torso = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.60, 0.20), boneMat);
-  torso.position.set(0, 0.90, 0);
-  group.add(torso);
+  const ribcage = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.60, 0.22), boneMat);
+  ribcage.position.set(0, 0.90, 0);
+  group.add(ribcage);
 
-  // Thin bony arms
-  const armGeo = new THREE.BoxGeometry(0.10, 0.55, 0.10);
+  const armGeo = new THREE.BoxGeometry(0.12, 0.60, 0.12);
   const leftArm = new THREE.Mesh(armGeo, boneMat);
-  leftArm.position.set(-0.28, 0.90, -0.20);
-  leftArm.rotation.x = -Math.PI / 2.5;
-
+  leftArm.position.set(-0.30, 0.90, 0);
   const rightArm = new THREE.Mesh(armGeo, boneMat);
-  rightArm.position.set(0.28, 0.90, -0.20);
-  rightArm.rotation.x = -Math.PI / 2.5;
+  rightArm.position.set(0.30, 0.90, 0);
   group.add(leftArm);
   group.add(rightArm);
 
-  // Bow
-  const bow = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.45, 0.06), bowMat);
-  bow.position.set(0.28, 0.85, -0.42);
+  // 3D Wooden Bow in left hand
+  const bow = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.50, 0.08), bowMat);
+  bow.position.set(-0.30, 0.85, -0.20);
+  bow.rotation.x = 0.4;
   group.add(bow);
 
-  // Legs
-  const legGeo = new THREE.BoxGeometry(0.12, 0.60, 0.12);
+  const legGeo = new THREE.BoxGeometry(0.14, 0.60, 0.14);
   const leftLeg = new THREE.Mesh(legGeo, boneMat);
-  leftLeg.position.set(-0.11, 0.30, 0);
+  leftLeg.position.set(-0.12, 0.30, 0);
   const rightLeg = new THREE.Mesh(legGeo, boneMat);
-  rightLeg.position.set(0.11, 0.30, 0);
+  rightLeg.position.set(0.12, 0.30, 0);
   group.add(leftLeg);
   group.add(rightLeg);
 
@@ -225,7 +282,7 @@ function createSkeletonModel() {
     legs: [leftLeg, rightLeg],
     arms: [leftArm, rightArm],
     head,
-    body: torso,
+    body: ribcage,
     originalMats: [boneMat, bowMat],
   };
 }
@@ -233,19 +290,16 @@ function createSkeletonModel() {
 function createSpiderModel() {
   const group = new THREE.Group();
   const bodyMat = new THREE.MeshLambertMaterial({ color: 0x1e293b });
-  const eyeMat = new THREE.MeshBasicMaterial({ color: 0xef4444 }); // Glowing red eyes
+  const eyeMat = new THREE.MeshBasicMaterial({ color: 0xef4444 });
 
-  // Abdomen (rear)
   const abdomen = new THREE.Mesh(new THREE.BoxGeometry(0.65, 0.45, 0.70), bodyMat);
   abdomen.position.set(0, 0.35, 0.40);
   group.add(abdomen);
 
-  // Cephalothorax (front)
   const head = new THREE.Mesh(new THREE.BoxGeometry(0.45, 0.35, 0.45), bodyMat);
   head.position.set(0, 0.30, -0.25);
   group.add(head);
 
-  // 4 Glowing Red Eyes
   const eyeGeo = new THREE.BoxGeometry(0.06, 0.06, 0.02);
   const e1 = new THREE.Mesh(eyeGeo, eyeMat);
   e1.position.set(-0.12, 0.32, -0.48);
@@ -254,7 +308,6 @@ function createSpiderModel() {
   group.add(e1);
   group.add(e2);
 
-  // 8 Articulated Sprawling Legs
   const legGeo = new THREE.BoxGeometry(0.60, 0.08, 0.08);
   const legs = [];
   for (let i = 0; i < 4; i++) {
@@ -282,51 +335,39 @@ function createSpiderModel() {
 
 function createCreeperModel() {
   const group = new THREE.Group();
-  const greenMat = new THREE.MeshLambertMaterial({ color: 0x22c55e });
-  const darkGreenMat = new THREE.MeshLambertMaterial({ color: 0x15803d });
-  const blackMat = new THREE.MeshLambertMaterial({ color: 0x0f172a });
+  const skinMat = new THREE.MeshLambertMaterial({ color: 0x15803d });
+  const faceMat = new THREE.MeshLambertMaterial({ color: 0x0f172a });
 
-  // Body / Torso
-  const body = new THREE.Mesh(new THREE.BoxGeometry(0.48, 0.70, 0.28), greenMat);
-  body.position.set(0, 0.75, 0);
-  group.add(body);
-
-  // Head
-  const head = new THREE.Mesh(new THREE.BoxGeometry(0.48, 0.48, 0.48), greenMat);
-  head.position.set(0, 1.34, 0);
+  const head = new THREE.Mesh(new THREE.BoxGeometry(0.46, 0.46, 0.46), skinMat);
+  head.position.set(0, 1.45, 0);
   group.add(head);
 
-  // Creeper Face: Eyes & Frown
-  const leftEye = new THREE.Mesh(new THREE.BoxGeometry(0.10, 0.10, 0.02), blackMat);
-  leftEye.position.set(-0.11, 1.38, -0.25);
-  const rightEye = new THREE.Mesh(new THREE.BoxGeometry(0.10, 0.10, 0.02), blackMat);
-  rightEye.position.set(0.11, 1.38, -0.25);
-  group.add(leftEye);
-  group.add(rightEye);
+  // Creeper iconic face
+  const eyeL = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.09, 0.02), faceMat);
+  eyeL.position.set(-0.11, 1.50, -0.24);
+  const eyeR = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.09, 0.02), faceMat);
+  eyeR.position.set(0.11, 1.50, -0.24);
+  const mouth = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.16, 0.02), faceMat);
+  mouth.position.set(0, 1.36, -0.24);
+  group.add(eyeL);
+  group.add(eyeR);
+  group.add(mouth);
 
-  const nose = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.12, 0.02), blackMat);
-  nose.position.set(0, 1.30, -0.25);
-  group.add(nose);
+  const torso = new THREE.Mesh(new THREE.BoxGeometry(0.46, 0.65, 0.26), skinMat);
+  torso.position.set(0, 0.90, 0);
+  group.add(torso);
 
-  const mouthLeft = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.14, 0.02), blackMat);
-  mouthLeft.position.set(-0.08, 1.20, -0.25);
-  const mouthRight = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.14, 0.02), blackMat);
-  mouthRight.position.set(0.08, 1.20, -0.25);
-  group.add(mouthLeft);
-  group.add(mouthRight);
-
-  // 4 Stubby Legs
-  const legGeo = new THREE.BoxGeometry(0.20, 0.40, 0.20);
+  const legGeo = new THREE.BoxGeometry(0.20, 0.45, 0.20);
   const legs = [];
   const legPositions = [
-    [-0.14, 0.20, -0.16],
-    [0.14, 0.20, -0.16],
-    [-0.14, 0.20, 0.16],
-    [0.14, 0.20, 0.16],
+    [-0.14, 0.22, -0.16],
+    [0.14, 0.22, -0.16],
+    [-0.14, 0.22, 0.16],
+    [0.14, 0.22, 0.16],
   ];
 
   for (const pos of legPositions) {
-    const leg = new THREE.Mesh(legGeo, darkGreenMat);
+    const leg = new THREE.Mesh(legGeo, skinMat);
     leg.position.set(...pos);
     group.add(leg);
     legs.push(leg);
@@ -336,22 +377,49 @@ function createCreeperModel() {
     group,
     legs,
     head,
-    body,
-    originalMats: [greenMat, darkGreenMat],
+    body: torso,
+    originalMats: [skinMat, faceMat],
   };
 }
 
-// ── Spawn Function ─────────────────────────────────────────
+// ── Spawn & Lifecycle ──────────────────────────────────────
+
+export function initMobManager(s) {
+  scene = s;
+}
 
 export function spawnMob(type, x, y, z) {
   if (!scene) return null;
 
   let modelData;
-  if (type === MobType.PIG) modelData = createPigModel();
-  else if (type === MobType.SKELETON) modelData = createSkeletonModel();
-  else if (type === MobType.SPIDER) modelData = createSpiderModel();
-  else if (type === MobType.CREEPER) modelData = createCreeperModel();
-  else modelData = createZombieModel();
+  let maxHp = 10;
+  let eyeHeight = 1.4;
+
+  if (type === MobType.PIG) {
+    modelData = createPigModel();
+    maxHp = 10;
+    eyeHeight = 0.6;
+  } else if (type === MobType.SHEEP) {
+    modelData = createSheepModel();
+    maxHp = 10;
+    eyeHeight = 0.65;
+  } else if (type === MobType.SKELETON) {
+    modelData = createSkeletonModel();
+    maxHp = 16;
+    eyeHeight = 1.45;
+  } else if (type === MobType.SPIDER) {
+    modelData = createSpiderModel();
+    maxHp = 14;
+    eyeHeight = 0.35;
+  } else if (type === MobType.CREEPER) {
+    modelData = createCreeperModel();
+    maxHp = 18;
+    eyeHeight = 1.45;
+  } else {
+    modelData = createZombieModel();
+    maxHp = 20;
+    eyeHeight = 1.45;
+  }
 
   modelData.group.position.set(x, y, z);
   scene.add(modelData.group);
@@ -361,82 +429,54 @@ export function spawnMob(type, x, y, z) {
     model: modelData,
     pos: new THREE.Vector3(x, y, z),
     vel: new THREE.Vector3(0, 0, 0),
-    health: type === MobType.PIG ? 10 : type === MobType.SPIDER ? 16 : 20,
-    maxHealth: type === MobType.PIG ? 10 : type === MobType.SPIDER ? 16 : 20,
-    yaw: Math.random() * Math.PI * 2,
-    targetYaw: 0,
-    stateTimer: 1.0 + Math.random() * 2.0,
+    yaw: 0,
+    health: maxHp,
+    maxHealth: maxHp,
+    eyeHeight,
     state: 'idle',
-    attackCooldown: 0,
-    hurtTimer: 0,
-    animPhase: 0,
-    onGround: false,
-    eyeHeight: type === MobType.PIG ? 0.6 : type === MobType.SPIDER ? 0.35 : 1.45,
-    losCheckTimer: Math.random() * 0.2,
-    canSeePlayer: false,
+    stateTimer: Math.random() * 2.0,
     lastSeenPos: null,
-    investigateTimer: 0,
-    burnTimer: 0,
-    isBurning: false,
-    shootCooldown: 1.0 + Math.random() * 1.5,
+    canSeePlayer: false,
+    losCheckTimer: Math.random() * 0.25,
+    attackCooldown: 0,
+    shootCooldown: 2.0,
     fuseTimer: 0,
     isFusing: false,
+    isAngered: false,
+    burnTimer: 0,
+    onGround: true,
   };
 
   mobs.push(mob);
   return mob;
 }
 
-export function initMobManager(s) {
-  scene = s;
-}
-
-export function getMobs() {
-  return mobs;
-}
-
-export function raycastMob(origin, direction, maxDist = 3.8) {
-  const dir = direction.clone().normalize();
-  let closestMob = null;
-  let closestDist = maxDist;
-
-  for (const mob of mobs) {
-    const mobCenter = mob.pos.clone().add(new THREE.Vector3(0, mob.eyeHeight * 0.6, 0));
-    const toMob = mobCenter.clone().sub(origin);
-    const proj = toMob.dot(dir);
-
-    if (proj > 0 && proj < closestDist) {
-      const perpDist = toMob.clone().sub(dir.clone().multiplyScalar(proj)).length();
-      const radius = mob.type === MobType.PIG ? 0.6 : mob.type === MobType.SPIDER ? 0.75 : 0.55;
-
-      if (perpDist < radius) {
-        closestDist = proj;
-        closestMob = mob;
-      }
-    }
-  }
-
-  return closestMob;
-}
-
 export function hitMob(mob, damage, knockbackDir) {
-  mob.health -= damage;
-  mob.hurtTimer = 0.25;
+  if (!mob || mob.health <= 0) return;
 
+  mob.health -= damage;
   playMobHitSound();
   spawnHitParticles(mob.pos.x, mob.pos.y + mob.eyeHeight * 0.5, mob.pos.z);
 
-  const kb = knockbackDir.clone().normalize().multiplyScalar(7.5);
+  const kb = knockbackDir.clone().multiplyScalar(4.5);
   mob.vel.x += kb.x;
   mob.vel.z += kb.z;
   mob.vel.y = 3.5;
 
+  mob.isAngered = true;
+
   if (mob.type === MobType.PIG) {
     mob.state = 'flee';
-    mob.stateTimer = 4.0;
+    mob.stateTimer = 4.5;
+    playPigSound();
+  } else if (mob.type === MobType.SHEEP) {
+    mob.state = 'flee';
+    mob.stateTimer = 4.5;
+    playSheepSound();
   } else {
     mob.state = 'chase';
     mob.lastSeenPos = getPlayerPosition().clone();
+    if (mob.type === MobType.ZOMBIE) playZombieSound();
   }
 
   if (mob.health <= 0) {
@@ -451,20 +491,23 @@ export function killMob(mob) {
 
   // Authentic Mob Drops
   if (mob.type === MobType.PIG) {
-    spawnDrop(mob.pos.x, mob.pos.y + 0.5, mob.pos.z, BlockType.PORKCHOP);
+    spawnDrop(BlockType.PORKCHOP, mob.pos.x, mob.pos.y + 0.5, mob.pos.z);
+  } else if (mob.type === MobType.SHEEP) {
+    spawnDrop(BlockType.WOOL, mob.pos.x, mob.pos.y + 0.5, mob.pos.z);
+    spawnDrop(BlockType.MUTTON, mob.pos.x, mob.pos.y + 0.5, mob.pos.z);
   } else if (mob.type === MobType.ZOMBIE) {
-    spawnDrop(mob.pos.x, mob.pos.y + 0.5, mob.pos.z, BlockType.ROTTEN_FLESH);
+    spawnDrop(BlockType.ROTTEN_FLESH, mob.pos.x, mob.pos.y + 0.5, mob.pos.z);
     if (Math.random() < 0.25) {
-      spawnDrop(mob.pos.x, mob.pos.y + 0.5, mob.pos.z, BlockType.IRON_INGOT);
+      spawnDrop(BlockType.IRON_INGOT, mob.pos.x, mob.pos.y + 0.5, mob.pos.z);
     }
   } else if (mob.type === MobType.SKELETON) {
-    spawnDrop(mob.pos.x, mob.pos.y + 0.5, mob.pos.z, BlockType.BONE);
-    spawnDrop(mob.pos.x, mob.pos.y + 0.5, mob.pos.z, BlockType.ARROW);
+    spawnDrop(BlockType.BONE, mob.pos.x, mob.pos.y + 0.5, mob.pos.z);
+    spawnDrop(BlockType.ARROW, mob.pos.x, mob.pos.y + 0.5, mob.pos.z);
   } else if (mob.type === MobType.SPIDER) {
-    spawnDrop(mob.pos.x, mob.pos.y + 0.5, mob.pos.z, BlockType.STRING);
-    spawnDrop(mob.pos.x, mob.pos.y + 0.5, mob.pos.z, BlockType.SPIDER_EYE);
+    spawnDrop(BlockType.STRING, mob.pos.x, mob.pos.y + 0.5, mob.pos.z);
+    spawnDrop(BlockType.SPIDER_EYE, mob.pos.x, mob.pos.y + 0.5, mob.pos.z);
   } else if (mob.type === MobType.CREEPER) {
-    spawnDrop(mob.pos.x, mob.pos.y + 0.5, mob.pos.z, BlockType.GUNPOWDER);
+    spawnDrop(BlockType.GUNPOWDER, mob.pos.x, mob.pos.y + 0.5, mob.pos.z);
   }
 }
 
@@ -488,12 +531,10 @@ export function createVoxelExplosion(x, y, z, radius = 2.8, maxDamage = 16) {
   }
 
   // Damage surrounding Mobs
-  for (let i = mobs.length - 1; i >= 0; i--) {
-    const mob = mobs[i];
-    const distToMob = mob.pos.distanceTo(center);
-    if (distToMob < radius * 2.0) {
-      const dmg = Math.round(maxDamage * (1 - distToMob / (radius * 2.0)));
-      hitMob(mob, dmg, mob.pos.clone().sub(center).normalize());
+  for (const mob of mobs) {
+    const d = mob.pos.distanceTo(center);
+    if (d < radius * 2.0) {
+      hitMob(mob, 14, mob.pos.clone().sub(center).normalize());
     }
   }
 
@@ -515,11 +556,10 @@ export function createVoxelExplosion(x, y, z, radius = 2.8, maxDamage = 16) {
             spawnBlockBreakParticles(bx, by, bz, currentType);
             setBlockAtWorld(scene, bx, by, bz, BlockType.AIR);
 
-            // 40% chance drop loose items from exploded blocks
             if (Math.random() < 0.40) {
               const dropItem = getBlockDrop(currentType);
               if (dropItem > 0) {
-                spawnDrop(bx + 0.5, by + 0.5, bz + 0.5, dropItem);
+                spawnDrop(dropItem, bx + 0.5, by + 0.5, bz + 0.5);
               }
             }
           }
@@ -559,7 +599,6 @@ function updateTNTEntities(dt) {
     tnt.timer -= dt;
     tnt.blinkTimer += dt * 10;
 
-    // Flash white periodically
     if (Math.floor(tnt.blinkTimer) % 2 === 0) {
       tnt.mat.color.setHex(0xffffff);
     } else {
@@ -588,8 +627,7 @@ export function spawnPlayerArrow(origin, direction) {
   mesh.position.copy(origin);
   scene.add(mesh);
 
-  const dir = direction.clone().normalize();
-  const vel = dir.multiplyScalar(26); // 26 blocks/s fast player shot
+  const vel = direction.clone().multiplyScalar(24); // 24 blocks/s
 
   arrows.push({
     mesh,
@@ -611,7 +649,7 @@ function spawnMobArrow(origin, targetPos) {
   scene.add(mesh);
 
   const dir = targetPos.clone().sub(origin).normalize();
-  const vel = dir.multiplyScalar(18); // 18 blocks/s
+  const vel = dir.multiplyScalar(16); // 16 blocks/s
 
   arrows.push({
     mesh,
@@ -634,12 +672,11 @@ function updateArrows(dt) {
     a.mesh.position.copy(a.pos);
 
     if (a.isPlayerShot) {
-      // Check collision with any Mob
       let hitAny = false;
       for (const mob of mobs) {
         const mobCenter = mob.pos.clone().add(new THREE.Vector3(0, mob.eyeHeight * 0.5, 0));
         if (a.pos.distanceTo(mobCenter) < 0.9) {
-          hitMob(mob, 9, a.vel.clone().normalize()); // 9 Critical Bow Damage
+          hitMob(mob, 9, a.vel.clone().normalize());
           scene.remove(a.mesh);
           arrows.splice(i, 1);
           hitAny = true;
@@ -648,7 +685,6 @@ function updateArrows(dt) {
       }
       if (hitAny) continue;
     } else {
-      // Collision with Player
       const distToPlayer = a.pos.distanceTo(playerPos.clone().add(new THREE.Vector3(0, 0.9, 0)));
       if (distToPlayer < 0.75) {
         damagePlayer(4, a.vel.clone().normalize());
@@ -658,7 +694,6 @@ function updateArrows(dt) {
       }
     }
 
-    // Collision with solid voxels
     if (isWorldBlockSolid(Math.floor(a.pos.x), Math.floor(a.pos.y), Math.floor(a.pos.z)) || a.life <= 0) {
       scene.remove(a.mesh);
       arrows.splice(i, 1);
@@ -671,9 +706,9 @@ function updateArrows(dt) {
 export function updateMobs(dt) {
   const playerPos = getPlayerPosition();
 
-  // Spawning logic
+  // Natural Spawning logic (throttled & balanced)
   spawnTimer += dt;
-  if (spawnTimer > 3.0 && mobs.length < MAX_MOBS) {
+  if (spawnTimer > 4.0 && mobs.length < MAX_MOBS) {
     spawnTimer = 0;
     trySpawnNaturalMob(playerPos);
   }
@@ -683,22 +718,38 @@ export function updateMobs(dt) {
 
   for (let i = mobs.length - 1; i >= 0; i--) {
     const mob = mobs[i];
-    updateSingleMob(mob, dt, playerPos);
+    const distToPlayer = mob.pos.distanceTo(playerPos);
+
+    // Auto-despawn distant mobs to conserve 100% CPU
+    if (distToPlayer > 52.0) {
+      scene.remove(mob.model.group);
+      mobs.splice(i, 1);
+      continue;
+    }
+
+    updateSingleMob(mob, dt, playerPos, distToPlayer);
   }
 }
 
 function trySpawnNaturalMob(playerPos) {
   const angle = Math.random() * Math.PI * 2;
-  const dist = 18 + Math.random() * 20;
+  // Spawn between 24 and 38 blocks away (safe authentic distance)
+  const dist = 24 + Math.random() * 14;
   const sx = Math.floor(playerPos.x + Math.cos(angle) * dist);
   const sz = Math.floor(playerPos.z + Math.sin(angle) * dist);
   const sy = getHeight(sx, sz);
 
-  if (sy > 18 && sy < 50) {
+  if (sy > 15 && sy < 55) {
     const day = isDaytime();
     if (day) {
-      spawnMob(MobType.PIG, sx + 0.5, sy + 1, sz + 0.5);
+      // Daytime: spawn peaceful animals (Pigs & Sheep)
+      const passiveCount = mobs.filter((m) => m.type === MobType.PIG || m.type === MobType.SHEEP).length;
+      if (passiveCount < 5) {
+        const p = Math.random() < 0.5 ? MobType.PIG : MobType.SHEEP;
+        spawnMob(p, sx + 0.5, sy + 1, sz + 0.5);
+      }
     } else {
+      // Nighttime: spawn hostiles
       const r = Math.random();
       if (r < 0.35) spawnMob(MobType.ZOMBIE, sx + 0.5, sy + 1, sz + 0.5);
       else if (r < 0.60) spawnMob(MobType.SKELETON, sx + 0.5, sy + 1, sz + 0.5);
@@ -708,10 +759,7 @@ function trySpawnNaturalMob(playerPos) {
   }
 }
 
-function updateSingleMob(mob, dt, playerPos) {
-  const toPlayer = playerPos.clone().sub(mob.pos);
-  const distToPlayer = toPlayer.length();
-
+function updateSingleMob(mob, dt, playerPos, distToPlayer) {
   // Sunlight burn for Zombies and Skeletons
   if ((mob.type === MobType.ZOMBIE || mob.type === MobType.SKELETON) && isDaytime()) {
     const topY = getHeight(Math.floor(mob.pos.x), Math.floor(mob.pos.z));
@@ -729,23 +777,33 @@ function updateSingleMob(mob, dt, playerPos) {
     }
   }
 
-  // Vision Check
+  // Vision Check (throttled)
   mob.losCheckTimer -= dt;
   if (mob.losCheckTimer <= 0) {
-    mob.losCheckTimer = 0.25;
+    mob.losCheckTimer = 0.30;
     const canSee = hasLineOfSight(mob.pos.x, mob.pos.y + mob.eyeHeight, mob.pos.z, playerPos.x, playerPos.y + 1.2, playerPos.z);
-    mob.canSeePlayer = canSee && distToPlayer < 24;
+    mob.canSeePlayer = canSee && distToPlayer < 16; // 16 blocks vision radius
+
     if (mob.canSeePlayer) {
       mob.lastSeenPos = playerPos.clone();
       if (mob.type !== MobType.PIG) {
-        mob.state = 'chase';
+        // Spider is neutral during daytime unless angered
+        if (mob.type === MobType.SPIDER && isDaytime() && !mob.isAngered) {
+          mob.state = 'idle';
+        } else {
+          mob.state = 'chase';
+        }
       }
+    } else if (distToPlayer > 22 && mob.state === 'chase') {
+      mob.state = 'idle';
     }
   }
 
   // AI Behaviors
   if (mob.type === MobType.PIG) {
     updatePigAI(mob, dt, playerPos, distToPlayer);
+  } else if (mob.type === MobType.SHEEP) {
+    updateSheepAI(mob, dt, playerPos, distToPlayer);
   } else if (mob.type === MobType.SKELETON) {
     updateSkeletonAI(mob, dt, playerPos, distToPlayer);
   } else if (mob.type === MobType.SPIDER) {
@@ -771,18 +829,19 @@ function updateSingleMob(mob, dt, playerPos) {
   mob.vel.z *= Math.exp(-8 * dt);
 
   mob.model.group.position.copy(mob.pos);
-  mob.model.group.rotation.y = mob.yaw;
+  // Rotate by PI so head points forward in the direction of movement
+  mob.model.group.rotation.y = mob.yaw + Math.PI;
 }
 
 function updateCreeperAI(mob, dt, playerPos, distToPlayer) {
   if (mob.state === 'chase') {
     mob.yaw = Math.atan2(playerPos.x - mob.pos.x, playerPos.z - mob.pos.z);
-    const speed = 2.8;
+    const speed = 1.8; // Realistic, reactable speed
     mob.vel.x = Math.sin(mob.yaw) * speed;
     mob.vel.z = Math.cos(mob.yaw) * speed;
 
     // Approach and ignite fuse
-    if (distToPlayer < 3.2) {
+    if (distToPlayer < 2.4) {
       if (!mob.isFusing) {
         mob.isFusing = true;
         playCreeperFuseSound();
@@ -793,17 +852,16 @@ function updateCreeperAI(mob, dt, playerPos, distToPlayer) {
       mob.vel.z = 0;
 
       // Pulsing white inflation visual
-      const scale = 1.0 + (mob.fuseTimer / 1.5) * 0.3;
+      const scale = 1.0 + (mob.fuseTimer / 1.8) * 0.35;
       mob.model.group.scale.set(scale, scale, scale);
 
-      if (mob.fuseTimer >= 1.5) {
-        // BOOM!
+      if (mob.fuseTimer >= 1.8) {
         createVoxelExplosion(mob.pos.x, mob.pos.y + 0.5, mob.pos.z, 2.8, 16);
         killMob(mob);
         return;
       }
-    } else if (distToPlayer > 5.5 && mob.isFusing) {
-      // Player ran away, defuse
+    } else if (distToPlayer > 4.5 && mob.isFusing) {
+      // Player backed away in time! Defuse
       mob.isFusing = false;
       mob.fuseTimer = 0;
       mob.model.group.scale.set(1, 1, 1);
@@ -814,14 +872,14 @@ function updateCreeperAI(mob, dt, playerPos, distToPlayer) {
 function updateZombieAI(mob, dt, playerPos, distToPlayer) {
   if (mob.state === 'chase') {
     mob.yaw = Math.atan2(playerPos.x - mob.pos.x, playerPos.z - mob.pos.z);
-    const speed = 3.4;
+    const speed = 1.8; // Authentic slow shambler
     mob.vel.x = Math.sin(mob.yaw) * speed;
     mob.vel.z = Math.cos(mob.yaw) * speed;
 
     if (distToPlayer < 1.4) {
       mob.attackCooldown -= dt;
       if (mob.attackCooldown <= 0) {
-        mob.attackCooldown = 1.0;
+        mob.attackCooldown = 1.2;
         damagePlayer(3, new THREE.Vector3(Math.sin(mob.yaw), 0, Math.cos(mob.yaw)));
       }
     }
@@ -832,17 +890,19 @@ function updateSkeletonAI(mob, dt, playerPos, distToPlayer) {
   mob.yaw = Math.atan2(playerPos.x - mob.pos.x, playerPos.z - mob.pos.z);
 
   if (mob.canSeePlayer) {
-    if (distToPlayer < 7.0) {
-      mob.vel.x = -Math.sin(mob.yaw) * 2.8;
-      mob.vel.z = -Math.cos(mob.yaw) * 2.8;
-    } else if (distToPlayer > 12.0) {
-      mob.vel.x = Math.sin(mob.yaw) * 2.8;
-      mob.vel.z = Math.cos(mob.yaw) * 2.8;
+    if (distToPlayer < 8.0) {
+      // Retreat slightly
+      mob.vel.x = -Math.sin(mob.yaw) * 1.8;
+      mob.vel.z = -Math.cos(mob.yaw) * 1.8;
+    } else if (distToPlayer > 14.0) {
+      // Approach
+      mob.vel.x = Math.sin(mob.yaw) * 1.8;
+      mob.vel.z = Math.cos(mob.yaw) * 1.8;
     }
 
     mob.shootCooldown -= dt;
     if (mob.shootCooldown <= 0 && distToPlayer < 18) {
-      mob.shootCooldown = 2.2;
+      mob.shootCooldown = 2.8; // Tactical delay giving player window to dodge
       playSwordSwingSound();
       spawnMobArrow(
         mob.pos.clone().add(new THREE.Vector3(0, 1.2, 0)),
@@ -855,21 +915,22 @@ function updateSkeletonAI(mob, dt, playerPos, distToPlayer) {
 function updateSpiderAI(mob, dt, playerPos, distToPlayer) {
   if (mob.state === 'chase') {
     mob.yaw = Math.atan2(playerPos.x - mob.pos.x, playerPos.z - mob.pos.z);
-    const speed = 4.5;
+    const speed = 2.8;
     mob.vel.x = Math.sin(mob.yaw) * speed;
     mob.vel.z = Math.cos(mob.yaw) * speed;
 
-    if (distToPlayer < 4.5 && mob.onGround && Math.random() < 0.05) {
-      mob.vel.y = 5.5;
-      mob.vel.x *= 1.5;
-      mob.vel.z *= 1.5;
+    // Tactical pounce leap when close
+    if (distToPlayer < 4.0 && mob.onGround && Math.random() < 0.04) {
+      mob.vel.y = 4.8;
+      mob.vel.x *= 1.4;
+      mob.vel.z *= 1.4;
       mob.onGround = false;
     }
 
     if (distToPlayer < 1.3) {
       mob.attackCooldown -= dt;
       if (mob.attackCooldown <= 0) {
-        mob.attackCooldown = 0.8;
+        mob.attackCooldown = 1.0;
         damagePlayer(2, new THREE.Vector3(Math.sin(mob.yaw), 0, Math.cos(mob.yaw)));
       }
     }
@@ -881,16 +942,65 @@ function updatePigAI(mob, dt, playerPos, distToPlayer) {
     mob.stateTimer -= dt;
     const away = mob.pos.clone().sub(playerPos).normalize();
     mob.yaw = Math.atan2(away.x, away.z);
-    mob.vel.x = away.x * 4.2;
-    mob.vel.z = away.z * 4.2;
+    mob.vel.x = Math.sin(mob.yaw) * 2.8;
+    mob.vel.z = Math.cos(mob.yaw) * 2.8;
     if (mob.stateTimer <= 0) mob.state = 'idle';
   } else {
     mob.stateTimer -= dt;
     if (mob.stateTimer <= 0) {
-      mob.stateTimer = 2.0 + Math.random() * 3.0;
-      mob.yaw += (Math.random() - 0.5) * 1.5;
+      mob.stateTimer = 2.5 + Math.random() * 3.5;
+      mob.yaw += (Math.random() - 0.5) * 1.8;
     }
-    mob.vel.x = Math.sin(mob.yaw) * 1.2;
-    mob.vel.z = Math.cos(mob.yaw) * 1.2;
+    // Peaceful stroll forward
+    mob.vel.x = Math.sin(mob.yaw) * 0.9;
+    mob.vel.z = Math.cos(mob.yaw) * 0.9;
   }
+}
+
+function updateSheepAI(mob, dt, playerPos, distToPlayer) {
+  if (mob.state === 'flee') {
+    mob.stateTimer -= dt;
+    const away = mob.pos.clone().sub(playerPos).normalize();
+    mob.yaw = Math.atan2(away.x, away.z);
+    mob.vel.x = Math.sin(mob.yaw) * 2.8;
+    mob.vel.z = Math.cos(mob.yaw) * 2.8;
+    if (mob.stateTimer <= 0) mob.state = 'idle';
+  } else {
+    mob.stateTimer -= dt;
+    if (mob.stateTimer <= 0) {
+      mob.stateTimer = 3.0 + Math.random() * 4.0;
+      mob.yaw += (Math.random() - 0.5) * 1.8;
+      if (Math.random() < 0.25) {
+        try { playSheepSound(); } catch (err) {}
+      }
+    }
+    // Peaceful stroll forward
+    mob.vel.x = Math.sin(mob.yaw) * 0.85;
+    mob.vel.z = Math.cos(mob.yaw) * 0.85;
+  }
+}
+
+export function raycastMob(origin, direction, maxDist = 3.8) {
+  let closestMob = null;
+  let closestDist = maxDist;
+
+  for (const mob of mobs) {
+    if (mob.health <= 0) continue;
+    const mobCenter = mob.pos.clone().add(new THREE.Vector3(0, mob.eyeHeight * 0.5, 0));
+    const toMob = mobCenter.clone().sub(origin);
+    const proj = toMob.dot(direction);
+    if (proj > 0 && proj < closestDist) {
+      const perpDist = toMob.clone().sub(direction.clone().multiplyScalar(proj)).length();
+      if (perpDist < 0.90) {
+        closestDist = proj;
+        closestMob = mob;
+      }
+    }
+  }
+
+  return closestMob;
+}
+
+export function getNearbyMobs() {
+  return mobs;
 }

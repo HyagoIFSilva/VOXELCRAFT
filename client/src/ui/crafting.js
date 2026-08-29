@@ -581,6 +581,187 @@ export const RECIPE_CATALOG = [
       return gp === 5 && sand === 4 && others === 0;
     },
   },
+
+  // ── 23. Diamond Sword (2 Diamonds + 1 Stick) ──
+  {
+    id: 'diamond_sword',
+    name: 'Espada de Diamante',
+    category: 'Armas',
+    result: BlockType.DIAMOND_SWORD,
+    count: 1,
+    gridSize: 3,
+    layout: [
+      0, BlockType.DIAMOND, 0,
+      0, BlockType.DIAMOND, 0,
+      0, BlockType.STICK,   0,
+    ],
+    desc: '2 Diamantes verticais e 1 Graveto na base (+9 Dano).',
+    check: (grid, w, h) => {
+      if (w === 3 && h === 3) {
+        for (let col = 0; col < 3; col++) {
+          if (
+            grid[col] === BlockType.DIAMOND &&
+            grid[col + 3] === BlockType.DIAMOND &&
+            grid[col + 6] === BlockType.STICK
+          ) {
+            const others = grid.filter((v, i) => (i === col || i === col + 3 || i === col + 6) ? false : v !== 0);
+            if (others.length === 0) return true;
+          }
+        }
+      }
+      return false;
+    },
+  },
+
+  // ── 24. Diamond Pickaxe (3 Diamonds + 2 Sticks) ──
+  {
+    id: 'diamond_pickaxe',
+    name: 'Picareta de Diamante',
+    category: 'Ferramentas',
+    result: BlockType.DIAMOND_PICKAXE,
+    count: 1,
+    gridSize: 3,
+    layout: [
+      BlockType.DIAMOND, BlockType.DIAMOND, BlockType.DIAMOND,
+      0,                 BlockType.STICK,   0,
+      0,                 BlockType.STICK,   0,
+    ],
+    desc: '3 Diamantes na linha superior e 2 Gravetos no centro vertical (Capaz de minerar Obsidiana).',
+    check: (grid, w, h) => {
+      if (w !== 3 || h !== 3) return false;
+      return (
+        grid[0] === BlockType.DIAMOND && grid[1] === BlockType.DIAMOND && grid[2] === BlockType.DIAMOND &&
+        grid[3] === 0 && grid[4] === BlockType.STICK && grid[5] === 0 &&
+        grid[6] === 0 && grid[7] === BlockType.STICK && grid[8] === 0
+      );
+    },
+  },
+
+  // ── 25. Diamond Helmet (5 Diamonds) ──
+  {
+    id: 'diamond_helmet',
+    name: 'Capacete de Diamante',
+    category: 'Armaduras',
+    result: BlockType.DIAMOND_HELMET,
+    count: 1,
+    gridSize: 3,
+    layout: [
+      BlockType.DIAMOND, BlockType.DIAMOND, BlockType.DIAMOND,
+      BlockType.DIAMOND, 0,                 BlockType.DIAMOND,
+      0,                 0,                 0,
+    ],
+    desc: '5 Diamantes em formato de arco/U invertido (+3 Defesa).',
+    check: (grid, w, h) => {
+      if (w !== 3 || h !== 3) return false;
+      return (
+        grid[0] === BlockType.DIAMOND && grid[1] === BlockType.DIAMOND && grid[2] === BlockType.DIAMOND &&
+        grid[3] === BlockType.DIAMOND && grid[4] === 0 && grid[5] === BlockType.DIAMOND &&
+        grid[6] === 0 && grid[7] === 0 && grid[8] === 0
+      );
+    },
+  },
+
+  // ── 26. Diamond Chestplate (8 Diamonds) ──
+  {
+    id: 'diamond_chestplate',
+    name: 'Peitoral de Diamante',
+    category: 'Armaduras',
+    result: BlockType.DIAMOND_CHESTPLATE,
+    count: 1,
+    gridSize: 3,
+    layout: [
+      BlockType.DIAMOND, 0,                  BlockType.DIAMOND,
+      BlockType.DIAMOND, BlockType.DIAMOND,  BlockType.DIAMOND,
+      BlockType.DIAMOND, BlockType.DIAMOND,  BlockType.DIAMOND,
+    ],
+    desc: '8 Diamantes em formato de colete com espaço superior central (+8 Defesa máxima).',
+    check: (grid, w, h) => {
+      if (w !== 3 || h !== 3) return false;
+      return (
+        grid[0] === BlockType.DIAMOND && grid[1] === 0 && grid[2] === BlockType.DIAMOND &&
+        grid[3] === BlockType.DIAMOND && grid[4] === BlockType.DIAMOND && grid[5] === BlockType.DIAMOND &&
+        grid[6] === BlockType.DIAMOND && grid[7] === BlockType.DIAMOND && grid[8] === BlockType.DIAMOND
+      );
+    },
+  },
+
+  // ── 27. Diamond Leggings (7 Diamonds) ──
+  {
+    id: 'diamond_leggings',
+    name: 'Calças de Diamante',
+    category: 'Armaduras',
+    result: BlockType.DIAMOND_LEGGINGS,
+    count: 1,
+    gridSize: 3,
+    layout: [
+      BlockType.DIAMOND, BlockType.DIAMOND, BlockType.DIAMOND,
+      BlockType.DIAMOND, 0,                 BlockType.DIAMOND,
+      BlockType.DIAMOND, 0,                 BlockType.DIAMOND,
+    ],
+    desc: '7 Diamantes em formato de calças (+6 Defesa).',
+    check: (grid, w, h) => {
+      if (w !== 3 || h !== 3) return false;
+      return (
+        grid[0] === BlockType.DIAMOND && grid[1] === BlockType.DIAMOND && grid[2] === BlockType.DIAMOND &&
+        grid[3] === BlockType.DIAMOND && grid[4] === 0 && grid[5] === BlockType.DIAMOND &&
+        grid[6] === BlockType.DIAMOND && grid[7] === 0 && grid[8] === BlockType.DIAMOND
+      );
+    },
+  },
+
+  // ── 28. Diamond Boots (4 Diamonds) ──
+  {
+    id: 'diamond_boots',
+    name: 'Botas de Diamante',
+    category: 'Armaduras',
+    result: BlockType.DIAMOND_BOOTS,
+    count: 1,
+    gridSize: 3,
+    layout: [
+      BlockType.DIAMOND, 0, BlockType.DIAMOND,
+      BlockType.DIAMOND, 0, BlockType.DIAMOND,
+      0,                 0, 0,
+    ],
+    desc: '4 Diamantes em formato de botas (+3 Defesa).',
+    check: (grid, w, h) => {
+      if (w !== 3 || h !== 3) return false;
+      return (
+        grid[0] === BlockType.DIAMOND && grid[1] === 0 && grid[2] === BlockType.DIAMOND &&
+        grid[3] === BlockType.DIAMOND && grid[4] === 0 && grid[5] === BlockType.DIAMOND &&
+        grid[6] === 0 && grid[7] === 0 && grid[8] === 0
+      );
+    },
+  },
+
+  // ── 29. Bed (3 Wool + 3 Wood Planks) ──
+  {
+    id: 'bed',
+    name: 'Cama Confortável',
+    category: 'Mobiliário',
+    result: BlockType.BED,
+    count: 1,
+    gridSize: 3,
+    layout: [
+      0,                      0,                      0,
+      BlockType.WOOL,         BlockType.WOOL,         BlockType.WOOL,
+      BlockType.WOOD_PLANKS,  BlockType.WOOD_PLANKS,  BlockType.WOOD_PLANKS,
+    ],
+    desc: '3 Blocos de Lã de Ovelha sobre 3 Tábuas de Madeira (Permite dormir e pular a noite).',
+    check: (grid, w, h) => {
+      if (w !== 3 || h !== 3) return false;
+      const matchRow1 = (
+        grid[0] === BlockType.WOOL && grid[1] === BlockType.WOOL && grid[2] === BlockType.WOOL &&
+        grid[3] === BlockType.WOOD_PLANKS && grid[4] === BlockType.WOOD_PLANKS && grid[5] === BlockType.WOOD_PLANKS &&
+        grid[6] === 0 && grid[7] === 0 && grid[8] === 0
+      );
+      const matchRow2 = (
+        grid[0] === 0 && grid[1] === 0 && grid[2] === 0 &&
+        grid[3] === BlockType.WOOL && grid[4] === BlockType.WOOL && grid[5] === BlockType.WOOL &&
+        grid[6] === BlockType.WOOD_PLANKS && grid[7] === BlockType.WOOD_PLANKS && grid[8] === BlockType.WOOD_PLANKS
+      );
+      return matchRow1 || matchRow2;
+    },
+  },
 ];
 
 export function evaluateCrafting(grid, width, height) {

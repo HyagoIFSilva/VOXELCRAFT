@@ -317,8 +317,11 @@ function generateChunk(cx, cz) {
         }
 
         // 3D Cave Carving Pass: Hollows out tunnels and cave entrances
+        // 3D Cave Carving Pass: Hollows out tunnels, deep lava pools and cave entrances
         if (y >= 2 && isCaveAir(wx, y, wz, height)) {
-          if (y <= SEA_LEVEL - 8) {
+          if (y <= 8) {
+            block = BlockType.LAVA; // Deep molten magma lake
+          } else if (y <= SEA_LEVEL - 8) {
             block = BlockType.WATER; // Underground cave pool
           } else {
             block = BlockType.AIR; // Hollow cave passage
@@ -383,7 +386,7 @@ function generateChunk(cx, cz) {
     }
   }
 
-  // 3. Subterranean Ore pass
+  // 3. Subterranean Ore pass (Coal, Iron & rare Deep Diamond Veins)
   for (let z = 0; z < CHUNK_WIDTH; z++) {
     for (let x = 0; x < CHUNK_WIDTH; x++) {
       const wx = offX + x;
@@ -393,7 +396,9 @@ function generateChunk(cx, cz) {
       for (let y = 1; y < height - 3; y++) {
         if (chunk.getBlock(x, y, z) === BlockType.STONE) {
           const r = hash2D(wx * 31 + y * 97, wz * 53 + y * 13);
-          if (r < 0.018) {
+          if (y <= 16 && r > 0.992) {
+            chunk.setBlock(x, y, z, BlockType.DIAMOND_ORE);
+          } else if (r < 0.018) {
             chunk.setBlock(x, y, z, BlockType.COAL_ORE);
           } else if (r > 0.982) {
             chunk.setBlock(x, y, z, BlockType.IRON_ORE);
@@ -429,6 +434,7 @@ export function getBlockAtWorld(wx, wy, wz) {
   }
 
   if (wy >= 2 && isCaveAir(wx, wy, wz, height)) {
+    if (wy <= 8) return BlockType.LAVA;
     return wy <= SEA_LEVEL - 8 ? BlockType.WATER : BlockType.AIR;
   }
 
@@ -556,6 +562,32 @@ export function getSpawnPosition() {
 
 export function setBlockAtWorld(scene, wx, wy, wz, type) {
   if (wy < 0 || wy >= CHUNK_HEIGHT) return;
+
+  // Water + Lava reaction -> Obsidian!
+  if (type === BlockType.WATER) {
+    const neighbors = [
+      [wx + 1, wy, wz], [wx - 1, wy, wz],
+      [wx, wy + 1, wz], [wx, wy - 1, wz],
+      [wx, wy, wz + 1], [wx, wy, wz - 1],
+    ];
+    for (const [nx, ny, nz] of neighbors) {
+      if (getBlockAtWorld(nx, ny, nz) === BlockType.LAVA) {
+        setBlockAtWorld(scene, nx, ny, nz, BlockType.OBSIDIAN);
+      }
+    }
+  } else if (type === BlockType.LAVA) {
+    const neighbors = [
+      [wx + 1, wy, wz], [wx - 1, wy, wz],
+      [wx, wy + 1, wz], [wx, wy - 1, wz],
+      [wx, wy, wz + 1], [wx, wy, wz - 1],
+    ];
+    for (const [nx, ny, nz] of neighbors) {
+      if (getBlockAtWorld(nx, ny, nz) === BlockType.WATER) {
+        type = BlockType.OBSIDIAN;
+        break;
+      }
+    }
+  }
 
   const cx = Math.floor(wx / CHUNK_WIDTH);
   const cz = Math.floor(wz / CHUNK_WIDTH);

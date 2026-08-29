@@ -1,5 +1,6 @@
 /**
  * Drop Manager — Floating 3D item drops with bobbing, rotation, gravity, and magnetic pickup.
+ * Includes hard cap (MAX_DROPS = 30) and memory cleanup to maintain 60 FPS on all CPUs.
  */
 
 import * as THREE from 'three';
@@ -13,13 +14,33 @@ import { addItemToInventory } from '../ui/inventory.js';
 let scene = null;
 const drops = [];
 const itemGeometry = new THREE.BoxGeometry(0.26, 0.26, 0.26);
+const MAX_DROPS = 30;
 
 export function initDropManager(s) {
   scene = s;
 }
 
-export function spawnDrop(itemType, x, y, z) {
-  if (!scene || !itemType || itemType === BlockType.AIR) return;
+export function spawnDrop(arg1, arg2, arg3, arg4) {
+  if (!scene) return;
+
+  let itemType, x, y, z;
+  if (typeof arg1 === 'number' && typeof arg4 === 'number') {
+    // Called as (x, y, z, itemType)
+    x = arg1; y = arg2; z = arg3; itemType = arg4;
+  } else {
+    // Called as (itemType, x, y, z)
+    itemType = arg1; x = arg2; y = arg3; z = arg4;
+  }
+
+  if (!itemType || itemType === BlockType.AIR) return;
+
+  // Cap global drops to prevent frame drops
+  if (drops.length >= MAX_DROPS) {
+    const oldest = drops.shift();
+    if (oldest && oldest.mesh) {
+      scene.remove(oldest.mesh);
+    }
+  }
 
   const textures = BlockTextures[itemType] || { top: 0, side: 1, bottom: 2 };
   const uv = getUVsForTexture(textures.side || 0);
@@ -37,9 +58,9 @@ export function spawnDrop(itemType, x, y, z) {
     mesh,
     pos: mesh.position.clone(),
     vel: new THREE.Vector3(
-      (Math.random() - 0.5) * 2.0,
-      3.2,
-      (Math.random() - 0.5) * 2.0
+      (Math.random() - 0.5) * 1.8,
+      3.0,
+      (Math.random() - 0.5) * 1.8
     ),
     age: 0,
     bobOffset: Math.random() * Math.PI * 2,
@@ -57,19 +78,18 @@ export function updateDrops(dt, time) {
     const drop = drops[i];
     drop.age += dt;
 
-    // Despawn if older than 180 seconds (3 mins)
-    if (drop.age > 180) {
+    // Despawn if older than 120 seconds (2 mins)
+    if (drop.age > 120) {
       scene.remove(drop.mesh);
-      drop.mesh.geometry.dispose();
       drops.splice(i, 1);
       continue;
     }
 
     const distToPlayer = drop.pos.distanceTo(playerCenter);
 
-    if (distToPlayer < 2.5 && drop.age > 0.4) {
+    if (distToPlayer < 2.5 && drop.age > 0.3) {
       // Magnetic pull towards player
-      const pullSpeed = Math.min(12.0, 1.0 / (distToPlayer * 0.2 + 0.05));
+      const pullSpeed = Math.min(14.0, 1.0 / (distToPlayer * 0.15 + 0.05));
       drop.pos.lerp(playerCenter, dt * pullSpeed);
 
       if (distToPlayer < 0.65) {
@@ -78,7 +98,6 @@ export function updateDrops(dt, time) {
         if (added) {
           playPickupSound();
           scene.remove(drop.mesh);
-          drop.mesh.geometry.dispose();
           drops.splice(i, 1);
           continue;
         }

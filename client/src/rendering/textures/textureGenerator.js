@@ -546,6 +546,86 @@ function drawTntBottom(ctx, size) {
   ctx.fillRect(7, 7, 2, 2);
 }
 
+function drawLava(ctx, size) {
+  fillWithNoise(ctx, size, '#ea580c', ['#f97316', '#c2410c', '#facc15', '#b45309', '#7c2d12'], 0.45, 2301);
+  const rng = seededRandom(2302);
+  for (let i = 0; i < 4; i++) {
+    const x = Math.floor(rng() * (size - 3));
+    const y = Math.floor(rng() * (size - 2));
+    ctx.fillStyle = '#fef08a';
+    ctx.fillRect(x, y, 3, 2);
+    ctx.fillStyle = '#ea580c';
+    ctx.fillRect(x + 1, y, 1, 1);
+  }
+}
+
+function drawDiamondOre(ctx, size) {
+  drawStone(ctx, size);
+  const rng = seededRandom(2401);
+  for (let i = 0; i < 4; i++) {
+    const cx = 2 + Math.floor(rng() * (size - 5));
+    const cy = 2 + Math.floor(rng() * (size - 5));
+    ctx.fillStyle = '#06b6d4';
+    ctx.fillRect(cx, cy, 2, 2);
+    ctx.fillStyle = '#67e8f9';
+    ctx.fillRect(cx, cy, 1, 1);
+    ctx.fillStyle = '#e0f2fe';
+    ctx.fillRect(cx + 1, cy + 1, 1, 1);
+  }
+}
+
+function drawObsidian(ctx, size) {
+  fillWithNoise(ctx, size, '#0f172a', ['#1e1b4b', '#020617', '#312e81', '#4c1d95', '#1e293b'], 0.45, 2501);
+  const rng = seededRandom(2502);
+  for (let i = 0; i < 5; i++) {
+    const x = Math.floor(rng() * (size - 2));
+    const y = Math.floor(rng() * (size - 2));
+    ctx.fillStyle = '#6366f1';
+    ctx.fillRect(x, y, 1, 2);
+    ctx.fillStyle = '#a855f7';
+    ctx.fillRect(x + 1, y + 1, 1, 1);
+  }
+}
+
+function drawBedTop(ctx, size) {
+  // Red blanket
+  ctx.fillStyle = '#dc2626';
+  ctx.fillRect(0, 0, size, size);
+  ctx.fillStyle = '#b91c1c';
+  ctx.fillRect(1, 6, size - 2, size - 7);
+
+  // White pillow at the top
+  ctx.fillStyle = '#f8fafc';
+  ctx.fillRect(2, 1, 12, 4);
+  ctx.fillStyle = '#cbd5e1';
+  ctx.fillRect(2, 4, 12, 1);
+}
+
+function drawBedSide(ctx, size) {
+  // Red mattress top
+  ctx.fillStyle = '#dc2626';
+  ctx.fillRect(0, 0, size, 6);
+  ctx.fillStyle = '#b91c1c';
+  ctx.fillRect(0, 5, size, 1);
+
+  // Wood frame & legs
+  ctx.fillStyle = '#78350f';
+  ctx.fillRect(0, 6, size, 10);
+  ctx.fillStyle = '#451a03';
+  ctx.fillRect(2, 9, size - 4, 7); // Hollow center under frame
+}
+
+function drawWool(ctx, size) {
+  fillWithNoise(ctx, size, '#f8fafc', ['#f1f5f9', '#e2e8f0', '#cbd5e1', '#ffffff'], 0.35, 2601);
+  const rng = seededRandom(2602);
+  for (let i = 0; i < 6; i++) {
+    const x = Math.floor(rng() * (size - 1));
+    const y = Math.floor(rng() * (size - 1));
+    ctx.fillStyle = '#e2e8f0';
+    ctx.fillRect(x, y, 1, 1);
+  }
+}
+
 // ── Export: texture definitions ───────────────────────────
 
 export const TEXTURE_DEFS = [
@@ -585,6 +665,12 @@ export const TEXTURE_DEFS = [
   { name: 'tnt_top',             draw: drawTntTop },             // 33
   { name: 'tnt_side',            draw: drawTntSide },            // 34
   { name: 'tnt_bottom',          draw: drawTntBottom },          // 35
+  { name: 'lava',                draw: drawLava },               // 36
+  { name: 'diamond_ore',         draw: drawDiamondOre },         // 37
+  { name: 'obsidian',            draw: drawObsidian },           // 38
+  { name: 'bed_top',             draw: drawBedTop },             // 39
+  { name: 'bed_side',            draw: drawBedSide },            // 40
+  { name: 'wool',                draw: drawWool },               // 41
 ];
 
 /**

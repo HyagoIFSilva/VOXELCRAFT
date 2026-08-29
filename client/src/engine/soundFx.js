@@ -522,3 +522,139 @@ export function playHoeSound() {
   osc.stop(now + 0.08);
 }
 
+export function playSheepSound() {
+  const ctx = getAudioContext();
+  if (!ctx) return;
+
+  const now = ctx.currentTime;
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+
+  // "Baaa" modulated vibrato
+  osc.type = 'sawtooth';
+  osc.frequency.setValueAtTime(240, now);
+  osc.frequency.linearRampToValueAtTime(210, now + 0.35);
+
+  const filter = ctx.createBiquadFilter();
+  filter.type = 'lowpass';
+  filter.frequency.setValueAtTime(700, now);
+  filter.frequency.linearRampToValueAtTime(450, now + 0.35);
+
+  gain.gain.setValueAtTime(0.14, now);
+  gain.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
+
+  osc.connect(filter);
+  filter.connect(gain);
+  gain.connect(ctx.destination);
+
+  osc.start(now);
+  osc.stop(now + 0.35);
+}
+
+export function playLavaSizzleSound() {
+  const ctx = getAudioContext();
+  if (!ctx) return;
+
+  const now = ctx.currentTime;
+  const bufferSize = Math.floor(ctx.sampleRate * 0.4);
+  const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+  const data = buffer.getChannelData(0);
+
+  for (let i = 0; i < bufferSize; i++) {
+    data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (bufferSize * 0.5));
+  }
+
+  const noise = ctx.createBufferSource();
+  noise.buffer = buffer;
+
+  const filter = ctx.createBiquadFilter();
+  filter.type = 'bandpass';
+  filter.frequency.setValueAtTime(1400, now);
+  filter.Q.setValueAtTime(3.0, now);
+
+  const gain = ctx.createGain();
+  gain.gain.setValueAtTime(0.25, now);
+  gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+
+  noise.connect(filter);
+  filter.connect(gain);
+  gain.connect(ctx.destination);
+
+  noise.start(now);
+}
+
+export function playSleepSound() {
+  const ctx = getAudioContext();
+  if (!ctx) return;
+
+  const now = ctx.currentTime;
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+
+  osc.type = 'sine';
+  osc.frequency.setValueAtTime(320, now);
+  osc.frequency.exponentialRampToValueAtTime(160, now + 0.6);
+
+  gain.gain.setValueAtTime(0.25, now);
+  gain.gain.exponentialRampToValueAtTime(0.001, now + 0.6);
+
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+
+  osc.start(now);
+  osc.stop(now + 0.6);
+}
+
+// ── Procedural Ambient Music Synthesizer (C418 Style) ──────
+
+let musicTimer = 20.0; // First song plays after 20s
+const PENTATONIC_FREQS = [
+  261.63, // C4
+  293.66, // D4
+  329.63, // E4
+  392.00, // G4
+  440.00, // A4
+  523.25, // C5
+  587.33, // D5
+  659.25, // E5
+];
+
+export function updateAmbientMusic(dt) {
+  musicTimer -= dt;
+  if (musicTimer <= 0) {
+    musicTimer = 65 + Math.random() * 45; // Next melody in 65-110s
+    playAmbientPhrase();
+  }
+}
+
+function playAmbientPhrase() {
+  const ctx = getAudioContext();
+  if (!ctx) return;
+
+  const noteCount = 4 + Math.floor(Math.random() * 3);
+  let timeOffset = ctx.currentTime;
+
+  for (let i = 0; i < noteCount; i++) {
+    const freq = PENTATONIC_FREQS[Math.floor(Math.random() * PENTATONIC_FREQS.length)];
+    const duration = 1.6 + Math.random() * 1.2;
+
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(freq, timeOffset);
+
+    gain.gain.setValueAtTime(0.0, timeOffset);
+    gain.gain.linearRampToValueAtTime(0.04, timeOffset + 0.3); // Very soft ambient volume
+    gain.gain.exponentialRampToValueAtTime(0.001, timeOffset + duration);
+
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+
+    osc.start(timeOffset);
+    osc.stop(timeOffset + duration);
+
+    timeOffset += 0.8 + Math.random() * 0.6;
+  }
+}
+

@@ -14,11 +14,13 @@ import { openWindow, closeWindow, UIWindow, isWindowOpen } from './uiManager.js'
 const SMELT_RECIPES = {
   [BlockType.IRON_ORE]:    { output: BlockType.IRON_INGOT,      time: 3.5 },
   [BlockType.PORKCHOP]:    { output: BlockType.COOKED_PORKCHOP, time: 2.5 },
+  [BlockType.MUTTON]:      { output: BlockType.COOKED_MUTTON,   time: 2.5 },
   [BlockType.COBBLESTONE]: { output: BlockType.STONE,           time: 3.0 },
 };
 
 // Fuels: Item Type -> Burn Duration in seconds
 const FUEL_DURATIONS = {
+  [BlockType.LAVA]:        60.0,
   [BlockType.COAL_ORE]:    16.0,
   [BlockType.WOOD_LOG]:     6.0,
   [BlockType.WOOD_PLANKS]:  3.0,

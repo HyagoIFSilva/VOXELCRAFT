@@ -29,6 +29,11 @@ export const BlockType = {
   WHEAT_STAGE_2:   23,
   WHEAT_STAGE_3:   24,
   TNT:             25,
+  LAVA:            26,
+  DIAMOND_ORE:     27,
+  OBSIDIAN:        28,
+  BED:             29,
+  WOOL:            30,
   // Items / Weapons / Tools
   IRON_SWORD:      101,
   IRON_PICKAXE:    102,
@@ -41,17 +46,17 @@ export const BlockType = {
   STONE_PICKAXE:   109,
   IRON_INGOT:      110,
   COOKED_PORKCHOP: 111,
-  // Armor Pieces
+  // Iron Armor
   IRON_HELMET:     112,
   IRON_CHESTPLATE: 113,
   IRON_LEGGINGS:   114,
   IRON_BOOTS:      115,
-  // Mob Drops & Projectiles
+  // Drops & Projectiles
   ARROW:           116,
   BONE:            117,
   STRING:          118,
   SPIDER_EYE:      119,
-  // Expansion: Combat, Farming & Explosives
+  // Farming, Bow & Explosives
   BOW:             120,
   WOODEN_HOE:      121,
   STONE_HOE:       122,
@@ -60,6 +65,16 @@ export const BlockType = {
   WHEAT:           125,
   BREAD:           126,
   GUNPOWDER:       127,
+  // The Diamond Era & Metallurgy
+  DIAMOND:         128,
+  DIAMOND_SWORD:   129,
+  DIAMOND_PICKAXE: 130,
+  DIAMOND_HELMET:  131,
+  DIAMOND_CHESTPLATE: 132,
+  DIAMOND_LEGGINGS:   133,
+  DIAMOND_BOOTS:      134,
+  MUTTON:          135,
+  COOKED_MUTTON:   136,
 };
 
 export const ITEM_NAMES = {
@@ -88,6 +103,11 @@ export const ITEM_NAMES = {
   [BlockType.WHEAT_STAGE_2]:   'Trigo em Crescimento',
   [BlockType.WHEAT_STAGE_3]:   'Trigo Maduro',
   [BlockType.TNT]:             'Bloco de TNT',
+  [BlockType.LAVA]:            'Balde de Lava',
+  [BlockType.DIAMOND_ORE]:     'Minério de Diamante',
+  [BlockType.OBSIDIAN]:        'Bloco de Obsidiana',
+  [BlockType.BED]:             'Cama Confortável',
+  [BlockType.WOOL]:            'Bloco de Lã Branca',
   [BlockType.IRON_SWORD]:      'Espada de Ferro',
   [BlockType.IRON_PICKAXE]:    'Picareta de Ferro',
   [BlockType.PORKCHOP]:        'Costela de Porco Crua',
@@ -113,8 +133,17 @@ export const ITEM_NAMES = {
   [BlockType.IRON_HOE]:        'Enxada de Ferro',
   [BlockType.WHEAT_SEEDS]:     'Sementes de Trigo',
   [BlockType.WHEAT]:           'Trigo',
-  [BlockType.BREAD]:           'Pão',
+  [BlockType.BREAD]:           'Pão Dourado',
   [BlockType.GUNPOWDER]:       'Pólvora',
+  [BlockType.DIAMOND]:         'Gema de Diamante',
+  [BlockType.DIAMOND_SWORD]:   'Espada de Diamante',
+  [BlockType.DIAMOND_PICKAXE]: 'Picareta de Diamante',
+  [BlockType.DIAMOND_HELMET]:  'Capacete de Diamante',
+  [BlockType.DIAMOND_CHESTPLATE]: 'Peitoral de Diamante',
+  [BlockType.DIAMOND_LEGGINGS]:   'Calças de Diamante',
+  [BlockType.DIAMOND_BOOTS]:      'Botas de Diamante',
+  [BlockType.MUTTON]:          'Carneiro Cru',
+  [BlockType.COOKED_MUTTON]:   'Carneiro Assado',
 };
 
 /**
@@ -146,6 +175,11 @@ export const BlockTextures = {
   [BlockType.WHEAT_STAGE_2]:  { top: 31, side: 31, bottom: 31 },
   [BlockType.WHEAT_STAGE_3]:  { top: 32, side: 32, bottom: 32 },
   [BlockType.TNT]:            { top: 33, side: 34, bottom: 35 },
+  [BlockType.LAVA]:           { top: 36, side: 36, bottom: 36 },
+  [BlockType.DIAMOND_ORE]:    { top: 37, side: 37, bottom: 37 },
+  [BlockType.OBSIDIAN]:       { top: 38, side: 38, bottom: 38 },
+  [BlockType.BED]:            { top: 39, side: 40, bottom: 16 },
+  [BlockType.WOOL]:           { top: 41, side: 41, bottom: 41 },
 };
 
 export function isSolid(type) {
@@ -153,6 +187,7 @@ export function isSolid(type) {
     type > BlockType.AIR &&
     type < 100 &&
     type !== BlockType.WATER &&
+    type !== BlockType.LAVA &&
     type !== BlockType.FLOWER_RED &&
     type !== BlockType.FLOWER_YELLOW &&
     type !== BlockType.TORCH &&
@@ -168,6 +203,7 @@ export function isPlaceableBlock(type) {
 
 export function isWeapon(type) {
   return (
+    type === BlockType.DIAMOND_SWORD ||
     type === BlockType.IRON_SWORD ||
     type === BlockType.STONE_SWORD ||
     type === BlockType.WOODEN_SWORD ||
@@ -177,6 +213,7 @@ export function isWeapon(type) {
 
 export function isPickaxe(type) {
   return (
+    type === BlockType.DIAMOND_PICKAXE ||
     type === BlockType.IRON_PICKAXE ||
     type === BlockType.STONE_PICKAXE ||
     type === BlockType.WOODEN_PICKAXE
@@ -195,6 +232,8 @@ export function isFood(type) {
   return (
     type === BlockType.PORKCHOP ||
     type === BlockType.COOKED_PORKCHOP ||
+    type === BlockType.MUTTON ||
+    type === BlockType.COOKED_MUTTON ||
     type === BlockType.ROTTEN_FLESH ||
     type === BlockType.BREAD
   );
@@ -205,25 +244,35 @@ export function isArmor(type) {
     type === BlockType.IRON_HELMET ||
     type === BlockType.IRON_CHESTPLATE ||
     type === BlockType.IRON_LEGGINGS ||
-    type === BlockType.IRON_BOOTS
+    type === BlockType.IRON_BOOTS ||
+    type === BlockType.DIAMOND_HELMET ||
+    type === BlockType.DIAMOND_CHESTPLATE ||
+    type === BlockType.DIAMOND_LEGGINGS ||
+    type === BlockType.DIAMOND_BOOTS
   );
 }
 
 export function getArmorDefense(type) {
   switch (type) {
-    case BlockType.IRON_HELMET: return 2;
-    case BlockType.IRON_CHESTPLATE: return 6;
-    case BlockType.IRON_LEGGINGS: return 5;
-    case BlockType.IRON_BOOTS: return 2;
+    case BlockType.DIAMOND_HELMET:     return 3;
+    case BlockType.DIAMOND_CHESTPLATE: return 8;
+    case BlockType.DIAMOND_LEGGINGS:   return 6;
+    case BlockType.DIAMOND_BOOTS:      return 3;
+    case BlockType.IRON_HELMET:        return 2;
+    case BlockType.IRON_CHESTPLATE:    return 6;
+    case BlockType.IRON_LEGGINGS:      return 5;
+    case BlockType.IRON_BOOTS:         return 2;
     default: return 0;
   }
 }
 
 export function getFoodNutrition(type) {
   switch (type) {
-    case BlockType.COOKED_PORKCHOP: return 8; // 4 full hearts
+    case BlockType.COOKED_PORKCHOP: return 8; // 4 hearts
+    case BlockType.COOKED_MUTTON:   return 6; // 3 hearts
     case BlockType.BREAD:           return 5; // 2.5 hearts
     case BlockType.PORKCHOP:        return 3; // 1.5 hearts
+    case BlockType.MUTTON:          return 2; // 1 heart
     case BlockType.ROTTEN_FLESH:    return 1; // 0.5 heart
     default: return 0;
   }
@@ -233,6 +282,7 @@ export function isTransparent(type) {
   return (
     type === BlockType.AIR ||
     type === BlockType.WATER ||
+    type === BlockType.LAVA ||
     type === BlockType.FLOWER_RED ||
     type === BlockType.FLOWER_YELLOW ||
     type === BlockType.TORCH ||
@@ -259,7 +309,9 @@ export function getBlockHardness(type) {
     case BlockType.FARMLAND:
       return 0.55;
     case BlockType.TNT:
-      return 0.1;
+    case BlockType.BED:
+    case BlockType.WOOL:
+      return 0.4;
     case BlockType.WOOD_LOG:
     case BlockType.WOOD_PLANKS:
     case BlockType.CRAFTING_TABLE:
@@ -274,6 +326,10 @@ export function getBlockHardness(type) {
     case BlockType.COAL_ORE:
     case BlockType.IRON_ORE:
       return 3.5;
+    case BlockType.DIAMOND_ORE:
+      return 4.5;
+    case BlockType.OBSIDIAN:
+      return 9.0;
     case BlockType.TORCH:
       return 0.05;
     default:
@@ -282,13 +338,28 @@ export function getBlockHardness(type) {
 }
 
 export function getMiningSpeed(blockType, toolType) {
+  const isDiamondPick = toolType === BlockType.DIAMOND_PICKAXE;
   const isIronPick = toolType === BlockType.IRON_PICKAXE;
   const isStonePick = toolType === BlockType.STONE_PICKAXE;
   const isWoodPick = toolType === BlockType.WOODEN_PICKAXE;
 
+  const isDiamondSword = toolType === BlockType.DIAMOND_SWORD;
   const isIronSword = toolType === BlockType.IRON_SWORD;
   const isStoneSword = toolType === BlockType.STONE_SWORD;
   const isWoodSword = toolType === BlockType.WOODEN_SWORD;
+
+  // Obsidian
+  if (blockType === BlockType.OBSIDIAN) {
+    if (isDiamondPick) return 4.0;
+    return 0.2; // Virtually unbreakable without diamond pick
+  }
+
+  // Diamond Ore
+  if (blockType === BlockType.DIAMOND_ORE) {
+    if (isDiamondPick) return 8.0;
+    if (isIronPick) return 6.0;
+    return 0.4;
+  }
 
   // Pickaxe on stone/ores/furnaces
   if (
@@ -299,27 +370,31 @@ export function getMiningSpeed(blockType, toolType) {
     blockType === BlockType.FURNACE ||
     blockType === BlockType.FURNACE_LIT
   ) {
+    if (isDiamondPick) return 9.5;
     if (isIronPick) return 6.5;
     if (isStonePick) return 4.2;
     if (isWoodPick) return 2.6;
-    return 0.65; // By hand
+    return 0.65;
   }
 
-  // Sword on leaves/plants/crops
+  // Sword on leaves/plants/crops/wool
   if (
     blockType === BlockType.LEAVES ||
+    blockType === BlockType.WOOL ||
     blockType === BlockType.FLOWER_RED ||
     blockType === BlockType.FLOWER_YELLOW ||
     blockType === BlockType.WHEAT_STAGE_1 ||
     blockType === BlockType.WHEAT_STAGE_2 ||
     blockType === BlockType.WHEAT_STAGE_3
   ) {
+    if (isDiamondSword) return 8.5;
     if (isIronSword || isStoneSword || isWoodSword) return 6.0;
     return 2.0;
   }
 
   // Wood blocks
-  if (blockType === BlockType.WOOD_LOG || blockType === BlockType.WOOD_PLANKS || blockType === BlockType.CRAFTING_TABLE || blockType === BlockType.CHEST) {
+  if (blockType === BlockType.WOOD_LOG || blockType === BlockType.WOOD_PLANKS || blockType === BlockType.CRAFTING_TABLE || blockType === BlockType.CHEST || blockType === BlockType.BED) {
+    if (isDiamondPick) return 2.2;
     if (isIronPick || isStonePick || isWoodPick) return 1.6;
     return 1.0;
   }
@@ -337,6 +412,10 @@ export function getBlockDrop(type) {
       return BlockType.COAL_ORE;
     case BlockType.IRON_ORE:
       return BlockType.IRON_ORE;
+    case BlockType.DIAMOND_ORE:
+      return BlockType.DIAMOND;
+    case BlockType.OBSIDIAN:
+      return BlockType.OBSIDIAN;
     case BlockType.FURNACE:
     case BlockType.FURNACE_LIT:
       return BlockType.FURNACE;
@@ -351,6 +430,10 @@ export function getBlockDrop(type) {
       return Math.random() < 0.35 ? BlockType.LEAVES : 0;
     case BlockType.TNT:
       return BlockType.TNT;
+    case BlockType.BED:
+      return BlockType.BED;
+    case BlockType.WOOL:
+      return BlockType.WOOL;
     default:
       return type;
   }

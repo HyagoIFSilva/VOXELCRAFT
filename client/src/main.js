@@ -27,6 +27,7 @@ import { initCraftingTable } from './ui/crafting.js';
 import { updateFurnaces } from './ui/furnace.js';
 import { initWeather, updateWeather } from './world/weather.js';
 import { saveWorld, loadWorld } from './engine/saveManager.js';
+import { updateAmbientMusic } from './engine/soundFx.js';
 
 // ── Bootstrap ──────────────────────────────────────────────
 
@@ -65,13 +66,10 @@ initPointerLock(getCanvas());
 // 9. Title Screen & Central UI Manager
 initTitleScreen(getCanvas());
 
-// 10. Mobs (Pacíficos e Hostis: Porco, Zumbi, Esqueleto, Aranha e Creeper)
+// 10. Mobs (Animais pacíficos no spawn inicial da manhã: Porco e Ovelha)
 initMobManager(scene);
 spawnMob(MobType.PIG, spawn.x + 4, spawn.y, spawn.z + 4);
-spawnMob(MobType.ZOMBIE, spawn.x + 14, spawn.y, spawn.z + 12);
-spawnMob(MobType.SKELETON, spawn.x - 12, spawn.y, spawn.z + 10);
-spawnMob(MobType.SPIDER, spawn.x + 8, spawn.y, spawn.z - 14);
-spawnMob(MobType.CREEPER, spawn.x - 8, spawn.y, spawn.z - 12);
+spawnMob(MobType.SHEEP, spawn.x - 3, spawn.y, spawn.z + 5);
 
 // 11. Block interaction & Combat
 initInteraction(scene);
@@ -91,7 +89,7 @@ initHand();
 // Load saved data if available
 loadWorld();
 
-console.log(`[VoxelCraft v0.4.0] Ready! Spawn at (${spawn.x}, ${spawn.y}, ${spawn.z})`);
+console.log(`[VoxelCraft v0.4.2] Ready! Spawn at (${spawn.x}, ${spawn.y}, ${spawn.z})`);
 
 // ── Game Loop ──────────────────────────────────────────────
 
@@ -121,6 +119,7 @@ function update(dt, time) {
   updateHotbar();
   updateHealthHud();
   updateHand(dt, time);
+  updateAmbientMusic(dt);
   updateHud(dt, { position: camera.position });
 
   // Auto-save every 30s

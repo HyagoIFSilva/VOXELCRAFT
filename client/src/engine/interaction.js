@@ -9,7 +9,9 @@ import {
   playBlockHitTickSound,
   playCraftSound,
   playHoeSound,
+  playSleepSound,
 } from './soundFx.js';
+import { isNighttime, skipToDawn } from '../world/dayNightCycle.js';
 import { spawnBlockBreakParticles } from '../rendering/particles.js';
 import { raycastMob, hitMob, spawnPlayerArrow, igniteTNT } from '../entities/mobManager.js';
 import {
@@ -232,15 +234,17 @@ function onMouseDown(e) {
     // ── Attack Mob with Priority ───────────────────────────
     const targetMob = raycastMob(cam.position, dir, 3.8);
     if (targetMob) {
+      const isDiamondSword = selectedBlockType === BlockType.DIAMOND_SWORD;
       const isIronSword = selectedBlockType === BlockType.IRON_SWORD;
       const isStoneSword = selectedBlockType === BlockType.STONE_SWORD;
       const isWoodSword = selectedBlockType === BlockType.WOODEN_SWORD;
       const isPick =
+        selectedBlockType === BlockType.DIAMOND_PICKAXE ||
         selectedBlockType === BlockType.IRON_PICKAXE ||
         selectedBlockType === BlockType.STONE_PICKAXE ||
         selectedBlockType === BlockType.WOODEN_PICKAXE;
 
-      const damageAmount = isIronSword ? 7 : isStoneSword ? 5 : isWoodSword ? 4 : isPick ? 3 : 2;
+      const damageAmount = isDiamondSword ? 9 : isIronSword ? 7 : isStoneSword ? 5 : isWoodSword ? 4 : isPick ? 3 : 2;
 
       playSwordSwingSound();
       hitMob(targetMob, damageAmount, dir);
@@ -260,7 +264,7 @@ function onMouseDown(e) {
       breakingBlockPos = { x: currentTarget.hit.x, y: currentTarget.hit.y, z: currentTarget.hit.z };
     }
   } else if (e.button === 2) {
-    // ── Right Click: Bow / Food / Hoe / Seeds / Container / Place Block ───
+    // ── Right Click: Bow / Food / Hoe / Seeds / Bed / Containers / Place Block ───
     e.preventDefault();
 
     // 1. Shoot Bow & Arrow
@@ -286,14 +290,28 @@ function onMouseDown(e) {
     if (currentTarget) {
       const hitBlock = getBlockAtWorld(currentTarget.hit.x, currentTarget.hit.y, currentTarget.hit.z);
 
-      // 3. Hoe Tilling: Transforms Grass/Dirt into Farmland
+      // 3. Bed: Sleep through the night to dawn
+      if (hitBlock === BlockType.BED) {
+        if (isNighttime()) {
+          playSleepSound();
+          skipToDawn();
+          healPlayer(4); // Restores 2 hearts on a good night's rest
+          return;
+        } else {
+          // Daytime sleep attempt
+          playCraftSound();
+          return;
+        }
+      }
+
+      // 4. Hoe Tilling: Transforms Grass/Dirt into Farmland
       if (isHoe(selectedBlockType) && (hitBlock === BlockType.GRASS || hitBlock === BlockType.DIRT)) {
         playHoeSound();
         setBlockAtWorld(scene, currentTarget.hit.x, currentTarget.hit.y, currentTarget.hit.z, BlockType.FARMLAND);
         return;
       }
 
-      // 4. Plant Wheat Seeds on Farmland
+      // 5. Plant Wheat Seeds on Farmland
       if (selectedBlockType === BlockType.WHEAT_SEEDS && hitBlock === BlockType.FARMLAND) {
         const cropY = currentTarget.hit.y + 1;
         if (cropY < 64 && getBlockAtWorld(currentTarget.hit.x, cropY, currentTarget.hit.z) === BlockType.AIR) {
@@ -311,25 +329,25 @@ function onMouseDown(e) {
         }
       }
 
-      // 5. Open Crafting Table 3×3 GUI
+      // 6. Open Crafting Table 3×3 GUI
       if (hitBlock === BlockType.CRAFTING_TABLE) {
         openCraftingTable();
         return;
       }
 
-      // 6. Open Furnace GUI
+      // 7. Open Furnace GUI
       if (hitBlock === BlockType.FURNACE || hitBlock === BlockType.FURNACE_LIT) {
         openFurnace(currentTarget.hit.x, currentTarget.hit.y, currentTarget.hit.z);
         return;
       }
 
-      // 7. Open Chest GUI
+      // 8. Open Chest GUI
       if (hitBlock === BlockType.CHEST) {
         openChest(currentTarget.hit.x, currentTarget.hit.y, currentTarget.hit.z);
         return;
       }
 
-      // 8. Place Block
+      // 9. Place Block
       if (isPlaceableBlock(selectedBlockType)) {
         const { prev } = currentTarget;
         if (prev.y >= 0 && prev.y < 64) {
