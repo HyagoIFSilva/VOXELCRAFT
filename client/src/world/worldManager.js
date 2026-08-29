@@ -458,6 +458,9 @@ function generateChunk(cx, cz) {
           const r = hash2D(wx * 31 + y * 97, wz * 53 + y * 13);
           if (y <= 16 && r > 0.992) {
             chunk.setBlock(x, y, z, BlockType.DIAMOND_ORE);
+          } else if (y <= 16 && r > 0.987) {
+            // Glowing Redstone Ore Veins
+            chunk.setBlock(x, y, z, BlockType.REDSTONE_ORE);
           } else if (r < 0.018) {
             chunk.setBlock(x, y, z, BlockType.COAL_ORE);
           } else if (r > 0.982) {
@@ -468,6 +471,34 @@ function generateChunk(cx, cz) {
         }
       }
     }
+  }
+
+  // 4. Procedural Dungeon Chamber (Rare Subterranean Treasure Rooms)
+  const dungeonHash = hash2D(cx * 911 + 43, cz * 317 + 89);
+  if (dungeonHash > 0.92) {
+    const dy = 12;
+    // 7x7 room from x=4..11, z=4..11
+    for (let dx = 4; dx <= 11; dx++) {
+      for (let dz = 4; dz <= 11; dz++) {
+        for (let y = dy; y <= dy + 4; y++) {
+          const isWall = (dx === 4 || dx === 11 || dz === 4 || dz === 11);
+          const isFloor = (y === dy);
+          const isCeil = (y === dy + 4);
+
+          if (isFloor || isCeil || isWall) {
+            const isMoss = hash2D(offX + dx, offZ + dz + y) > 0.5;
+            chunk.setBlock(dx, y, dz, isMoss ? BlockType.MOSSY_COBBLESTONE : BlockType.COBBLESTONE);
+          } else {
+            chunk.setBlock(dx, y, dz, BlockType.AIR);
+          }
+        }
+      }
+    }
+
+    // Center Spawner & Chests
+    chunk.setBlock(7, dy + 1, 7, BlockType.MONSTER_SPAWNER);
+    chunk.setBlock(5, dy + 1, 7, BlockType.CHEST);
+    chunk.setBlock(10, dy + 1, 7, BlockType.CHEST);
   }
 
   return chunk;

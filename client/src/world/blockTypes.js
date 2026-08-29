@@ -86,6 +86,28 @@ export const BlockType = {
   FLINT:           137,
   FLINT_AND_STEEL: 138,
   QUARTZ:          139,
+  // v0.6.0 — Redstone, Combat & Enchanting
+  REDSTONE_ORE:    38,
+  REDSTONE_WIRE:   39,
+  REDSTONE_TORCH:  40,
+  LEVER:           41,
+  PRESSURE_PLATE:  42,
+  WOODEN_DOOR_BOTTOM: 43,
+  WOODEN_DOOR_TOP: 44,
+  IRON_DOOR_BOTTOM: 45,
+  IRON_DOOR_TOP:   46,
+  ENCHANTING_TABLE: 47,
+  MOSSY_COBBLESTONE: 48,
+  MONSTER_SPAWNER: 49,
+  BOOKSHELF:       50,
+  // Items
+  REDSTONE_DUST:   140,
+  WOODEN_SHIELD:   141,
+  IRON_SHIELD:     142,
+  BOOK:            143,
+  GOLDEN_APPLE:    144,
+  BOAT:            145,
+  EXPERIENCE_BOTTLE: 146,
 };
 
 export const ITEM_NAMES = {
@@ -165,6 +187,27 @@ export const ITEM_NAMES = {
   [BlockType.FLINT]:           'Pederneira',
   [BlockType.FLINT_AND_STEEL]: 'Isqueiro de Pederneira',
   [BlockType.QUARTZ]:          'Cristal de Quartzo',
+  // v0.6.0
+  [BlockType.REDSTONE_ORE]:    'Minério de Redstone',
+  [BlockType.REDSTONE_WIRE]:   'Fio de Redstone',
+  [BlockType.REDSTONE_TORCH]:  'Tocha de Redstone',
+  [BlockType.LEVER]:           'Alavanca de Redstone',
+  [BlockType.PRESSURE_PLATE]:  'Placa de Pressão de Pedra',
+  [BlockType.WOODEN_DOOR_BOTTOM]: 'Porta de Madeira',
+  [BlockType.WOODEN_DOOR_TOP]: 'Porta de Madeira (Topo)',
+  [BlockType.IRON_DOOR_BOTTOM]: 'Porta de Ferro',
+  [BlockType.IRON_DOOR_TOP]:   'Porta de Ferro (Topo)',
+  [BlockType.ENCHANTING_TABLE]: 'Mesa de Encantamentos',
+  [BlockType.MOSSY_COBBLESTONE]: 'Pedregulho com Musgo',
+  [BlockType.MONSTER_SPAWNER]: 'Gerador de Monstros (Spawner)',
+  [BlockType.BOOKSHELF]:       'Estante de Livros',
+  [BlockType.REDSTONE_DUST]:   'Pó de Redstone',
+  [BlockType.WOODEN_SHIELD]:   'Escudo de Carvalho',
+  [BlockType.IRON_SHIELD]:     'Escudo Reforçado de Ferro',
+  [BlockType.BOOK]:            'Livro Arcano',
+  [BlockType.GOLDEN_APPLE]:    'Maçã Dourada Encantada',
+  [BlockType.BOAT]:            'Barco de Carvalho',
+  [BlockType.EXPERIENCE_BOTTLE]: 'Frasco de Experiência',
 };
 
 /**
@@ -208,6 +251,20 @@ export const BlockTextures = {
   [BlockType.NETHER_QUARTZ_ORE]: { top: 46, side: 46, bottom: 46 },
   [BlockType.QUARTZ_BLOCK]:   { top: 47, side: 47, bottom: 47 },
   [BlockType.NETHER_PORTAL]:  { top: 48, side: 48, bottom: 48 },
+  // v0.6.0 Textures
+  [BlockType.REDSTONE_ORE]:    { top: 49, side: 49, bottom: 49 },
+  [BlockType.REDSTONE_WIRE]:   { top: 50, side: 50, bottom: 50 },
+  [BlockType.REDSTONE_TORCH]:  { top: 51, side: 51, bottom: 51 },
+  [BlockType.LEVER]:           { top: 52, side: 52, bottom: 52 },
+  [BlockType.PRESSURE_PLATE]:  { top: 53, side: 53, bottom: 53 },
+  [BlockType.WOODEN_DOOR_BOTTOM]: { top: 54, side: 54, bottom: 54 },
+  [BlockType.WOODEN_DOOR_TOP]:    { top: 55, side: 55, bottom: 55 },
+  [BlockType.IRON_DOOR_BOTTOM]:   { top: 56, side: 56, bottom: 56 },
+  [BlockType.IRON_DOOR_TOP]:      { top: 57, side: 57, bottom: 57 },
+  [BlockType.ENCHANTING_TABLE]:   { top: 58, side: 59, bottom: 38 },
+  [BlockType.MOSSY_COBBLESTONE]:  { top: 60, side: 60, bottom: 60 },
+  [BlockType.MONSTER_SPAWNER]:    { top: 61, side: 61, bottom: 61 },
+  [BlockType.BOOKSHELF]:          { top: 16, side: 62, bottom: 16 },
 };
 
 export function isSolid(type) {
@@ -220,6 +277,10 @@ export function isSolid(type) {
     type !== BlockType.FLOWER_RED &&
     type !== BlockType.FLOWER_YELLOW &&
     type !== BlockType.TORCH &&
+    type !== BlockType.REDSTONE_WIRE &&
+    type !== BlockType.REDSTONE_TORCH &&
+    type !== BlockType.LEVER &&
+    type !== BlockType.PRESSURE_PLATE &&
     type !== BlockType.WHEAT_STAGE_1 &&
     type !== BlockType.WHEAT_STAGE_2 &&
     type !== BlockType.WHEAT_STAGE_3
@@ -237,6 +298,26 @@ export function isWeapon(type) {
     type === BlockType.STONE_SWORD ||
     type === BlockType.WOODEN_SWORD ||
     type === BlockType.BOW
+  );
+}
+
+export function isShield(type) {
+  return (
+    type === BlockType.WOODEN_SHIELD ||
+    type === BlockType.IRON_SHIELD
+  );
+}
+
+export function isBoat(type) {
+  return type === BlockType.BOAT;
+}
+
+export function isDoor(type) {
+  return (
+    type === BlockType.WOODEN_DOOR_BOTTOM ||
+    type === BlockType.WOODEN_DOOR_TOP ||
+    type === BlockType.IRON_DOOR_BOTTOM ||
+    type === BlockType.IRON_DOOR_TOP
   );
 }
 
@@ -264,7 +345,8 @@ export function isFood(type) {
     type === BlockType.MUTTON ||
     type === BlockType.COOKED_MUTTON ||
     type === BlockType.ROTTEN_FLESH ||
-    type === BlockType.BREAD
+    type === BlockType.BREAD ||
+    type === BlockType.GOLDEN_APPLE
   );
 }
 
@@ -297,12 +379,13 @@ export function getArmorDefense(type) {
 
 export function getFoodNutrition(type) {
   switch (type) {
-    case BlockType.COOKED_PORKCHOP: return 8; // 4 hearts
-    case BlockType.COOKED_MUTTON:   return 6; // 3 hearts
-    case BlockType.BREAD:           return 5; // 2.5 hearts
-    case BlockType.PORKCHOP:        return 3; // 1.5 hearts
-    case BlockType.MUTTON:          return 2; // 1 heart
-    case BlockType.ROTTEN_FLESH:    return 1; // 0.5 heart
+    case BlockType.GOLDEN_APPLE:    return 10; // 5 hearts + golden regen
+    case BlockType.COOKED_PORKCHOP: return 8;  // 4 hearts
+    case BlockType.COOKED_MUTTON:   return 6;  // 3 hearts
+    case BlockType.BREAD:           return 5;  // 2.5 hearts
+    case BlockType.PORKCHOP:        return 3;  // 1.5 hearts
+    case BlockType.MUTTON:          return 2;  // 1 heart
+    case BlockType.ROTTEN_FLESH:    return 1;  // 0.5 heart
     default: return 0;
   }
 }
@@ -315,6 +398,14 @@ export function isTransparent(type) {
     type === BlockType.FLOWER_RED ||
     type === BlockType.FLOWER_YELLOW ||
     type === BlockType.TORCH ||
+    type === BlockType.REDSTONE_WIRE ||
+    type === BlockType.REDSTONE_TORCH ||
+    type === BlockType.LEVER ||
+    type === BlockType.PRESSURE_PLATE ||
+    type === BlockType.WOODEN_DOOR_BOTTOM ||
+    type === BlockType.WOODEN_DOOR_TOP ||
+    type === BlockType.IRON_DOOR_BOTTOM ||
+    type === BlockType.IRON_DOOR_TOP ||
     type === BlockType.WHEAT_STAGE_1 ||
     type === BlockType.WHEAT_STAGE_2 ||
     type === BlockType.WHEAT_STAGE_3 ||
@@ -498,6 +589,30 @@ export function getBlockDrop(type) {
       return BlockType.BED;
     case BlockType.WOOL:
       return BlockType.WOOL;
+    case BlockType.REDSTONE_ORE:
+      return BlockType.REDSTONE_DUST;
+    case BlockType.REDSTONE_WIRE:
+      return BlockType.REDSTONE_DUST;
+    case BlockType.REDSTONE_TORCH:
+      return BlockType.REDSTONE_TORCH;
+    case BlockType.LEVER:
+      return BlockType.LEVER;
+    case BlockType.PRESSURE_PLATE:
+      return BlockType.PRESSURE_PLATE;
+    case BlockType.WOODEN_DOOR_BOTTOM:
+    case BlockType.WOODEN_DOOR_TOP:
+      return BlockType.WOODEN_DOOR_BOTTOM;
+    case BlockType.IRON_DOOR_BOTTOM:
+    case BlockType.IRON_DOOR_TOP:
+      return BlockType.IRON_DOOR_BOTTOM;
+    case BlockType.ENCHANTING_TABLE:
+      return BlockType.ENCHANTING_TABLE;
+    case BlockType.MOSSY_COBBLESTONE:
+      return BlockType.MOSSY_COBBLESTONE;
+    case BlockType.BOOKSHELF:
+      return BlockType.BOOK;
+    case BlockType.MONSTER_SPAWNER:
+      return BlockType.AIR;
     default:
       return type;
   }

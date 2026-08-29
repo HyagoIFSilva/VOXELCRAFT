@@ -825,6 +825,205 @@ export const RECIPE_CATALOG = [
       return false;
     },
   },
+
+  // ── 32. Wooden Shield (6 Wood Planks + 1 Iron Ingot) ──
+  {
+    id: 'wooden_shield',
+    name: 'Escudo de Carvalho',
+    category: 'Armaduras',
+    result: BlockType.WOODEN_SHIELD,
+    count: 1,
+    gridSize: 3,
+    layout: [
+      BlockType.WOOD_PLANKS, BlockType.IRON_INGOT,  BlockType.WOOD_PLANKS,
+      BlockType.WOOD_PLANKS, BlockType.WOOD_PLANKS, BlockType.WOOD_PLANKS,
+      0,                     BlockType.WOOD_PLANKS, 0,
+    ],
+    desc: '6 Tábuas de Madeira e 1 Barra de Ferro no topo central.',
+    check: (grid, w, h) => {
+      if (w !== 3 || h !== 3) return false;
+      return (
+        grid[0] === BlockType.WOOD_PLANKS && grid[1] === BlockType.IRON_INGOT && grid[2] === BlockType.WOOD_PLANKS &&
+        grid[3] === BlockType.WOOD_PLANKS && grid[4] === BlockType.WOOD_PLANKS && grid[5] === BlockType.WOOD_PLANKS &&
+        grid[6] === 0 && grid[7] === BlockType.WOOD_PLANKS && grid[8] === 0
+      );
+    },
+  },
+
+  // ── 33. Redstone Torch (1 Redstone Dust + 1 Stick) ──
+  {
+    id: 'redstone_torch',
+    name: 'Tocha de Redstone',
+    category: 'Redstone',
+    result: BlockType.REDSTONE_TORCH,
+    count: 1,
+    gridSize: 2,
+    layout: [BlockType.REDSTONE_DUST, 0, BlockType.STICK, 0],
+    desc: '1 Pó de Redstone sobre 1 Graveto (Emite sinal constante de energia).',
+    check: (grid) => {
+      const red = grid.filter(v => v === BlockType.REDSTONE_DUST).length;
+      const stick = grid.filter(v => v === BlockType.STICK).length;
+      const others = grid.filter(v => v !== 0 && v !== BlockType.REDSTONE_DUST && v !== BlockType.STICK).length;
+      return red === 1 && stick === 1 && others === 0;
+    },
+  },
+
+  // ── 34. Lever (1 Stick + 1 Cobblestone) ──
+  {
+    id: 'lever',
+    name: 'Alavanca de Redstone',
+    category: 'Redstone',
+    result: BlockType.LEVER,
+    count: 1,
+    gridSize: 2,
+    layout: [BlockType.STICK, 0, BlockType.COBBLESTONE, 0],
+    desc: '1 Graveto sobre 1 Pedregulho (Liga e desliga circuitos).',
+    check: (grid) => {
+      const stick = grid.filter(v => v === BlockType.STICK).length;
+      const cobble = grid.filter(v => v === BlockType.COBBLESTONE).length;
+      const others = grid.filter(v => v !== 0 && v !== BlockType.STICK && v !== BlockType.COBBLESTONE).length;
+      return stick === 1 && cobble === 1 && others === 0;
+    },
+  },
+
+  // ── 35. Pressure Plate (2 Stones) ──
+  {
+    id: 'pressure_plate',
+    name: 'Placa de Pressão de Pedra',
+    category: 'Redstone',
+    result: BlockType.PRESSURE_PLATE,
+    count: 1,
+    gridSize: 2,
+    layout: [BlockType.STONE, BlockType.STONE, 0, 0],
+    desc: '2 Pedras lado a lado (Ativa ao pisar).',
+    check: (grid) => {
+      const stones = grid.filter(v => v === BlockType.STONE).length;
+      const others = grid.filter(v => v !== 0 && v !== BlockType.STONE).length;
+      return stones === 2 && others === 0;
+    },
+  },
+
+  // ── 36. Wooden Door (6 Wood Planks in 2x3) ──
+  {
+    id: 'wooden_door',
+    name: 'Porta de Madeira',
+    category: 'Blocos',
+    result: BlockType.WOODEN_DOOR_BOTTOM,
+    count: 1,
+    gridSize: 3,
+    layout: [
+      BlockType.WOOD_PLANKS, BlockType.WOOD_PLANKS, 0,
+      BlockType.WOOD_PLANKS, BlockType.WOOD_PLANKS, 0,
+      BlockType.WOOD_PLANKS, BlockType.WOOD_PLANKS, 0,
+    ],
+    desc: '6 Tábuas de Madeira em duas colunas verticais.',
+    check: (grid, w, h) => {
+      if (w !== 3 || h !== 3) return false;
+      const col12 = (
+        grid[0] === BlockType.WOOD_PLANKS && grid[1] === BlockType.WOOD_PLANKS && grid[2] === 0 &&
+        grid[3] === BlockType.WOOD_PLANKS && grid[4] === BlockType.WOOD_PLANKS && grid[5] === 0 &&
+        grid[6] === BlockType.WOOD_PLANKS && grid[7] === BlockType.WOOD_PLANKS && grid[8] === 0
+      );
+      const col23 = (
+        grid[0] === 0 && grid[1] === BlockType.WOOD_PLANKS && grid[2] === BlockType.WOOD_PLANKS &&
+        grid[3] === 0 && grid[4] === BlockType.WOOD_PLANKS && grid[5] === BlockType.WOOD_PLANKS &&
+        grid[6] === 0 && grid[7] === BlockType.WOOD_PLANKS && grid[8] === BlockType.WOOD_PLANKS
+      );
+      return col12 || col23;
+    },
+  },
+
+  // ── 37. Enchanting Table (1 Book + 2 Diamonds + 4 Obsidian) ──
+  {
+    id: 'enchanting_table',
+    name: 'Mesa de Encantamentos',
+    category: 'Magia',
+    result: BlockType.ENCHANTING_TABLE,
+    count: 1,
+    gridSize: 3,
+    layout: [
+      0,                  BlockType.BOOK,     0,
+      BlockType.DIAMOND,  BlockType.OBSIDIAN, BlockType.DIAMOND,
+      BlockType.OBSIDIAN, BlockType.OBSIDIAN, BlockType.OBSIDIAN,
+    ],
+    desc: '1 Livro no topo central, 2 Diamantes nas laterais e 4 Obsidianas.',
+    check: (grid, w, h) => {
+      if (w !== 3 || h !== 3) return false;
+      return (
+        grid[0] === 0 && grid[1] === BlockType.BOOK && grid[2] === 0 &&
+        grid[3] === BlockType.DIAMOND && grid[4] === BlockType.OBSIDIAN && grid[5] === BlockType.DIAMOND &&
+        grid[6] === BlockType.OBSIDIAN && grid[7] === BlockType.OBSIDIAN && grid[8] === BlockType.OBSIDIAN
+      );
+    },
+  },
+
+  // ── 38. Boat (5 Wood Planks in U-shape) ──
+  {
+    id: 'boat',
+    name: 'Barco de Carvalho',
+    category: 'Veículos',
+    result: BlockType.BOAT,
+    count: 1,
+    gridSize: 3,
+    layout: [
+      0,                     0,                     0,
+      BlockType.WOOD_PLANKS, 0,                     BlockType.WOOD_PLANKS,
+      BlockType.WOOD_PLANKS, BlockType.WOOD_PLANKS, BlockType.WOOD_PLANKS,
+    ],
+    desc: '5 Tábuas de Madeira dispostas em formato de barco (Permite navegar na água).',
+    check: (grid, w, h) => {
+      if (w !== 3 || h !== 3) return false;
+      return (
+        grid[0] === 0 && grid[1] === 0 && grid[2] === 0 &&
+        grid[3] === BlockType.WOOD_PLANKS && grid[4] === 0 && grid[5] === BlockType.WOOD_PLANKS &&
+        grid[6] === BlockType.WOOD_PLANKS && grid[7] === BlockType.WOOD_PLANKS && grid[8] === BlockType.WOOD_PLANKS
+      );
+    },
+  },
+
+  // ── 39. Book (3 Papers / Wheat) ──
+  {
+    id: 'book',
+    name: 'Livro Arcano',
+    category: 'Magia',
+    result: BlockType.BOOK,
+    count: 1,
+    gridSize: 2,
+    layout: [
+      BlockType.WHEAT, BlockType.WHEAT,
+      BlockType.WHEAT, 0,
+    ],
+    desc: '3 Trigos processados em livro de couro.',
+    check: (grid) => {
+      const wheat = grid.filter(v => v === BlockType.WHEAT).length;
+      const others = grid.filter(v => v !== 0 && v !== BlockType.WHEAT).length;
+      return wheat === 3 && others === 0;
+    },
+  },
+
+  // ── 40. Bookshelf (6 Wood Planks + 3 Books) ──
+  {
+    id: 'bookshelf',
+    name: 'Estante de Livros',
+    category: 'Blocos',
+    result: BlockType.BOOKSHELF,
+    count: 1,
+    gridSize: 3,
+    layout: [
+      BlockType.WOOD_PLANKS, BlockType.WOOD_PLANKS, BlockType.WOOD_PLANKS,
+      BlockType.BOOK,        BlockType.BOOK,        BlockType.BOOK,
+      BlockType.WOOD_PLANKS, BlockType.WOOD_PLANKS, BlockType.WOOD_PLANKS,
+    ],
+    desc: '3 Livros no centro entre 6 Tábuas de Madeira (Aumenta o poder da Mesa de Encantamentos).',
+    check: (grid, w, h) => {
+      if (w !== 3 || h !== 3) return false;
+      return (
+        grid[0] === BlockType.WOOD_PLANKS && grid[1] === BlockType.WOOD_PLANKS && grid[2] === BlockType.WOOD_PLANKS &&
+        grid[3] === BlockType.BOOK && grid[4] === BlockType.BOOK && grid[5] === BlockType.BOOK &&
+        grid[6] === BlockType.WOOD_PLANKS && grid[7] === BlockType.WOOD_PLANKS && grid[8] === BlockType.WOOD_PLANKS
+      );
+    },
+  },
 ];
 
 export function evaluateCrafting(grid, width, height) {

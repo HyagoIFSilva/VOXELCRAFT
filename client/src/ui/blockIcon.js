@@ -671,6 +671,148 @@ export function createBlockIconCanvas(blockType, size = 46) {
     return canvas;
   }
 
+  // ── v0.6.0 Items Pixel Art ───────────────────────────────
+
+  if (blockType === BlockType.REDSTONE_DUST) {
+    ctx.fillStyle = '#991b1b';
+    ctx.beginPath();
+    ctx.arc(size * 0.5, size * 0.55, size * 0.28, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = '#ef4444';
+    ctx.beginPath();
+    ctx.arc(size * 0.46, size * 0.50, size * 0.18, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = '#fca5a5';
+    ctx.fillRect(size * 0.42, size * 0.42, size * 0.08, size * 0.08);
+    ctx.fillRect(size * 0.60, size * 0.55, size * 0.06, size * 0.06);
+    return canvas;
+  }
+
+  if (blockType === BlockType.WOODEN_SHIELD || blockType === BlockType.IRON_SHIELD) {
+    const isIron = blockType === BlockType.IRON_SHIELD;
+    // Shield silhouette
+    ctx.fillStyle = isIron ? '#475569' : '#451a03';
+    ctx.beginPath();
+    ctx.moveTo(size * 0.22, size * 0.18);
+    ctx.lineTo(size * 0.78, size * 0.18);
+    ctx.lineTo(size * 0.78, size * 0.55);
+    ctx.lineTo(size * 0.50, size * 0.86);
+    ctx.lineTo(size * 0.22, size * 0.55);
+    ctx.closePath();
+    ctx.fill();
+
+    // Body
+    ctx.fillStyle = isIron ? '#e2e8f0' : '#b45309';
+    ctx.beginPath();
+    ctx.moveTo(size * 0.28, size * 0.24);
+    ctx.lineTo(size * 0.72, size * 0.24);
+    ctx.lineTo(size * 0.72, size * 0.52);
+    ctx.lineTo(size * 0.50, size * 0.78);
+    ctx.lineTo(size * 0.28, size * 0.52);
+    ctx.closePath();
+    ctx.fill();
+
+    // Center Iron Boss
+    ctx.fillStyle = '#334155';
+    ctx.beginPath();
+    ctx.arc(size * 0.5, size * 0.45, size * 0.09, 0, Math.PI * 2);
+    ctx.fill();
+    return canvas;
+  }
+
+  if (blockType === BlockType.BOOK) {
+    // Book cover
+    ctx.fillStyle = '#831843';
+    ctx.beginPath();
+    ctx.roundRect(size * 0.22, size * 0.20, size * 0.56, size * 0.60, 4);
+    ctx.fill();
+
+    // Pages edge
+    ctx.fillStyle = '#fef08a';
+    ctx.fillRect(size * 0.30, size * 0.25, size * 0.44, size * 0.50);
+
+    // Cover spine
+    ctx.fillStyle = '#4c0519';
+    ctx.fillRect(size * 0.22, size * 0.20, size * 0.08, size * 0.60);
+
+    // Gold ribbon
+    ctx.fillStyle = '#facc15';
+    ctx.fillRect(size * 0.46, size * 0.20, size * 0.08, size * 0.68);
+    return canvas;
+  }
+
+  if (blockType === BlockType.GOLDEN_APPLE) {
+    // Apple Body
+    ctx.fillStyle = '#facc15';
+    ctx.beginPath();
+    ctx.arc(size * 0.42, size * 0.52, size * 0.26, 0, Math.PI * 2);
+    ctx.arc(size * 0.58, size * 0.52, size * 0.26, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Golden shine
+    ctx.fillStyle = '#fef08a';
+    ctx.beginPath();
+    ctx.arc(size * 0.38, size * 0.42, size * 0.10, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Leaf & Stem
+    ctx.fillStyle = '#78350f';
+    ctx.fillRect(size * 0.48, size * 0.18, size * 0.06, size * 0.14);
+    ctx.fillStyle = '#16a34a';
+    ctx.fillRect(size * 0.54, size * 0.20, size * 0.14, size * 0.08);
+    return canvas;
+  }
+
+  if (blockType === BlockType.BOAT) {
+    ctx.fillStyle = '#78350f';
+    ctx.beginPath();
+    ctx.moveTo(size * 0.15, size * 0.42);
+    ctx.lineTo(size * 0.85, size * 0.42);
+    ctx.lineTo(size * 0.72, size * 0.72);
+    ctx.lineTo(size * 0.28, size * 0.72);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.fillStyle = '#b45309';
+    ctx.fillRect(size * 0.25, size * 0.46, size * 0.50, size * 0.14);
+
+    // Oars
+    ctx.lineWidth = 2.5;
+    ctx.strokeStyle = '#451a03';
+    ctx.beginPath();
+    ctx.moveTo(size * 0.35, size * 0.30);
+    ctx.lineTo(size * 0.12, size * 0.75);
+    ctx.moveTo(size * 0.65, size * 0.30);
+    ctx.lineTo(size * 0.88, size * 0.75);
+    ctx.stroke();
+    return canvas;
+  }
+
+  if (blockType === BlockType.EXPERIENCE_BOTTLE) {
+    // Glass vial
+    ctx.fillStyle = '#bae6fd';
+    ctx.beginPath();
+    ctx.moveTo(size * 0.42, size * 0.20);
+    ctx.lineTo(size * 0.58, size * 0.20);
+    ctx.lineTo(size * 0.58, size * 0.36);
+    ctx.lineTo(size * 0.75, size * 0.60);
+    ctx.lineTo(size * 0.70, size * 0.82);
+    ctx.lineTo(size * 0.30, size * 0.82);
+    ctx.lineTo(size * 0.25, size * 0.60);
+    ctx.lineTo(size * 0.42, size * 0.36);
+    ctx.closePath();
+    ctx.fill();
+
+    // Glowing emerald XP liquid
+    ctx.fillStyle = '#22c55e';
+    ctx.fillRect(size * 0.34, size * 0.55, size * 0.32, size * 0.24);
+    ctx.fillStyle = '#86efac';
+    ctx.fillRect(size * 0.42, size * 0.60, size * 0.08, size * 0.08);
+    return canvas;
+  }
+
   if (
     blockType === BlockType.FLOWER_RED ||
     blockType === BlockType.FLOWER_YELLOW ||

@@ -269,6 +269,14 @@ export function playInventorySound(open = true) {
   osc.stop(now + 0.08);
 }
 
+export function playChestSound(open = true) {
+  playInventorySound(open);
+}
+
+export function playDoorSound(open = true) {
+  playInventorySound(open);
+}
+
 export function playBlockHitTickSound(blockType = 1) {
   const ctx = getAudioContext();
   if (!ctx) return;

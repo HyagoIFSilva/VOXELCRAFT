@@ -30,12 +30,16 @@ import {
   getBlockDrop,
   isFood,
   isHoe,
+  isDoor,
+  isShield,
   getFoodNutrition,
 } from '../world/blockTypes.js';
+import { toggleLever, toggleDoor, recalculateRedstoneGrid } from './redstoneEngine.js';
 import { spawnDrop } from '../entities/dropManager.js';
 import { openCraftingTable } from '../ui/crafting.js';
 import { openFurnace } from '../ui/furnace.js';
 import { openChest, getChestItems, clearChest } from '../ui/chest.js';
+import { openEnchantingTable } from '../ui/enchantingModal.js';
 import { isAnyWindowOpen } from '../ui/uiManager.js';
 import { healPlayer, getPlayerPosition, getPlayerState } from '../entities/player.js';
 import { removeItemFromHotbar, hasItemInInventory, consumeItemFromInventory } from '../ui/inventory.js';
@@ -364,25 +368,56 @@ function onMouseDown(e) {
         }
       }
 
-      // 7. Open Crafting Table 3×3 GUI
+      // 7. Toggle Lever (Redstone Switch)
+      if (hitBlock === BlockType.LEVER) {
+        toggleLever(currentTarget.hit.x, currentTarget.hit.y, currentTarget.hit.z);
+        playBlockHitTickSound(BlockType.STONE);
+        return;
+      }
+
+      // 8. Toggle Door (Open / Close)
+      if (isDoor(hitBlock)) {
+        toggleDoor(currentTarget.hit.x, currentTarget.hit.y, currentTarget.hit.z);
+        return;
+      }
+
+      // 9. Open Enchanting Table GUI
+      if (hitBlock === BlockType.ENCHANTING_TABLE) {
+        openEnchantingTable();
+        return;
+      }
+
+      // 10. Open Crafting Table 3×3 GUI
       if (hitBlock === BlockType.CRAFTING_TABLE) {
         openCraftingTable();
         return;
       }
 
-      // 8. Open Furnace GUI
+      // 11. Open Furnace GUI
       if (hitBlock === BlockType.FURNACE || hitBlock === BlockType.FURNACE_LIT) {
         openFurnace(currentTarget.hit.x, currentTarget.hit.y, currentTarget.hit.z);
         return;
       }
 
-      // 9. Open Chest GUI
+      // 12. Open Chest GUI
       if (hitBlock === BlockType.CHEST) {
         openChest(currentTarget.hit.x, currentTarget.hit.y, currentTarget.hit.z);
         return;
       }
 
-      // 10. Place Block
+      // 13. Place Redstone Dust as Wire
+      if (selectedBlockType === BlockType.REDSTONE_DUST) {
+        const { prev } = currentTarget;
+        if (prev.y >= 0 && prev.y < 64 && getBlockAtWorld(prev.x, prev.y, prev.z) === BlockType.AIR) {
+          playBlockPlaceSound();
+          setBlockAtWorld(scene, prev.x, prev.y, prev.z, BlockType.REDSTONE_WIRE);
+          consumeItemFromInventory(BlockType.REDSTONE_DUST, 1);
+          recalculateRedstoneGrid();
+          return;
+        }
+      }
+
+      // 14. Place Block
       if (isPlaceableBlock(selectedBlockType)) {
         const { prev } = currentTarget;
         if (prev.y >= 0 && prev.y < 64) {
@@ -391,6 +426,10 @@ function onMouseDown(e) {
             playBlockPlaceSound();
             setBlockAtWorld(scene, prev.x, prev.y, prev.z, selectedBlockType);
             consumeItemFromInventory(selectedBlockType, 1);
+
+            if (selectedBlockType === BlockType.REDSTONE_TORCH || selectedBlockType === BlockType.LEVER || selectedBlockType === BlockType.PRESSURE_PLATE) {
+              recalculateRedstoneGrid();
+            }
           }
         }
       }

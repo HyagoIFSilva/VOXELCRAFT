@@ -17,6 +17,8 @@ import { initInteraction, updateInteraction, getSelectedBlockType } from './engi
 import { initPlayer, updatePlayer, getPlayerPosition } from './entities/player.js';
 import { initPlayerModel } from './entities/playerModel.js';
 import { initDynamicLighting, updateDynamicLighting } from './rendering/dynamicLighting.js';
+import { initRedstone, updateRedstoneEngine } from './engine/redstoneEngine.js';
+import { initEnchantingTableModal } from './ui/enchantingModal.js';
 import { initMobManager, updateMobs, spawnMob, MobType } from './entities/mobManager.js';
 import { initHealthHud, updateHealthHud } from './ui/health.js';
 import { initHand, updateHand } from './entities/hand.js';
@@ -84,8 +86,10 @@ initInventory();
 initCraftingTable();
 initHotbar();
 
-// 13. Player 3D Character Model, Dynamic Lighting, physics + health
+// 13. Player 3D Character Model, Dynamic Lighting, Redstone, physics + health
 initDynamicLighting(scene);
+initRedstone(scene);
+initEnchantingTableModal();
 initPlayerModel(scene);
 initPlayer();
 initHealthHud();
@@ -96,7 +100,7 @@ initHand();
 // Load saved data if available
 loadWorld();
 
-console.log(`[VoxelCraft v0.5.0] Ready! Spawn at (${spawn.x}, ${spawn.y}, ${spawn.z})`);
+console.log(`[VoxelCraft v0.6.0] Ready! Spawn at (${spawn.x}, ${spawn.y}, ${spawn.z})`);
 
 // ── Game Loop ──────────────────────────────────────────────
 
@@ -119,6 +123,7 @@ function update(dt, time) {
   updateDayNightCycle(dt, scene, camera, renderer);
   updateWeather(dt, getPlayerPosition());
   updateDynamicLighting(dt, time, getPlayerPosition(), getSelectedBlockType(), camera.position);
+  updateRedstoneEngine(dt);
   updateFurnaces(dt);
   updateMobs(dt);
   updateDrops(dt, time);

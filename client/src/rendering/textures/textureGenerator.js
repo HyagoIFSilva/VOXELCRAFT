@@ -718,6 +718,175 @@ function drawNetherPortal(ctx, size) {
   ctx.fillRect(9, 7, 1, 1);
 }
 
+function drawRedstoneOre(ctx, size) {
+  drawStone(ctx, size);
+  const rng = seededRandom(3801);
+  for (let i = 0; i < 5; i++) {
+    const cx = 2 + Math.floor(rng() * (size - 5));
+    const cy = 2 + Math.floor(rng() * (size - 5));
+    ctx.fillStyle = '#b91c1c';
+    ctx.fillRect(cx, cy, 3, 3);
+    ctx.fillStyle = '#ef4444';
+    ctx.fillRect(cx, cy, 2, 2);
+    ctx.fillStyle = '#fca5a5';
+    ctx.fillRect(cx + 1, cy + 1, 1, 1);
+  }
+}
+
+function drawRedstoneWire(ctx, size) {
+  ctx.clearRect(0, 0, size, size);
+  ctx.fillStyle = '#991b1b';
+  ctx.fillRect(6, 0, 4, size);
+  ctx.fillRect(0, 6, size, 4);
+  ctx.fillStyle = '#ef4444';
+  ctx.fillRect(7, 0, 2, size);
+  ctx.fillRect(0, 7, size, 2);
+  ctx.fillStyle = '#fca5a5';
+  ctx.fillRect(7, 7, 2, 2);
+}
+
+function drawRedstoneTorch(ctx, size) {
+  ctx.clearRect(0, 0, size, size);
+  // Stick
+  ctx.fillStyle = '#78350f';
+  ctx.fillRect(7, 7, 2, 9);
+  // Redstone Head
+  ctx.fillStyle = '#991b1b';
+  ctx.fillRect(6, 2, 4, 5);
+  ctx.fillStyle = '#ef4444';
+  ctx.fillRect(6, 2, 4, 3);
+  ctx.fillStyle = '#fca5a5';
+  ctx.fillRect(7, 3, 2, 2);
+}
+
+function drawLever(ctx, size) {
+  drawCobblestone(ctx, size);
+  ctx.fillStyle = '#334155';
+  ctx.fillRect(5, 5, 6, 6);
+  // Angled wood handle
+  ctx.fillStyle = '#78350f';
+  ctx.fillRect(7, 3, 2, 6);
+  ctx.fillStyle = '#d97706';
+  ctx.fillRect(7, 2, 2, 2);
+}
+
+function drawPressurePlate(ctx, size) {
+  drawStone(ctx, size);
+  ctx.fillStyle = '#475569';
+  ctx.fillRect(2, 2, 12, 12);
+  ctx.fillStyle = '#64748b';
+  ctx.fillRect(3, 3, 10, 10);
+}
+
+function drawWoodenDoorBottom(ctx, size) {
+  drawWoodPlanks(ctx, size);
+  ctx.fillStyle = '#451a03';
+  ctx.strokeRect(1, 1, 14, 14);
+  ctx.fillStyle = '#0f172a';
+  ctx.fillRect(12, 4, 2, 3);
+}
+
+function drawWoodenDoorTop(ctx, size) {
+  drawWoodPlanks(ctx, size);
+  ctx.fillStyle = '#451a03';
+  ctx.strokeRect(1, 1, 14, 14);
+  // Glass window panes
+  ctx.fillStyle = '#bae6fd';
+  ctx.fillRect(3, 3, 4, 4);
+  ctx.fillRect(9, 3, 4, 4);
+  ctx.fillRect(3, 9, 4, 4);
+  ctx.fillRect(9, 9, 4, 4);
+}
+
+function drawIronDoorBottom(ctx, size) {
+  fillWithNoise(ctx, size, '#e2e8f0', ['#cbd5e1', '#f1f5f9', '#94a3b8'], 0.35, 3901);
+  ctx.fillStyle = '#334155';
+  ctx.strokeRect(1, 1, 14, 14);
+  ctx.fillRect(12, 4, 2, 3);
+}
+
+function drawIronDoorTop(ctx, size) {
+  fillWithNoise(ctx, size, '#e2e8f0', ['#cbd5e1', '#f1f5f9', '#94a3b8'], 0.35, 3902);
+  ctx.fillStyle = '#334155';
+  ctx.strokeRect(1, 1, 14, 14);
+  // Steel slits
+  ctx.fillStyle = '#1e293b';
+  ctx.fillRect(4, 4, 8, 2);
+  ctx.fillRect(4, 8, 8, 2);
+}
+
+function drawEnchantingTableTop(ctx, size) {
+  drawObsidian(ctx, size);
+  // Red cloth diamond
+  ctx.fillStyle = '#991b1b';
+  ctx.fillRect(3, 3, 10, 10);
+  ctx.fillStyle = '#dc2626';
+  ctx.fillRect(4, 4, 8, 8);
+  // Diamond corners
+  ctx.fillStyle = '#22d3ee';
+  ctx.fillRect(1, 1, 2, 2);
+  ctx.fillRect(13, 1, 2, 2);
+  ctx.fillRect(1, 13, 2, 2);
+  ctx.fillRect(13, 13, 2, 2);
+}
+
+function drawEnchantingTableSide(ctx, size) {
+  drawObsidian(ctx, size);
+  ctx.fillStyle = '#22d3ee';
+  ctx.fillRect(0, 0, size, 2);
+  ctx.fillStyle = '#06b6d4';
+  ctx.fillRect(2, 6, 4, 4);
+  ctx.fillRect(10, 6, 4, 4);
+}
+
+function drawMossyCobblestone(ctx, size) {
+  drawCobblestone(ctx, size);
+  const rng = seededRandom(4001);
+  for (let i = 0; i < 6; i++) {
+    const x = Math.floor(rng() * (size - 3));
+    const y = Math.floor(rng() * (size - 3));
+    ctx.fillStyle = '#15803d';
+    ctx.fillRect(x, y, 3, 3);
+    ctx.fillStyle = '#4ade80';
+    ctx.fillRect(x + 1, y + 1, 1, 1);
+  }
+}
+
+function drawMonsterSpawner(ctx, size) {
+  ctx.fillStyle = '#0f172a';
+  ctx.fillRect(0, 0, size, size);
+  // Iron cage grid
+  ctx.fillStyle = '#475569';
+  ctx.fillRect(0, 0, size, 2);
+  ctx.fillRect(0, size - 2, size, 2);
+  ctx.fillRect(0, 0, 2, size);
+  ctx.fillRect(size - 2, 0, 2, size);
+  ctx.fillRect(6, 0, 2, size);
+  ctx.fillRect(0, 6, size, 2);
+  // Glowing flame interior
+  ctx.fillStyle = '#ea580c';
+  ctx.fillRect(7, 7, 2, 2);
+}
+
+function drawBookshelfSide(ctx, size) {
+  drawWoodPlanks(ctx, size);
+  // Shelf row 1
+  ctx.fillStyle = '#1e293b';
+  ctx.fillRect(2, 2, 12, 5);
+  ctx.fillStyle = '#dc2626'; ctx.fillRect(3, 2, 2, 5);
+  ctx.fillStyle = '#2563eb'; ctx.fillRect(5, 2, 3, 5);
+  ctx.fillStyle = '#16a34a'; ctx.fillRect(8, 2, 2, 5);
+  ctx.fillStyle = '#d97706'; ctx.fillRect(10, 2, 3, 5);
+
+  // Shelf row 2
+  ctx.fillStyle = '#1e293b';
+  ctx.fillRect(2, 9, 12, 5);
+  ctx.fillStyle = '#9333ea'; ctx.fillRect(3, 9, 3, 5);
+  ctx.fillStyle = '#ca8a04'; ctx.fillRect(6, 9, 2, 5);
+  ctx.fillStyle = '#0891b2'; ctx.fillRect(8, 9, 3, 5);
+  ctx.fillStyle = '#e11d48'; ctx.fillRect(11, 9, 2, 5);
+}
+
 // ── Export: texture definitions ───────────────────────────
 
 export const TEXTURE_DEFS = [
@@ -770,6 +939,21 @@ export const TEXTURE_DEFS = [
   { name: 'nether_quartz_ore',   draw: drawNetherQuartzOre },    // 46
   { name: 'quartz_block',        draw: drawQuartzBlock },        // 47
   { name: 'nether_portal',       draw: drawNetherPortal },       // 48
+  // v0.6.0
+  { name: 'redstone_ore',        draw: drawRedstoneOre },        // 49
+  { name: 'redstone_wire',       draw: drawRedstoneWire },       // 50
+  { name: 'redstone_torch',      draw: drawRedstoneTorch },      // 51
+  { name: 'lever',               draw: drawLever },              // 52
+  { name: 'pressure_plate',      draw: drawPressurePlate },      // 53
+  { name: 'wooden_door_bottom',  draw: drawWoodenDoorBottom },   // 54
+  { name: 'wooden_door_top',     draw: drawWoodenDoorTop },      // 55
+  { name: 'iron_door_bottom',    draw: drawIronDoorBottom },     // 56
+  { name: 'iron_door_top',       draw: drawIronDoorTop },        // 57
+  { name: 'enchanting_table_top', draw: drawEnchantingTableTop }, // 58
+  { name: 'enchanting_table_side', draw: drawEnchantingTableSide }, // 59
+  { name: 'mossy_cobblestone',   draw: drawMossyCobblestone },   // 60
+  { name: 'monster_spawner',     draw: drawMonsterSpawner },     // 61
+  { name: 'bookshelf_side',      draw: drawBookshelfSide },      // 62
 ];
 
 /**

@@ -257,6 +257,121 @@ function createDetailedBowMesh() {
 }
 
 /**
+ * Create 3D Shield Model (Wooden / Iron).
+ */
+function createShieldMesh(isIron = false) {
+  const group = new THREE.Group();
+
+  const rimMat = new THREE.MeshStandardMaterial({
+    color: isIron ? 0x334155 : 0x451a03,
+    roughness: 0.4,
+    metalness: 0.8,
+  });
+
+  const bodyMat = new THREE.MeshStandardMaterial({
+    color: isIron ? 0xe2e8f0 : 0xb45309,
+    roughness: 0.35,
+    metalness: isIron ? 0.85 : 0.2,
+  });
+
+  const bossMat = new THREE.MeshStandardMaterial({
+    color: 0x334155,
+    roughness: 0.3,
+    metalness: 0.9,
+  });
+
+  // Outer Rim (Curved Shield Shape)
+  const rim = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.46, 0.04), rimMat);
+  rim.position.set(0, 0.12, 0);
+  group.add(rim);
+
+  // Inner Body
+  const body = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.42, 0.046), bodyMat);
+  body.position.set(0, 0.12, 0.005);
+  group.add(body);
+
+  // Center Iron Boss Emblem
+  const boss = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.08, 0.06), bossMat);
+  boss.position.set(0, 0.12, 0.015);
+  group.add(boss);
+
+  // Arm Grip Handle (Back)
+  const grip = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.04, 0.03), rimMat);
+  grip.position.set(0, 0.12, -0.03);
+  group.add(grip);
+
+  return group;
+}
+
+/**
+ * Create 3D Floating Arcane Book.
+ */
+function create3DBookMesh() {
+  const group = new THREE.Group();
+  const coverMat = new THREE.MeshLambertMaterial({ color: 0x831843 });
+  const pageMat = new THREE.MeshLambertMaterial({ color: 0xfef08a });
+  const goldMat = new THREE.MeshStandardMaterial({ color: 0xfacc15, roughness: 0.2, metalness: 0.8 });
+
+  // Open pages left & right
+  const leftPage = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.02, 0.20), pageMat);
+  leftPage.position.set(-0.075, 0.02, 0);
+  leftPage.rotation.z = -0.15;
+  group.add(leftPage);
+
+  const rightPage = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.02, 0.20), pageMat);
+  rightPage.position.set(0.075, 0.02, 0);
+  rightPage.rotation.z = 0.15;
+  group.add(rightPage);
+
+  // Leather cover
+  const cover = new THREE.Mesh(new THREE.BoxGeometry(0.30, 0.015, 0.22), coverMat);
+  cover.position.set(0, 0, 0);
+  group.add(cover);
+
+  // Golden corner clasps
+  const clasp = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.025, 0.03), goldMat);
+  clasp.position.set(0.12, 0.01, 0.09);
+  group.add(clasp);
+
+  return group;
+}
+
+/**
+ * Create 3D Boat Model.
+ */
+function create3DBoatMesh() {
+  const group = new THREE.Group();
+  const woodMat = new THREE.MeshLambertMaterial({ color: 0x78350f });
+  const plankMat = new THREE.MeshLambertMaterial({ color: 0xb45309 });
+
+  // Hull bottom
+  const bottom = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.04, 0.54), plankMat);
+  bottom.position.set(0, 0, 0);
+  group.add(bottom);
+
+  // Left wall
+  const leftW = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.14, 0.54), woodMat);
+  leftW.position.set(-0.20, 0.07, 0);
+  group.add(leftW);
+
+  // Right wall
+  const rightW = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.14, 0.54), woodMat);
+  rightW.position.set(0.20, 0.07, 0);
+  group.add(rightW);
+
+  // Bow & Stern
+  const bow = new THREE.Mesh(new THREE.BoxGeometry(0.44, 0.14, 0.04), woodMat);
+  bow.position.set(0, 0.07, -0.27);
+  group.add(bow);
+
+  const stern = new THREE.Mesh(new THREE.BoxGeometry(0.44, 0.14, 0.04), woodMat);
+  stern.position.set(0, 0.07, 0.27);
+  group.add(stern);
+
+  return group;
+}
+
+/**
  * Create Flint and Steel 3D model.
  */
 function createFlintAndSteelMesh() {
@@ -316,15 +431,20 @@ export function getBlockPreviewMesh(itemType, size = 0.22) {
   // Weapons & Tools
   if (itemType === BlockType.BOW) return createDetailedBowMesh();
   if (itemType === BlockType.FLINT_AND_STEEL) return createFlintAndSteelMesh();
+  if (itemType === BlockType.WOODEN_SHIELD) return createShieldMesh(false);
+  if (itemType === BlockType.IRON_SHIELD) return createShieldMesh(true);
+  if (itemType === BlockType.BOOK) return create3DBookMesh();
+  if (itemType === BlockType.BOAT) return create3DBoatMesh();
 
-  // Torches: Clean vertical 3D stick model
-  if (itemType === BlockType.TORCH) {
+  // Torches & Redstone Torch
+  if (itemType === BlockType.TORCH || itemType === BlockType.REDSTONE_TORCH) {
+    const isRed = itemType === BlockType.REDSTONE_TORCH;
     const group = new THREE.Group();
     const woodMat = new THREE.MeshLambertMaterial({ color: 0x78350f });
     const flameMat = new THREE.MeshStandardMaterial({
-      color: 0xf97316,
-      emissive: 0xfacc15,
-      emissiveIntensity: 0.9,
+      color: isRed ? 0xef4444 : 0xf97316,
+      emissive: isRed ? 0xb91c1c : 0xfacc15,
+      emissiveIntensity: 0.95,
     });
 
     const stick = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.32, 0.04), woodMat);
@@ -336,6 +456,58 @@ export function getBlockPreviewMesh(itemType, size = 0.22) {
     group.add(flame);
 
     return group;
+  }
+
+  // Lever in hand
+  if (itemType === BlockType.LEVER) {
+    const group = new THREE.Group();
+    const cobbleMat = new THREE.MeshLambertMaterial({ color: 0x64748b });
+    const stickMat = new THREE.MeshLambertMaterial({ color: 0x78350f });
+
+    const base = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.04, 0.16), cobbleMat);
+    group.add(base);
+
+    const stick = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.22, 0.03), stickMat);
+    stick.position.set(0, 0.10, 0);
+    stick.rotation.z = -0.35;
+    group.add(stick);
+
+    return group;
+  }
+
+  // Pressure Plate in hand
+  if (itemType === BlockType.PRESSURE_PLATE) {
+    const mat = new THREE.MeshLambertMaterial({ color: 0x64748b });
+    return new THREE.Mesh(new THREE.BoxGeometry(size * 0.9, size * 0.15, size * 0.9), mat);
+  }
+
+  // Enchanting Table in 3D preview
+  if (itemType === BlockType.ENCHANTING_TABLE) {
+    const group = new THREE.Group();
+    const obsMat = new THREE.MeshLambertMaterial({ color: 0x1e1b4b });
+    const book = create3DBookMesh();
+
+    const base = new THREE.Mesh(new THREE.BoxGeometry(size, size * 0.75, size), obsMat);
+    base.position.set(0, size * 0.375, 0);
+    group.add(base);
+
+    book.position.set(0, size * 0.82, 0);
+    book.scale.set(0.65, 0.65, 0.65);
+    group.add(book);
+
+    return group;
+  }
+
+  // Golden Apple
+  if (itemType === BlockType.GOLDEN_APPLE) {
+    const mat = new THREE.MeshStandardMaterial({
+      color: 0xfacc15,
+      emissive: 0x854d0e,
+      emissiveIntensity: 0.3,
+      roughness: 0.2,
+      metalness: 0.7,
+    });
+    return new THREE.Mesh(new THREE.SphereGeometry(size * 0.42, 8, 8), mat);
   }
 
   if (itemType === BlockType.BREAD) {
